@@ -26,8 +26,7 @@ export const metadata: Metadata = {
     "hands-free cooking",
     "AI kitchen",
     "Hindi recipes",
-  ],
-    generator: 'v0.app'
+  ]
 }
 
 export default function RootLayout({
