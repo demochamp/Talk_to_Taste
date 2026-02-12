@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback, useMemo } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import {
   Mic,
@@ -32,34 +32,51 @@ import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
 import { VoiceWaveAnimation } from "@/components/voice-wave-animation"
 import { useVoice, parseVoiceCommand } from "@/hooks/use-voice"
-import { recipes } from "@/lib/recipes-data"
+
 import Link from "next/link"
 import { useSearchParams } from "next/navigation"
 
 export default function CookPage() {
   const searchParams = useSearchParams()
   const recipeId = searchParams.get("recipe")
-
-  // Find recipe or use first one
-  const recipe = useMemo(() => {
-    if (recipeId) {
-      const found = recipes.find((r) => r.id === Number.parseInt(recipeId))
-      if (found) return found
-    }
-    return recipes[0]
-  }, [recipeId])
-
+  const [recipe, setRecipe] = useState<any>(null)
   const [currentStep, setCurrentStep] = useState(0)
   const [isPlaying, setIsPlaying] = useState(false)
   const [timers, setTimers] = useState<
     Array<{ id: number; name: string; duration: number; remaining: number; isRunning: boolean }>
   >([])
   const [whistleCount, setWhistleCount] = useState(0)
-  const [targetWhistles, setTargetWhistles] = useState(recipe.whistleCount || 3)
+  const [targetWhistles, setTargetWhistles] = useState(3)
   const [showIngredients, setShowIngredients] = useState(false)
   const [showTimerModal, setShowTimerModal] = useState(false)
   const [newTimerMinutes, setNewTimerMinutes] = useState(5)
   const [showVoiceCommands, setShowVoiceCommands] = useState(false)
+
+  // Load recipe based on query param
+  useEffect(() => {
+    if (!recipeId) return
+
+    const loadRecipe = async () => {
+      try {
+        const res = await fetch(`/api/recipes/${recipeId}`)
+
+        if (!res.ok) {
+          throw new Error("Recipe fetch failed")
+        }
+
+        const data = await res.json()
+        console.log("Loaded recipe:", data)
+        setRecipe(data)
+
+      } catch (err) {
+        console.error("Cook page fetch error:", err)
+        setRecipe(null)
+      }
+    }
+
+    loadRecipe()
+  }, [recipeId])
+
 
   // Use real voice hook
   const {
@@ -76,8 +93,10 @@ export default function CookPage() {
     isSupported: voiceSupported,
   } = useVoice()
 
-  const step = recipe.steps[currentStep]
-  const progress = ((currentStep + 1) / recipe.steps.length) * 100
+  const steps = recipe?.steps ?? []
+  const step = steps[currentStep]
+  const stepsLength = steps.length
+  const progress = stepsLength ? ((currentStep + 1) / stepsLength) * 100 : 0
 
   // Timer logic
   useEffect(() => {
@@ -101,10 +120,11 @@ export default function CookPage() {
 
   // Navigation functions
   const nextStep = useCallback(() => {
-    if (currentStep < recipe.steps.length - 1) {
+    if (currentStep < stepsLength - 1) {
       setCurrentStep((prev) => prev + 1)
     }
-  }, [currentStep, recipe.steps.length])
+  }, [currentStep, stepsLength])
+
 
   const prevStep = useCallback(() => {
     if (currentStep > 0) {
@@ -114,11 +134,11 @@ export default function CookPage() {
 
   const goToStep = useCallback(
     (stepNum: number) => {
-      if (stepNum >= 1 && stepNum <= recipe.steps.length) {
+      if (stepNum >= 1 && stepNum <= stepsLength) {
         setCurrentStep(stepNum - 1)
       }
     },
-    [recipe.steps.length],
+    [stepsLength],
   )
 
   const repeatStep = useCallback(() => {
@@ -236,6 +256,9 @@ export default function CookPage() {
     speak(newLang === "hi-IN" ? "हिंदी में बोल रहा हूं" : "Speaking in English")
   }
 
+  if (!recipe || !step) {
+    return <div className="p-10">Loading recipe...</div>
+  }
   return (
     <main className="min-h-screen bg-background">
       {/* Header */}
@@ -250,7 +273,7 @@ export default function CookPage() {
             <div>
               <h1 className="font-semibold text-foreground">{language === "hi-IN" ? recipe.nameHindi : recipe.name}</h1>
               <p className="text-xs text-muted-foreground">
-                Step {currentStep + 1} of {recipe.steps.length}
+                Step {currentStep + 1} of {stepsLength}
               </p>
             </div>
           </div>
@@ -385,21 +408,22 @@ export default function CookPage() {
               {/* Step navigation dots */}
               <div className="flex items-center justify-center">
                 <div className="flex gap-2 overflow-x-auto py-2 px-4">
-                  {recipe.steps.map((_, index) => (
-                    <motion.button
-                      key={index}
-                      whileHover={{ scale: 1.2 }}
-                      whileTap={{ scale: 0.9 }}
-                      onClick={() => setCurrentStep(index)}
-                      className={`h-3 rounded-full transition-all ${
-                        index === currentStep
+                  {steps.map((stepItem: any, index: number) => {
+                    return (
+                      <motion.button
+                        key={index}
+                        whileHover={{ scale: 1.2 }}
+                        whileTap={{ scale: 0.9 }}
+                        onClick={() => setCurrentStep(index)}
+                        className={`h-3 rounded-full transition-all ${index === currentStep
                           ? "bg-primary w-8"
                           : index < currentStep
                             ? "bg-primary/50 w-3"
                             : "bg-border w-3"
-                      }`}
-                    />
-                  ))}
+                          }`}
+                      />
+                    )
+                  })}
                 </div>
               </div>
 
@@ -436,9 +460,8 @@ export default function CookPage() {
                       stopSpeaking()
                     }
                   }}
-                  className={`w-20 h-20 rounded-full flex items-center justify-center shadow-xl ${
-                    isPlaying ? "bg-accent shadow-accent/30" : "bg-primary shadow-primary/30"
-                  }`}
+                  className={`w-20 h-20 rounded-full flex items-center justify-center shadow-xl ${isPlaying ? "bg-accent shadow-accent/30" : "bg-primary shadow-primary/30"
+                    }`}
                 >
                   {isPlaying ? (
                     <Pause className="w-8 h-8 text-accent-foreground" />
@@ -451,7 +474,7 @@ export default function CookPage() {
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.9 }}
                   onClick={nextStep}
-                  disabled={currentStep === recipe.steps.length - 1}
+                  disabled={currentStep === stepsLength - 1}
                   className="w-14 h-14 rounded-full bg-secondary flex items-center justify-center disabled:opacity-50 transition-colors hover:bg-secondary/80"
                 >
                   <SkipForward className="w-6 h-6 text-foreground" />
@@ -463,13 +486,12 @@ export default function CookPage() {
                   whileTap={{ scale: 0.9 }}
                   onClick={toggleListening}
                   disabled={!voiceSupported}
-                  className={`w-14 h-14 rounded-full flex items-center justify-center transition-all ${
-                    isListening
-                      ? "bg-primary animate-pulse-glow"
-                      : voiceSupported
-                        ? "bg-secondary hover:bg-secondary/80"
-                        : "bg-muted opacity-50"
-                  }`}
+                  className={`w-14 h-14 rounded-full flex items-center justify-center transition-all ${isListening
+                    ? "bg-primary animate-pulse-glow"
+                    : voiceSupported
+                      ? "bg-secondary hover:bg-secondary/80"
+                      : "bg-muted opacity-50"
+                    }`}
                 >
                   {isListening ? (
                     <MicOff className="w-6 h-6 text-primary-foreground" />
@@ -553,11 +575,10 @@ export default function CookPage() {
                         key={timer.id}
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
-                        className={`p-4 rounded-2xl ${
-                          timer.remaining === 0
-                            ? "bg-destructive/10 border-2 border-destructive animate-pulse"
-                            : "bg-secondary"
-                        }`}
+                        className={`p-4 rounded-2xl ${timer.remaining === 0
+                          ? "bg-destructive/10 border-2 border-destructive animate-pulse"
+                          : "bg-secondary"
+                          }`}
                       >
                         <div className="flex items-center justify-between mb-2">
                           <span className="text-sm font-medium">{timer.name}</span>
@@ -570,9 +591,8 @@ export default function CookPage() {
                         </div>
                         <div className="flex items-center justify-between">
                           <span
-                            className={`text-2xl font-bold ${
-                              timer.remaining === 0 ? "text-destructive" : "text-foreground"
-                            }`}
+                            className={`text-2xl font-bold ${timer.remaining === 0 ? "text-destructive" : "text-foreground"
+                              }`}
                           >
                             {formatTime(timer.remaining)}
                           </span>
@@ -621,9 +641,8 @@ export default function CookPage() {
                         key={i}
                         animate={i < whistleCount ? { scale: [1, 1.3, 1] } : {}}
                         transition={{ duration: 0.3 }}
-                        className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${
-                          i < whistleCount ? "bg-primary text-primary-foreground" : "bg-secondary"
-                        }`}
+                        className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${i < whistleCount ? "bg-primary text-primary-foreground" : "bg-secondary"
+                          }`}
                       >
                         {i < whistleCount ? <Check className="w-4 h-4" /> : <Circle className="w-4 h-4" />}
                       </motion.div>
@@ -670,8 +689,7 @@ export default function CookPage() {
               <div className="bg-card rounded-3xl border border-border p-6">
                 <div className="flex items-center gap-4 mb-4">
                   <img
-                    src={recipe.image || "/placeholder.svg?height=80&width=80&query=Indian food dish"}
-                    alt={recipe.name}
+                    src={recipe.image || "/placeholder.jpg"}
                     className="w-20 h-20 rounded-2xl object-cover"
                   />
                   <div>
@@ -734,21 +752,24 @@ export default function CookPage() {
                 </Button>
               </div>
               <ul className="space-y-3">
-                {recipe.ingredients.map((ing, index) => (
-                  <motion.li
-                    key={index}
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: index * 0.05 }}
-                    className="flex items-center gap-3 p-3 rounded-xl bg-secondary"
-                  >
-                    <Check className="w-4 h-4 text-primary flex-shrink-0" />
-                    <span className="text-sm">
-                      {language === "hi-IN" ? ing.itemHindi : ing.item} -{" "}
-                      {language === "hi-IN" ? ing.quantityHindi : ing.quantity}
-                    </span>
-                  </motion.li>
-                ))}
+                {(recipe.ingredients ?? []).map((ing: any, index: number) => {
+                  return (
+                    <motion.li
+                      key={index}
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: index * 0.05 }}
+                      className="flex items-center gap-3 p-3 rounded-xl bg-secondary"
+                    >
+                      <Check className="w-4 h-4 text-primary flex-shrink-0" />
+                      <span className="text-sm">
+                        {language === "hi-IN" ? ing.itemHindi : ing.item} —{" "}
+                        {language === "hi-IN" ? ing.quantityHindi : ing.quantity}
+                      </span>
+                    </motion.li>
+                  )
+                })}
+
               </ul>
             </motion.div>
           </motion.div>

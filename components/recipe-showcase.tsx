@@ -115,12 +115,13 @@ export function RecipeShowcase() {
                   {/* Image */}
                   <div className="relative aspect-[4/3] overflow-hidden">
                     <motion.img
-                      src={recipe.image}
+                      src={recipe.image || "/placeholder.jpg"}
                       alt={recipe.name}
                       className="w-full h-full object-cover"
                       whileHover={{ scale: 1.1 }}
                       transition={{ duration: 0.6 }}
                     />
+
                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
 
                     {/* Rating badge */}

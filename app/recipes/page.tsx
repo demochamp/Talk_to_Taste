@@ -1,44 +1,63 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState, useMemo, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Search, Filter, Clock, Users, Flame, Star, Mic, X, ChevronDown, ChefHat } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Navigation } from "@/components/navigation"
 import { Footer } from "@/components/footer"
-import { recipes } from "@/lib/recipes-data"
 import Link from "next/link"
 
-const cuisines = ["All", ...Array.from(new Set(recipes.map((r) => r.cuisine)))]
-const difficulties = ["All", "Easy", "Medium", "Hard"]
-const categories = ["All", ...Array.from(new Set(recipes.map((r) => r.category)))]
+
 
 export default function RecipesPage() {
   const [searchQuery, setSearchQuery] = useState("")
+  const [recipes, setRecipes] = useState<any[]>([])
   const [selectedCuisine, setSelectedCuisine] = useState("All")
   const [selectedDifficulty, setSelectedDifficulty] = useState("All")
   const [selectedCategory, setSelectedCategory] = useState("All")
   const [isFilterOpen, setIsFilterOpen] = useState(false)
   const [isCategoryOpen, setIsCategoryOpen] = useState(false)
 
+  const cuisines = useMemo(
+    () => ["All", ...Array.from(new Set(recipes.map(r => r.cuisine)))],
+    [recipes]
+  )
+
+  const categories = useMemo(
+    () => ["All", ...Array.from(new Set(recipes.map(r => r.category)))],
+    [recipes]
+  )
+
+  const difficulties = ["All", "Easy", "Medium", "Hard"]
+
+
+  useEffect(() => {
+    fetch("/api/recipes")
+      .then(res => res.json())
+      .then(data => setRecipes(data))
+  }, [])
+
   const filteredRecipes = useMemo(() => {
     return recipes.filter((recipe) => {
+      const q = searchQuery.toLowerCase()
+
       const matchesSearch =
-        recipe.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        recipe.nameHindi.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        recipe.tags.some((tag) => tag.toLowerCase().includes(searchQuery.toLowerCase())) ||
-        recipe.ingredients.some(
-          (ing) =>
-            ing.item.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            ing.itemHindi.toLowerCase().includes(searchQuery.toLowerCase()),
+        (recipe.name || "").toLowerCase().includes(q) ||
+        (recipe.nameHindi || "").toLowerCase().includes(q) ||
+        (recipe.tags || []).some((tag: string) => tag.toLowerCase().includes(q)) ||
+        (recipe.ingredients || []).some((ing: any) =>
+          (ing.item || "").toLowerCase().includes(q) ||
+          (ing.itemHindi || "").toLowerCase().includes(q)
         )
+
       const matchesCuisine = selectedCuisine === "All" || recipe.cuisine === selectedCuisine
       const matchesDifficulty = selectedDifficulty === "All" || recipe.difficulty === selectedDifficulty
       const matchesCategory = selectedCategory === "All" || recipe.category === selectedCategory
       return matchesSearch && matchesCuisine && matchesDifficulty && matchesCategory
     })
-  }, [searchQuery, selectedCuisine, selectedDifficulty, selectedCategory])
+  }, [recipes, searchQuery, selectedCuisine, selectedDifficulty, selectedCategory])
 
   return (
     <main className="min-h-screen bg-background">
@@ -138,9 +157,8 @@ export default function RecipesPage() {
                           setSelectedCategory(cat)
                           setIsCategoryOpen(false)
                         }}
-                        className={`block w-full text-left px-4 py-2 rounded-lg text-sm transition-colors ${
-                          selectedCategory === cat ? "bg-primary text-primary-foreground" : "hover:bg-secondary"
-                        }`}
+                        className={`block w-full text-left px-4 py-2 rounded-lg text-sm transition-colors ${selectedCategory === cat ? "bg-primary text-primary-foreground" : "hover:bg-secondary"
+                          }`}
                       >
                         {cat}
                       </button>
@@ -178,9 +196,8 @@ export default function RecipesPage() {
                           setSelectedDifficulty(diff)
                           setIsFilterOpen(false)
                         }}
-                        className={`block w-full text-left px-4 py-2 rounded-lg text-sm transition-colors ${
-                          selectedDifficulty === diff ? "bg-primary text-primary-foreground" : "hover:bg-secondary"
-                        }`}
+                        className={`block w-full text-left px-4 py-2 rounded-lg text-sm transition-colors ${selectedDifficulty === diff ? "bg-primary text-primary-foreground" : "hover:bg-secondary"
+                          }`}
                       >
                         {diff}
                       </button>
@@ -195,21 +212,21 @@ export default function RecipesPage() {
               selectedDifficulty !== "All" ||
               selectedCategory !== "All" ||
               searchQuery) && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => {
-                  setSelectedCuisine("All")
-                  setSelectedDifficulty("All")
-                  setSelectedCategory("All")
-                  setSearchQuery("")
-                }}
-                className="rounded-full gap-1"
-              >
-                <X className="w-4 h-4" />
-                Clear
-              </Button>
-            )}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    setSelectedCuisine("All")
+                    setSelectedDifficulty("All")
+                    setSelectedCategory("All")
+                    setSearchQuery("")
+                  }}
+                  className="rounded-full gap-1"
+                >
+                  <X className="w-4 h-4" />
+                  Clear
+                </Button>
+              )}
 
             {/* Results count */}
             <span className="text-sm text-muted-foreground ml-auto">{filteredRecipes.length} recipes found</span>
@@ -230,12 +247,12 @@ export default function RecipesPage() {
             >
               {filteredRecipes.map((recipe, index) => (
                 <motion.div
-                  key={recipe.id}
+                  key={recipe._id}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: Math.min(index * 0.03, 0.5) }}
                 >
-                  <Link href={`/cook?recipe=${recipe.id}`}>
+                  <Link href={`/cook?recipe=${recipe._id}`}>
                     <motion.div
                       whileHover={{ y: -8 }}
                       className="group bg-card rounded-2xl overflow-hidden border border-border hover:border-primary/30 hover:shadow-xl transition-all duration-300"
@@ -243,7 +260,7 @@ export default function RecipesPage() {
                       {/* Image */}
                       <div className="relative aspect-[4/3] overflow-hidden">
                         <motion.img
-                          src={recipe.image || "/placeholder.svg?height=300&width=400&query=Indian food dish"}
+                          src={recipe.image || "/placeholder.jpg"}
                           alt={recipe.name}
                           className="w-full h-full object-cover"
                           whileHover={{ scale: 1.1 }}
