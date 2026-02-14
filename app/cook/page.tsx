@@ -1,6 +1,5 @@
 "use client"
-
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useRef } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import {
   Mic,
@@ -34,10 +33,11 @@ import { VoiceWaveAnimation } from "@/components/voice-wave-animation"
 import { useVoice, parseVoiceCommand } from "@/hooks/use-voice"
 
 import Link from "next/link"
-import { useSearchParams } from "next/navigation"
+import { useSearchParams, useRouter } from "next/navigation"
 
 export default function CookPage() {
   const searchParams = useSearchParams()
+  const router = useRouter()
   const recipeId = searchParams.get("recipe")
   const [recipe, setRecipe] = useState<any>(null)
   const [currentStep, setCurrentStep] = useState(0)
@@ -51,6 +51,7 @@ export default function CookPage() {
   const [showTimerModal, setShowTimerModal] = useState(false)
   const [newTimerMinutes, setNewTimerMinutes] = useState(5)
   const [showVoiceCommands, setShowVoiceCommands] = useState(false)
+  const hasSpokenRef = useRef<number | null>(null)
 
   // Load recipe based on query param
   useEffect(() => {
@@ -142,17 +143,63 @@ export default function CookPage() {
   )
 
   const repeatStep = useCallback(() => {
-    const text = language === "hi-IN" ? step.instructionHindi : step.instruction
-    speak(text)
+    if (!step) return
+
+    const text =
+      language === "hi-IN"
+        ? (step.instructionHindi || step.instruction)
+        : step.instruction
+
+    if (text) speak(text)
+
   }, [speak, step, language])
+
 
   // Speak current step when playing or step changes
   useEffect(() => {
-    if (isPlaying && !isSpeaking) {
-      const text = language === "hi-IN" ? step.instructionHindi : step.instruction
+    if (!step) return
+    if (!isPlaying) return
+    if (isSpeaking) return
+
+    // Check if we've already spoken this step
+    if (hasSpokenRef.current === currentStep) return
+
+    const text =
+      language === "hi-IN"
+        ? (step.instructionHindi || step.instruction)
+        : step.instruction
+
+    if (text) {
       speak(text)
+      hasSpokenRef.current = currentStep
     }
-  }, [currentStep, isPlaying, speak, step, language, isSpeaking])
+
+  }, [currentStep, isPlaying, isSpeaking, language, step])
+
+  useEffect(() => {
+    hasSpokenRef.current = null
+  }, [currentStep])
+
+  // Auto move to next step after speech ends
+  useEffect(() => {
+    if (!isPlaying) return
+    if (isSpeaking) return
+
+    // Only auto-move if we HAVE spoken the current step
+    // This prevents skipping steps or moving before speaking
+    if (hasSpokenRef.current !== currentStep) return
+
+    const t = setTimeout(() => {
+      if (currentStep < stepsLength - 1) {
+        setCurrentStep(s => s + 1)
+      } else {
+        setIsPlaying(false)
+      }
+    }, 1200)
+
+    return () => clearTimeout(t)
+
+  }, [isSpeaking, isPlaying, currentStep, stepsLength])
 
   // Process voice commands
   useEffect(() => {
@@ -187,10 +234,16 @@ export default function CookPage() {
           case "PLAY":
             setIsPlaying(true)
             break
+          case "SEARCH_RECIPE":
+            router.push(`/recipes?search=${encodeURIComponent(command.params.query as string)}`)
+            break
+          case "SEARCH_BY_INGREDIENTS":
+            router.push(`/recipes?ingredients=${encodeURIComponent(command.params.ingredients as string)}`)
+            break
         }
       }
     }
-  }, [transcript, nextStep, prevStep, repeatStep, goToStep, stopSpeaking])
+  }, [transcript, nextStep, prevStep, repeatStep, goToStep, stopSpeaking, router])
 
   // Timer functions
   const addTimer = (minutes: number) => {

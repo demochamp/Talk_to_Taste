@@ -1,10 +1,11 @@
 "use client"
 
 import { motion } from "framer-motion"
-import { Mic, Play, Sparkles, ArrowRight } from "lucide-react"
+import { Mic, Play, Sparkles, ArrowRight, Search } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { VoiceWaveAnimation } from "./voice-wave-animation"
+import { VoiceSearch } from "./hero-voice-search"
 
 export function HeroSection() {
   return (
@@ -67,6 +68,16 @@ export function HeroSection() {
               Experience the magic of voice-controlled cooking. Navigate recipes, set timers, and track pressure cooker
               whistles — all without touching your device.
             </motion.p>
+
+            {/* Voice Search Bar */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.45 }}
+              className="relative max-w-xl mx-auto lg:mx-0 mb-8"
+            >
+              <VoiceSearch />
+            </motion.div>
 
             {/* CTA Buttons */}
             <motion.div

@@ -8,11 +8,21 @@ import { Input } from "@/components/ui/input"
 import { Navigation } from "@/components/navigation"
 import { Footer } from "@/components/footer"
 import Link from "next/link"
-
+import { useSearchParams } from "next/navigation"
+import { useVoice, parseVoiceCommand } from "@/hooks/use-voice"
+import { VoiceWaveAnimation } from "@/components/voice-wave-animation"
 
 
 export default function RecipesPage() {
+  const searchParams = useSearchParams()
   const [searchQuery, setSearchQuery] = useState("")
+
+  useEffect(() => {
+    const query = searchParams.get("search") || searchParams.get("ingredients")
+    if (query) {
+      setSearchQuery(query)
+    }
+  }, [searchParams])
   const [recipes, setRecipes] = useState<any[]>([])
   const [selectedCuisine, setSelectedCuisine] = useState("All")
   const [selectedDifficulty, setSelectedDifficulty] = useState("All")
@@ -38,6 +48,48 @@ export default function RecipesPage() {
       .then(res => res.json())
       .then(data => setRecipes(data))
   }, [])
+
+  const {
+    isListening,
+    transcript,
+    startListening,
+    stopListening,
+    isSupported: voiceSupported,
+  } = useVoice()
+
+  // Toggle voice listening
+  const toggleListening = () => {
+    if (isListening) {
+      stopListening()
+    } else {
+      startListening()
+    }
+  }
+
+  // Handle voice commands/search
+  useEffect(() => {
+    if (transcript) {
+      // Check for specific commands first
+      const command = parseVoiceCommand(transcript)
+      if (command) {
+        if (command.action === "SEARCH_RECIPE") {
+          setSearchQuery(command.params.query as string)
+          return
+        }
+        if (command.action === "SEARCH_BY_INGREDIENTS") {
+          setSearchQuery(command.params.ingredients as string)
+          return
+        }
+      }
+
+      // Default: If listening and speaking, update search query directly
+      // This makes it feel like "dictation" for the search box
+      if (isListening) {
+        // Optional: debounce or just set it
+        setSearchQuery(transcript.replace(/\.$/, "")) // remove trailing dot
+      }
+    }
+  }, [transcript, isListening])
 
   const filteredRecipes = useMemo(() => {
     return recipes.filter((recipe) => {
@@ -97,8 +149,13 @@ export default function RecipesPage() {
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-12 pr-12 h-14 rounded-full text-lg border-2 focus:border-primary"
               />
-              <Button size="icon" className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full bg-primary">
-                <Mic className="w-5 h-5" />
+              <Button
+                size="icon"
+                className={`absolute right-2 top-1/2 -translate-y-1/2 rounded-full ${isListening ? "bg-red-500 animate-pulse" : "bg-primary"}`}
+                onClick={toggleListening}
+                disabled={!voiceSupported}
+              >
+                {isListening ? <VoiceWaveAnimation isActive={true} /> : <Mic className="w-5 h-5" />}
               </Button>
             </div>
           </motion.div>

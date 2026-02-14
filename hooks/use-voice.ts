@@ -1,7 +1,15 @@
 "use client"
 
 import { useState, useCallback, useEffect, useRef } from "react"
-import type SpeechRecognition from "speech-recognition"
+type SpeechRecognitionType =
+  typeof window.SpeechRecognition | typeof window.webkitSpeechRecognition
+
+declare global {
+  interface Window {
+    SpeechRecognition: any
+    webkitSpeechRecognition: any
+  }
+}
 
 type Language = "en-IN" | "hi-IN"
 
@@ -31,13 +39,18 @@ export function useVoice(): UseVoiceReturn {
     language: "en-IN",
   })
 
-  const recognitionRef = useRef<SpeechRecognition | null>(null)
+  const recognitionRef = useRef<any>(null)
   const synthRef = useRef<SpeechSynthesisUtterance | null>(null)
 
-  const isSupported =
-    typeof window !== "undefined" &&
-    ("SpeechRecognition" in window || "webkitSpeechRecognition" in window) &&
-    "speechSynthesis" in window
+  const [isSupported, setIsSupported] = useState(false)
+
+  useEffect(() => {
+    setIsSupported(
+      typeof window !== "undefined" &&
+      ("SpeechRecognition" in window || "webkitSpeechRecognition" in window) &&
+      "speechSynthesis" in window
+    )
+  }, [])
 
   // Initialize Speech Recognition
   useEffect(() => {
@@ -54,13 +67,13 @@ export function useVoice(): UseVoiceReturn {
       setState((prev) => ({ ...prev, isListening: true, error: null }))
     }
 
-    recognition.onresult = (event) => {
+    recognition.onresult = (event: any) => {
       const current = event.resultIndex
       const transcript = event.results[current][0].transcript
       setState((prev) => ({ ...prev, transcript }))
     }
 
-    recognition.onerror = (event) => {
+    recognition.onerror = (event: any) => {
       setState((prev) => ({
         ...prev,
         isListening: false,
@@ -105,40 +118,90 @@ export function useVoice(): UseVoiceReturn {
     recognitionRef.current.stop()
   }, [])
 
-  const speak = useCallback(
-    (text: string, lang?: Language) => {
-      if (typeof window === "undefined" || !window.speechSynthesis) return
+  const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([])
 
-      window.speechSynthesis.cancel()
+  useEffect(() => {
+    if (typeof window === "undefined" || !("speechSynthesis" in window)) return
 
-      const utterance = new SpeechSynthesisUtterance(text)
-      utterance.lang = lang || state.language
-      utterance.rate = 0.9
-      utterance.pitch = 1
+    const loadVoices = () => {
+      const availableVoices = window.speechSynthesis.getVoices()
+      if (availableVoices.length > 0) {
+        setVoices(availableVoices)
+      }
+    }
 
-      // Try to find a voice for the specified language
-      const voices = window.speechSynthesis.getVoices()
-      const targetLang = lang || state.language
-      const voice = voices.find((v) => v.lang.startsWith(targetLang.split("-")[0])) || voices[0]
-      if (voice) utterance.voice = voice
+    loadVoices()
 
-      utterance.onstart = () => {
-        setState((prev) => ({ ...prev, isSpeaking: true }))
+    window.speechSynthesis.onvoiceschanged = loadVoices
+
+    return () => {
+      window.speechSynthesis.onvoiceschanged = null
+    }
+  }, [])
+
+  const speak = useCallback((text: string) => {
+    if (!text || typeof window === "undefined") return
+
+    window.speechSynthesis.cancel()
+
+    const utter = new SpeechSynthesisUtterance(text)
+
+    if (state.language === "hi-IN") {
+      // Prioritize Hindi voices
+      // 1. Google Hindi (usually best quality)
+      // 2. Microsoft Hindi
+      // 3. Any voice containing "Hindi" or "hi-IN"
+      const hiVoice =
+        voices.find(v => v.name.includes("Google") && v.lang.includes("hi")) ||
+        voices.find(v => v.name.includes("Microsoft") && v.lang.includes("hi")) ||
+        voices.find(v => v.lang.includes("hi"))
+
+      if (hiVoice) {
+        utter.voice = hiVoice
+        utter.lang = "hi-IN"
+      } else {
+        // Fallback if no Hindi voice found - try to use a generic one but set lang
+        // This might still result in the "numbers only" issue if the engine doesn't support Hindi,
+        // but it's the best we can do.
+        utter.lang = "hi-IN"
       }
 
-      utterance.onend = () => {
-        setState((prev) => ({ ...prev, isSpeaking: false }))
+    } else {
+      const enVoice =
+        voices.find(v => v.lang.includes("en-IN")) ||
+        voices.find(v => v.lang.includes("en-US")) ||
+        voices.find(v => v.lang.includes("en"))
+
+      if (enVoice) utter.voice = enVoice
+      utter.lang = "en-IN"
+    }
+
+    utter.rate = 0.9
+    utter.pitch = 1
+
+    utter.onstart = () =>
+      setState(prev => ({ ...prev, isSpeaking: true }))
+
+    utter.onend = () =>
+      setState(prev => ({ ...prev, isSpeaking: false }))
+
+    utter.onerror = (e) => {
+      // Ignore "interrupted" or "canceled" errors as they happen when we call cancel()
+      // or when the user navigates away.
+      if (e.error === "interrupted" || e.error === "canceled") {
+        setState(prev => ({ ...prev, isSpeaking: false }))
+        return
       }
 
-      utterance.onerror = () => {
-        setState((prev) => ({ ...prev, isSpeaking: false }))
-      }
+      console.error("Speech synthesis error:", e)
+      setState(prev => ({ ...prev, isSpeaking: false }))
+    }
 
-      synthRef.current = utterance
-      window.speechSynthesis.speak(utterance)
-    },
-    [state.language],
-  )
+
+    window.speechSynthesis.speak(utter)
+
+  }, [state.language, voices])
+
 
   const stopSpeaking = useCallback(() => {
     if (typeof window !== "undefined") {
@@ -168,6 +231,30 @@ export function parseVoiceCommand(transcript: string): {
   params: Record<string, string | number>
 } | null {
   const text = transcript.toLowerCase().trim()
+
+  // Help commands
+  if (text.includes("help") || text.includes("madad") || text.includes("bot") || text.includes("assistant") || text.includes("what can i say") || text.includes("kya bolu") || text.includes("commands")) {
+    return { action: "OPEN_HELP", params: {} }
+  }
+
+  // Theme commands
+  if (text.includes("dark mode") || text.includes("switch to dark")) {
+    return { action: "SET_THEME", params: { theme: 'dark' } }
+  }
+  if (text.includes("light mode") || text.includes("switch to light")) {
+    return { action: "SET_THEME", params: { theme: 'light' } }
+  }
+
+  // Global Navigation
+  if (text.includes("go to home") || text.includes("ghar jao") || text.includes("home page")) {
+    return { action: "NAVIGATE_HOME", params: {} }
+  }
+  if (text.includes("go to recipes") || text.includes("open recipes") || text.includes("recipes dikhao") || text.includes("recipe page")) {
+    return { action: "NAVIGATE_RECIPES", params: {} }
+  }
+  if (text.includes("go to profile") || text.includes("open profile") || text.includes("profile dikhao")) {
+    return { action: "NAVIGATE_PROFILE", params: {} }
+  }
 
   // Navigation commands
   if (text.includes("next step") || text.includes("agle step") || text.includes("aage")) {

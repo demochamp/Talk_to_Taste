@@ -2,10 +2,13 @@
 
 import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { ChefHat, Menu, X, User, Moon, Sun } from "lucide-react"
+import { Menu, X, User, Moon, Sun } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useTheme } from "next-themes"
 import Link from "next/link"
+import { GlobalVoiceControl } from "./global-voice-control"
+import { HelpAssistant } from "./help-assistant"
+import { AnimatedLogo } from "./animated-logo"
 
 export function Navigation() {
   const [isScrolled, setIsScrolled] = useState(false)
@@ -34,20 +37,13 @@ export function Navigation() {
       <motion.nav
         initial={{ y: -100 }}
         animate={{ y: 0 }}
-        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
-          isScrolled ? "glass-card py-3" : "bg-transparent py-6"
-        }`}
+        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${isScrolled ? "glass-card py-3" : "bg-transparent py-6"
+          }`}
       >
         <div className="container mx-auto px-6 flex items-center justify-between">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-3 group">
-            <motion.div
-              whileHover={{ rotate: 360 }}
-              transition={{ duration: 0.6 }}
-              className="w-12 h-12 rounded-2xl bg-primary flex items-center justify-center shadow-lg"
-            >
-              <ChefHat className="w-7 h-7 text-primary-foreground" />
-            </motion.div>
+            <AnimatedLogo />
             <div className="flex flex-col">
               <span className="text-xl font-bold tracking-tight gradient-text">TalktoTaste</span>
               <span className="text-[10px] text-muted-foreground uppercase tracking-widest">Voice Kitchen</span>
@@ -75,6 +71,9 @@ export function Navigation() {
 
           {/* Right side actions */}
           <div className="flex items-center gap-3">
+            {/* Voice Control */}
+            <GlobalVoiceControl />
+
             {/* Theme toggle */}
             {mounted && (
               <motion.button
@@ -147,6 +146,17 @@ export function Navigation() {
                     </Link>
                   </motion.div>
                 ))}
+
+                {/* Mobile Voice Control */}
+                <motion.div
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.35 }}
+                  className="flex justify-between items-center py-3 border-b border-border"
+                >
+                  <span className="text-2xl font-semibold text-foreground">Voice Assistant</span>
+                  <GlobalVoiceControl />
+                </motion.div>
                 <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.4 }}>
                   <Link
                     href="/profile"
@@ -171,6 +181,7 @@ export function Navigation() {
           </motion.div>
         )}
       </AnimatePresence>
+      <HelpAssistant />
     </>
   )
 }
