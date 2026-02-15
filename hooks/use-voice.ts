@@ -312,5 +312,15 @@ export function parseVoiceCommand(transcript: string): {
     return { action: "GO_TO_STEP", params: { step: Number.parseInt(stepMatch[1]) } }
   }
 
+  // Save/Favorite commands
+  if (text.includes("save") || text.includes("favorite") || text.includes("like") || text.includes("pasand")) {
+    return { action: "SAVE_RECIPE", params: {} }
+  }
+
+  // Share commands
+  if (text.includes("share") || text.includes("bhejo") || text.includes("send")) {
+    return { action: "SHARE_RECIPE", params: {} }
+  }
+
   return null
 }

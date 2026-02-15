@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import {
   User,
@@ -28,44 +28,38 @@ import { Footer } from "@/components/footer"
 import { useTheme } from "next-themes"
 import { recipes } from "@/lib/recipes-data"
 import Link from "next/link"
-
-// Mock user data - in production this would come from auth/database
-const mockUser = {
-  name: "Priya Sharma",
-  email: "priya@example.com",
-  avatar: "/indian-woman-avatar.jpg",
-  preferredLanguage: "hi-IN",
-  joinedDate: "January 2024",
-  stats: {
-    recipesCooked: 47,
-    totalCookingTime: "32 hours",
-    favoriteCuisine: "Punjabi",
-    streak: 12,
-  },
-  favorites: [1, 3, 5, 10, 15], // Recipe IDs
-  recentlyCooked: [1, 2, 7, 4, 8],
-  achievements: [
-    { id: 1, name: "First Recipe", icon: "🎉", unlocked: true },
-    { id: 2, name: "10 Recipes", icon: "👨‍🍳", unlocked: true },
-    { id: 3, name: "50 Recipes", icon: "🏆", unlocked: false },
-    { id: 4, name: "Master Chef", icon: "⭐", unlocked: false },
-    { id: 5, name: "Week Streak", icon: "🔥", unlocked: true },
-    { id: 6, name: "Month Streak", icon: "💪", unlocked: false },
-  ],
-}
+import { useUserState } from "@/hooks/use-user-state"
 
 export default function ProfilePage() {
   const { theme, setTheme } = useTheme()
   const [activeTab, setActiveTab] = useState<"overview" | "favorites" | "history" | "settings">("overview")
   const [isEditing, setIsEditing] = useState(false)
-  const [userName, setUserName] = useState(mockUser.name)
-  const [language, setLanguage] = useState(mockUser.preferredLanguage)
-  const [voiceEnabled, setVoiceEnabled] = useState(true)
-  const [notifications, setNotifications] = useState(true)
+
+  const { user, updateName, updateSettings } = useUserState()
+  const [userName, setUserName] = useState(user.name)
+
+  // Sync local name state when user data loads
+  useEffect(() => {
+    setUserName(user.name)
+  }, [user.name])
+
+  const handleSaveName = () => {
+    updateName(userName)
+    setIsEditing(false)
+  }
 
   // Get favorite recipes
-  const favoriteRecipes = recipes.filter((r) => mockUser.favorites.includes(r.id))
-  const recentRecipes = recipes.filter((r) => mockUser.recentlyCooked.includes(r.id))
+  const favoriteRecipes = recipes.filter((r) => user.favorites.includes(r.id))
+  // Get history recipes (allow duplicates in history but filter here for display unique or show timestamp logic if needed)
+  // For now, let's just show unique recent
+  const historyIds = Array.from(new Set(user.history))
+  const recentRecipes = recipes.filter((r) => historyIds.includes(r.id))
+
+  // Calculated stats
+  const recipesCooked = user.history.length
+  // Mock logic for total time - assume 30 mins per recipe average
+  const totalCookingTime = `${Math.floor(recipesCooked * 0.5)} hours`
+  const streak = 3 // Mock streak for now, hard to implement real streak without daily logs
 
   const tabs = [
     { id: "overview", label: "Overview", icon: User },
@@ -91,48 +85,42 @@ export default function ProfilePage() {
             <div className="relative">
               <motion.div
                 whileHover={{ scale: 1.05 }}
-                className="w-32 h-32 rounded-full overflow-hidden border-4 border-primary/30 shadow-xl"
+                className="w-32 h-32 rounded-full overflow-hidden border-4 border-primary/30 shadow-xl bg-secondary flex items-center justify-center"
               >
-                <img
-                  src={mockUser.avatar || "/placeholder.svg"}
-                  alt={mockUser.name}
-                  className="w-full h-full object-cover"
-                />
+                <User className="w-16 h-16 text-muted-foreground" />
               </motion.div>
-              <button className="absolute bottom-0 right-0 w-10 h-10 rounded-full bg-primary flex items-center justify-center shadow-lg">
-                <Camera className="w-5 h-5 text-primary-foreground" />
-              </button>
             </div>
 
             {/* User Info */}
             <div className="text-center md:text-left flex-1">
               <div className="flex items-center gap-3 justify-center md:justify-start mb-2">
                 {isEditing ? (
-                  <Input
-                    value={userName}
-                    onChange={(e) => setUserName(e.target.value)}
-                    className="text-2xl font-bold max-w-[250px]"
-                  />
+                  <div className="flex gap-2">
+                    <Input
+                      value={userName}
+                      onChange={(e) => setUserName(e.target.value)}
+                      className="text-2xl font-bold max-w-[250px]"
+                    />
+                    <Button size="sm" onClick={handleSaveName}>Save</Button>
+                  </div>
                 ) : (
-                  <h1 className="text-3xl font-bold text-foreground">{userName}</h1>
+                  <h1 className="text-3xl font-bold text-foreground">{user.name}</h1>
                 )}
-                <Button variant="ghost" size="icon" onClick={() => setIsEditing(!isEditing)}>
-                  <Edit3 className="w-4 h-4" />
-                </Button>
+                {!isEditing && (
+                  <Button variant="ghost" size="icon" onClick={() => setIsEditing(true)}>
+                    <Edit3 className="w-4 h-4" />
+                  </Button>
+                )}
               </div>
-              <p className="text-muted-foreground mb-4">{mockUser.email}</p>
+              <p className="text-muted-foreground mb-4">Master Chef in Training</p>
               <div className="flex items-center gap-4 justify-center md:justify-start text-sm text-muted-foreground">
                 <span className="flex items-center gap-1">
                   <ChefHat className="w-4 h-4 text-primary" />
-                  {mockUser.stats.recipesCooked} recipes cooked
+                  {recipesCooked} recipes cooked
                 </span>
                 <span className="flex items-center gap-1">
                   <Clock className="w-4 h-4 text-primary" />
-                  {mockUser.stats.totalCookingTime}
-                </span>
-                <span className="flex items-center gap-1">
-                  <TrendingUp className="w-4 h-4 text-primary" />
-                  {mockUser.stats.streak} day streak
+                  {totalCookingTime}
                 </span>
               </div>
             </div>
@@ -144,18 +132,18 @@ export default function ProfilePage() {
                 className="p-4 rounded-2xl bg-card border border-border text-center"
               >
                 <Heart className="w-6 h-6 text-primary mx-auto mb-2" />
-                <p className="text-2xl font-bold text-foreground">{mockUser.favorites.length}</p>
+                <p className="text-2xl font-bold text-foreground">{user.favorites.length}</p>
                 <p className="text-xs text-muted-foreground">Favorites</p>
               </motion.div>
               <motion.div
                 whileHover={{ scale: 1.05 }}
                 className="p-4 rounded-2xl bg-card border border-border text-center"
               >
-                <Award className="w-6 h-6 text-primary mx-auto mb-2" />
+                <ChefHat className="w-6 h-6 text-primary mx-auto mb-2" />
                 <p className="text-2xl font-bold text-foreground">
-                  {mockUser.achievements.filter((a) => a.unlocked).length}
+                  {recipesCooked}
                 </p>
-                <p className="text-xs text-muted-foreground">Achievements</p>
+                <p className="text-xs text-muted-foreground">Cooked</p>
               </motion.div>
             </div>
           </motion.div>
@@ -193,43 +181,21 @@ export default function ProfilePage() {
                 exit={{ opacity: 0, y: -20 }}
                 className="space-y-8"
               >
-                {/* Achievements */}
-                <div className="bg-card rounded-3xl border border-border p-6">
-                  <h2 className="text-xl font-semibold mb-6 flex items-center gap-2">
-                    <Award className="w-5 h-5 text-primary" />
-                    Achievements
-                  </h2>
-                  <div className="grid grid-cols-3 md:grid-cols-6 gap-4">
-                    {mockUser.achievements.map((achievement) => (
-                      <motion.div
-                        key={achievement.id}
-                        whileHover={{ scale: 1.1 }}
-                        className={`p-4 rounded-2xl text-center ${
-                          achievement.unlocked ? "bg-primary/10" : "bg-secondary opacity-50"
-                        }`}
-                      >
-                        <span className="text-3xl mb-2 block">{achievement.icon}</span>
-                        <p className="text-xs font-medium">{achievement.name}</p>
-                      </motion.div>
-                    ))}
-                  </div>
-                </div>
-
                 {/* Cooking Stats */}
                 <div className="grid md:grid-cols-3 gap-6">
                   <motion.div whileHover={{ y: -5 }} className="bg-card rounded-3xl border border-border p-6">
                     <ChefHat className="w-8 h-8 text-primary mb-4" />
-                    <p className="text-3xl font-bold text-foreground mb-1">{mockUser.stats.recipesCooked}</p>
+                    <p className="text-3xl font-bold text-foreground mb-1">{recipesCooked}</p>
                     <p className="text-muted-foreground">Recipes Cooked</p>
                   </motion.div>
                   <motion.div whileHover={{ y: -5 }} className="bg-card rounded-3xl border border-border p-6">
-                    <Star className="w-8 h-8 text-primary mb-4" />
-                    <p className="text-3xl font-bold text-foreground mb-1">{mockUser.stats.favoriteCuisine}</p>
-                    <p className="text-muted-foreground">Favorite Cuisine</p>
+                    <Heart className="w-8 h-8 text-primary mb-4" />
+                    <p className="text-3xl font-bold text-foreground mb-1">{user.favorites.length}</p>
+                    <p className="text-muted-foreground">Favorites</p>
                   </motion.div>
                   <motion.div whileHover={{ y: -5 }} className="bg-card rounded-3xl border border-border p-6">
                     <TrendingUp className="w-8 h-8 text-primary mb-4" />
-                    <p className="text-3xl font-bold text-foreground mb-1">{mockUser.stats.streak} Days</p>
+                    <p className="text-3xl font-bold text-foreground mb-1">{streak} Days</p>
                     <p className="text-muted-foreground">Current Streak</p>
                   </motion.div>
                 </div>
@@ -240,27 +206,31 @@ export default function ProfilePage() {
                     <Clock className="w-5 h-5 text-primary" />
                     Recently Cooked
                   </h2>
-                  <div className="grid md:grid-cols-3 lg:grid-cols-5 gap-4">
-                    {recentRecipes.slice(0, 5).map((recipe) => (
-                      <Link key={recipe.id} href={`/cook?recipe=${recipe.id}`}>
-                        <motion.div
-                          whileHover={{ y: -5 }}
-                          className="bg-card rounded-2xl border border-border overflow-hidden group"
-                        >
-                          <div className="aspect-square overflow-hidden">
-                            <img
-                              src={recipe.image || "/placeholder.svg?height=200&width=200&query=Indian food"}
-                              alt={recipe.name}
-                              className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
-                            />
-                          </div>
-                          <div className="p-3">
-                            <p className="font-medium text-sm truncate">{recipe.name}</p>
-                          </div>
-                        </motion.div>
-                      </Link>
-                    ))}
-                  </div>
+                  {recentRecipes.length > 0 ? (
+                    <div className="grid md:grid-cols-3 lg:grid-cols-5 gap-4">
+                      {recentRecipes.slice(0, 5).map((recipe) => (
+                        <Link key={recipe.id} href={`/cook?recipe=${recipe.id}`}>
+                          <motion.div
+                            whileHover={{ y: -5 }}
+                            className="bg-card rounded-2xl border border-border overflow-hidden group"
+                          >
+                            <div className="aspect-square overflow-hidden">
+                              <img
+                                src={recipe.image || "/placeholder.svg?height=200&width=200&query=Indian food"}
+                                alt={recipe.name}
+                                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                              />
+                            </div>
+                            <div className="p-3">
+                              <p className="font-medium text-sm truncate">{recipe.name}</p>
+                            </div>
+                          </motion.div>
+                        </Link>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-muted-foreground">No cooking history yet. Start cooking!</p>
+                  )}
                 </div>
               </motion.div>
             )}
@@ -360,6 +330,9 @@ export default function ProfilePage() {
                       </Link>
                     </motion.div>
                   ))}
+                  {recentRecipes.length === 0 && (
+                    <p className="text-center text-muted-foreground py-10">No history available.</p>
+                  )}
                 </div>
               </motion.div>
             )}
@@ -407,17 +380,17 @@ export default function ProfilePage() {
                     </div>
                     <div className="flex gap-2">
                       <Button
-                        variant={language === "en-IN" ? "default" : "outline"}
+                        variant={user.settings.language === "en-IN" ? "default" : "outline"}
                         size="sm"
-                        onClick={() => setLanguage("en-IN")}
+                        onClick={() => updateSettings({ language: "en-IN" })}
                         className="rounded-full"
                       >
                         English
                       </Button>
                       <Button
-                        variant={language === "hi-IN" ? "default" : "outline"}
+                        variant={user.settings.language === "hi-IN" ? "default" : "outline"}
                         size="sm"
-                        onClick={() => setLanguage("hi-IN")}
+                        onClick={() => updateSettings({ language: "hi-IN" })}
                         className="rounded-full"
                       >
                         हिंदी
@@ -438,7 +411,7 @@ export default function ProfilePage() {
                         <p className="font-medium">Voice Narration</p>
                         <p className="text-sm text-muted-foreground">Enable voice reading of instructions</p>
                       </div>
-                      <Switch checked={voiceEnabled} onCheckedChange={setVoiceEnabled} />
+                      <Switch checked={user.settings.voiceEnabled} onCheckedChange={(c) => updateSettings({ voiceEnabled: c })} />
                     </div>
                   </div>
                 </div>
@@ -454,7 +427,7 @@ export default function ProfilePage() {
                       <p className="font-medium">Timer Alerts</p>
                       <p className="text-sm text-muted-foreground">Get notified when timers complete</p>
                     </div>
-                    <Switch checked={notifications} onCheckedChange={setNotifications} />
+                    <Switch checked={user.settings.notifications} onCheckedChange={(c) => updateSettings({ notifications: c })} />
                   </div>
                 </div>
 
@@ -462,9 +435,14 @@ export default function ProfilePage() {
                 <Button
                   variant="outline"
                   className="w-full rounded-full gap-2 text-destructive hover:bg-destructive/10 bg-transparent"
+                  onClick={() => {
+                    // In a real app this would clear session, here we can just clear local storage
+                    localStorage.removeItem("talktotaste-user")
+                    window.location.reload()
+                  }}
                 >
                   <LogOut className="w-4 h-4" />
-                  Log Out
+                  Reset Profile
                 </Button>
               </motion.div>
             )}

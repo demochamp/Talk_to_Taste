@@ -26,11 +26,14 @@ import {
   ChefHat,
   Sparkles,
   AlertCircle,
+  Share2,
+  Youtube,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
 import { VoiceWaveAnimation } from "@/components/voice-wave-animation"
 import { useVoice, parseVoiceCommand } from "@/hooks/use-voice"
+import { useUserState } from "@/hooks/use-user-state"
 
 import Link from "next/link"
 import { useSearchParams, useRouter } from "next/navigation"
@@ -51,6 +54,8 @@ export default function CookPage() {
   const [showTimerModal, setShowTimerModal] = useState(false)
   const [newTimerMinutes, setNewTimerMinutes] = useState(5)
   const [showVoiceCommands, setShowVoiceCommands] = useState(false)
+  const [showVideo, setShowVideo] = useState(false)
+  const { addToHistory, toggleFavorite, isFavorite } = useUserState()
   const hasSpokenRef = useRef<number | null>(null)
 
   // Load recipe based on query param
@@ -68,6 +73,9 @@ export default function CookPage() {
         const data = await res.json()
         console.log("Loaded recipe:", data)
         setRecipe(data)
+        if (data && data.id) {
+          addToHistory(data.id)
+        }
 
       } catch (err) {
         console.error("Cook page fetch error:", err)
@@ -240,10 +248,30 @@ export default function CookPage() {
           case "SEARCH_BY_INGREDIENTS":
             router.push(`/recipes?ingredients=${encodeURIComponent(command.params.ingredients as string)}`)
             break
+          case "SAVE_RECIPE":
+            if (recipe) {
+              toggleFavorite(recipe.id)
+              speak(language === "hi-IN"
+                ? (isFavorite(recipe.id) ? "रेसिपी हटा दी गई" : "रेसिपी सेव कर ली गई")
+                : (isFavorite(recipe.id) ? "Recipe removed from favorites" : "Recipe saved to favorites"))
+            }
+            break
+          case "SHARE_RECIPE":
+            if (navigator.share) {
+              navigator.share({
+                title: recipe.name,
+                text: `Check out this recipe for ${recipe.name} on TalkToTaste!`,
+                url: window.location.href,
+              }).catch(console.error);
+            } else {
+              navigator.clipboard.writeText(window.location.href);
+              speak(language === "hi-IN" ? "लिंक कॉपी हो गया" : "Link copied to clipboard")
+            }
+            break
         }
       }
     }
-  }, [transcript, nextStep, prevStep, repeatStep, goToStep, stopSpeaking, router])
+  }, [transcript, nextStep, prevStep, repeatStep, goToStep, stopSpeaking, router, toggleFavorite, isFavorite, language, recipe, speak])
 
   // Timer functions
   const addTimer = (minutes: number) => {
@@ -331,8 +359,36 @@ export default function CookPage() {
             </div>
           </div>
           <div className="flex items-center gap-2">
-            {/* Language toggle */}
-            <Button variant="ghost" size="icon" className="rounded-full" onClick={toggleLanguage}>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="rounded-full"
+              onClick={() => {
+                if (navigator.share) {
+                  navigator.share({
+                    title: recipe.name,
+                    text: `Check out this recipe for ${recipe.name} on TalkToTaste!`,
+                    url: window.location.href,
+                  }).catch(console.error);
+                } else {
+                  navigator.clipboard.writeText(window.location.href);
+                  alert("Link copied to clipboard!");
+                }
+              }}
+            >
+              <Share2 className="w-5 h-5" />
+            </Button>
+            {recipe.youtubeUrl && (
+              <Button
+                variant={showVideo ? "default" : "ghost"}
+                size="icon"
+                className="rounded-full"
+                onClick={() => setShowVideo(!showVideo)}
+              >
+                <Youtube className="w-5 h-5" />
+              </Button>
+            )}
+            <Button variant="ghost" size="icon" className="rounded-full" onClick={toggleLanguage} aria-label="Toggle Language">
               <Globe className="w-5 h-5" />
             </Button>
             <Button variant="ghost" size="icon" className="rounded-full" onClick={() => setShowIngredients(true)}>
@@ -887,6 +943,43 @@ export default function CookPage() {
           </motion.div>
         )}
       </AnimatePresence>
-    </main>
+
+      {/* Video Modal */}
+      <AnimatePresence>
+        {showVideo && recipe.youtubeUrl && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4"
+            onClick={() => setShowVideo(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-black rounded-3xl overflow-hidden max-w-4xl w-full aspect-video shadow-2xl relative"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <Button
+                variant="ghost"
+                size="icon"
+                className="absolute top-4 right-4 text-white z-10 bg-black/20 hover:bg-black/40 rounded-full"
+                onClick={() => setShowVideo(false)}
+              >
+                <X className="w-6 h-6" />
+              </Button>
+              <iframe
+                src={recipe.youtubeUrl}
+                title="Recipe Video"
+                className="w-full h-full"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+              />
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </main >
   )
 }

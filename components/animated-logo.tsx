@@ -1,10 +1,15 @@
 "use client"
 
 import { motion } from "framer-motion"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 
 export function AnimatedLogo() {
     const [isDancing, setIsDancing] = useState(false)
+    const [timestamp, setTimestamp] = useState<number | null>(null)
+
+    useEffect(() => {
+        setTimestamp(new Date().getTime())
+    }, [])
 
     const triggerDance = () => {
         setIsDancing(true)
@@ -32,7 +37,7 @@ export function AnimatedLogo() {
         >
             <div className="relative w-full h-full">
                 <img
-                    src={`/logo.png?v=${new Date().getTime()}`}
+                    src={`/logo.png${timestamp ? `?v=${timestamp}` : ''}`}
                     alt="TalktoTaste Logo"
                     className="w-full h-full object-contain scale-110"
                 />

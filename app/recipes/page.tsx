@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { Search, Filter, Clock, Users, Flame, Star, Mic, X, ChevronDown, ChefHat } from "lucide-react"
+import { Search, Filter, Clock, Users, Flame, Star, Mic, X, ChevronDown, ChefHat, Heart } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Navigation } from "@/components/navigation"
@@ -11,9 +11,11 @@ import Link from "next/link"
 import { useSearchParams } from "next/navigation"
 import { useVoice, parseVoiceCommand } from "@/hooks/use-voice"
 import { VoiceWaveAnimation } from "@/components/voice-wave-animation"
+import { useUserState } from "@/hooks/use-user-state"
 
 
 export default function RecipesPage() {
+  const { toggleFavorite, isFavorite } = useUserState()
   const searchParams = useSearchParams()
   const [searchQuery, setSearchQuery] = useState("")
 
@@ -304,12 +306,12 @@ export default function RecipesPage() {
             >
               {filteredRecipes.map((recipe, index) => (
                 <motion.div
-                  key={recipe._id}
+                  key={recipe.id}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: Math.min(index * 0.03, 0.5) }}
                 >
-                  <Link href={`/cook?recipe=${recipe._id}`}>
+                  <Link href={`/cook?recipe=${recipe.id}`}>
                     <motion.div
                       whileHover={{ y: -8 }}
                       className="group bg-card rounded-2xl overflow-hidden border border-border hover:border-primary/30 hover:shadow-xl transition-all duration-300"
@@ -343,6 +345,21 @@ export default function RecipesPage() {
                             {recipe.whistleCount}
                           </div>
                         )}
+
+                        {/* Favorite Toggle */}
+                        <button
+                          onClick={(e) => {
+                            e.preventDefault()
+                            e.stopPropagation()
+                            toggleFavorite(recipe.id)
+                          }}
+                          className="absolute bottom-3 left-3 w-8 h-8 rounded-full bg-white/90 flex items-center justify-center hover:bg-white transition-colors z-20"
+                        >
+                          <Heart
+                            className={`w-4 h-4 ${isFavorite(recipe.id) ? "fill-red-500 text-red-500" : "text-muted-foreground"
+                              }`}
+                          />
+                        </button>
 
                         {/* Cook with voice overlay */}
                         <motion.div

@@ -1,17 +1,16 @@
 import { NextResponse } from "next/server"
-import connectDB from "@/lib/mongodb"
-import Recipe from "@/lib/models/Recipe"
+import { recipes } from "@/lib/recipes-data"
 
 export async function GET(
   req: Request,
   context: { params: Promise<{ id: string }> }
 ) {
   try {
-    await connectDB()
+    const params = await context.params
+    const id = params.id
+    const recipeId = parseInt(id)
 
-    const { id } = await context.params   // ✅ REQUIRED in Next 16
-
-    const recipe = await Recipe.findById(id).lean()
+    const recipe = recipes.find(r => r.id === recipeId)
 
     if (!recipe) {
       return NextResponse.json(
@@ -24,7 +23,6 @@ export async function GET(
 
   } catch (error) {
     console.error("Recipe fetch error:", error)
-
     return NextResponse.json(
       { error: "Server error" },
       { status: 500 }
