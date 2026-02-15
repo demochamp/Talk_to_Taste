@@ -129,29 +129,33 @@ export default function CookPage() {
 
   // Navigation functions
   const nextStep = useCallback(() => {
+    stopSpeaking() // Ensure previous speech stops
     if (currentStep < stepsLength - 1) {
       setCurrentStep((prev) => prev + 1)
     }
-  }, [currentStep, stepsLength])
+  }, [currentStep, stepsLength, stopSpeaking])
 
 
   const prevStep = useCallback(() => {
+    stopSpeaking() // Ensure previous speech stops
     if (currentStep > 0) {
       setCurrentStep((prev) => prev - 1)
     }
-  }, [currentStep])
+  }, [currentStep, stopSpeaking])
 
   const goToStep = useCallback(
     (stepNum: number) => {
+      stopSpeaking()
       if (stepNum >= 1 && stepNum <= stepsLength) {
         setCurrentStep(stepNum - 1)
       }
     },
-    [stepsLength],
+    [stepsLength, stopSpeaking],
   )
 
   const repeatStep = useCallback(() => {
     if (!step) return
+    stopSpeaking() // Clean slate for repeat
 
     const text =
       language === "hi-IN"
@@ -160,7 +164,7 @@ export default function CookPage() {
 
     if (text) speak(text)
 
-  }, [speak, step, language])
+  }, [speak, step, language, stopSpeaking])
 
 
   // Speak current step when playing or step changes
@@ -182,11 +186,9 @@ export default function CookPage() {
       hasSpokenRef.current = currentStep
     }
 
-  }, [currentStep, isPlaying, isSpeaking, language, step])
+  }, [currentStep, isPlaying, isSpeaking, language, step, speak])
 
-  useEffect(() => {
-    hasSpokenRef.current = null
-  }, [currentStep])
+  // Removed redundant useEffect reseting hasSpokenRef
 
   // Auto move to next step after speech ends
   useEffect(() => {

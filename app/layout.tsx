@@ -29,6 +29,11 @@ export const metadata: Metadata = {
   ]
 }
 
+import { AuthGuard } from "@/components/auth-guard"
+import { UserProvider } from "@/components/user-provider"
+
+// ... imports remain the same ...
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -38,7 +43,11 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning className={`${playfair.variable} ${inter.variable}`}>
       <body className="font-sans antialiased overflow-x-hidden">
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
-          {children}
+          <UserProvider>
+            <AuthGuard>
+              {children}
+            </AuthGuard>
+          </UserProvider>
         </ThemeProvider>
         <Analytics />
       </body>

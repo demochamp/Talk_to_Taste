@@ -9,12 +9,18 @@ import Link from "next/link"
 import { GlobalVoiceControl } from "./global-voice-control"
 import { HelpAssistant } from "./help-assistant"
 import { AnimatedLogo } from "./animated-logo"
+import { useUserState } from "@/hooks/use-user-state"
+
+import { translations } from "@/lib/translations"
 
 export function Navigation() {
   const [isScrolled, setIsScrolled] = useState(false)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const { theme, setTheme } = useTheme()
   const [mounted, setMounted] = useState(false)
+  const { user, logout } = useUserState()
+
+  const t = translations[user.settings.language || "en-IN"]
 
   useEffect(() => {
     setMounted(true)
@@ -26,10 +32,10 @@ export function Navigation() {
   }, [])
 
   const navItems = [
-    { label: "Home", href: "/" },
-    { label: "Recipes", href: "/recipes" },
-    { label: "Features", href: "/#features" },
-    { label: "How It Works", href: "/#how-it-works" },
+    { label: t["nav.home"], href: "/" },
+    { label: t["nav.recipes"], href: "/recipes" },
+    { label: t["nav.features"], href: "/#features" },
+    { label: t["nav.howItWorks"], href: "/#how-it-works" },
   ]
 
   return (
@@ -67,6 +73,22 @@ export function Navigation() {
                 </Link>
               </motion.div>
             ))}
+
+            {/* Admin Link */}
+            {user?.role === 'admin' && (
+              <motion.div
+                initial={{ opacity: 0, y: -20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.4 }}
+              >
+                <Link
+                  href="/admin"
+                  className="text-red-500 hover:text-red-600 transition-colors font-bold text-sm flex items-center gap-1"
+                >
+                  Admin Dashboard
+                </Link>
+              </motion.div>
+            )}
           </div>
 
           {/* Right side actions */}
@@ -90,6 +112,23 @@ export function Navigation() {
               </motion.button>
             )}
 
+            {/* Login/Logout Button */}
+            {user?.isLoggedIn ? (
+              <Button
+                variant="ghost"
+                onClick={() => logout()}
+                className="hidden md:flex items-center gap-2 rounded-full text-orange-600 hover:text-orange-700 hover:bg-orange-50"
+              >
+                {t["nav.logout"]}
+              </Button>
+            ) : (
+              <Link href="/login">
+                <Button variant="ghost" className="hidden md:flex items-center gap-2 rounded-full">
+                  {t["nav.login"]}
+                </Button>
+              </Link>
+            )}
+
             {/* Profile link */}
             <Link href="/profile">
               <motion.div
@@ -103,7 +142,7 @@ export function Navigation() {
 
             {/* CTA Button */}
             <Link href="/recipes" className="hidden md:block">
-              <Button className="rounded-full px-6 shadow-lg shadow-primary/30">Start Cooking</Button>
+              <Button className="rounded-full px-6 shadow-lg shadow-primary/30">{t["nav.startCooking"]}</Button>
             </Link>
 
             {/* Mobile menu button */}
@@ -163,7 +202,7 @@ export function Navigation() {
                     onClick={() => setIsMobileMenuOpen(false)}
                     className="block text-2xl font-semibold text-foreground hover:text-primary transition-colors py-3 border-b border-border"
                   >
-                    Profile
+                    {t["nav.profile"]}
                   </Link>
                 </motion.div>
                 <motion.div
@@ -173,7 +212,7 @@ export function Navigation() {
                   className="pt-6"
                 >
                   <Link href="/recipes" onClick={() => setIsMobileMenuOpen(false)}>
-                    <Button className="w-full rounded-full py-6 text-lg">Start Cooking</Button>
+                    <Button className="w-full rounded-full py-6 text-lg">{t["nav.startCooking"]}</Button>
                   </Link>
                 </motion.div>
               </div>

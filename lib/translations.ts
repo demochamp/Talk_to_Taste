@@ -1,0 +1,101 @@
+export const translations = {
+    "en-IN": {
+        "nav.home": "Home",
+        "nav.recipes": "Recipes",
+        "nav.features": "Features",
+        "nav.howItWorks": "How It Works",
+        "nav.login": "Login",
+        "nav.logout": "Log Out",
+        "nav.profile": "Profile",
+        "nav.startCooking": "Start Cooking",
+
+        "profile.welcome": "Welcome",
+        "profile.masterChef": "Master Chef in Training",
+        "profile.recipesCooked": "recipes cooked",
+        "profile.favorites": "Favorites",
+        "profile.cooked": "Cooked",
+        "profile.streak": "Current Streak",
+        "profile.days": "Days",
+
+        "profile.tab.overview": "Overview",
+        "profile.tab.favorites": "Favorites",
+        "profile.tab.history": "History",
+        "profile.tab.settings": "Settings",
+
+        "profile.section.appearance": "Appearance",
+        "profile.desc.darkMode": "Switch between light and dark themes",
+        "profile.darkMode": "Dark Mode",
+
+        "profile.section.language": "Language",
+        "profile.desc.language": "Choose your cooking language",
+        "profile.language": "Preferred Language",
+
+        "profile.section.voice": "Voice Settings",
+        "profile.desc.voice": "Enable voice reading of instructions",
+        "profile.voiceNarration": "Voice Narration",
+
+        "profile.section.notifications": "Notifications",
+        "profile.desc.notifications": "Get notified when timers complete",
+        "profile.timerAlerts": "Timer Alerts",
+
+        "profile.reset": "Reset Profile",
+        "profile.noFavorites": "No favorites yet",
+        "profile.startSaving": "Start cooking and save your favorite recipes!",
+        "profile.browseRecipes": "Browse Recipes",
+        "profile.recentlyCooked": "Recently Cooked",
+        "profile.noHistory": "No cooking history yet. Start cooking!",
+        "profile.cookAgain": "Cook Again",
+        "profile.save": "Save",
+    },
+    "hi-IN": {
+        "nav.home": "होम",
+        "nav.recipes": "रेसिपी",
+        "nav.features": "विशेषताएं",
+        "nav.howItWorks": "यह कैसे काम करता है",
+        "nav.login": "लॉग इन",
+        "nav.logout": "लॉग आउट",
+        "nav.profile": "प्रोफ़ाइल",
+        "nav.startCooking": "कुकिंग शुरू करें",
+
+        "profile.welcome": "स्वागत है",
+        "profile.masterChef": "मास्टर शेफ इन ट्रेनिंग",
+        "profile.recipesCooked": "रेसिपी बनाई",
+        "profile.favorites": "पसंदीदा",
+        "profile.cooked": "बनाया",
+        "profile.streak": "वर्तमान स्ट्रीक",
+        "profile.days": "दिन",
+
+        "profile.tab.overview": "अवलोकन",
+        "profile.tab.favorites": "पसंदीदा",
+        "profile.tab.history": "इतिहास",
+        "profile.tab.settings": "सेटिंग्स",
+
+        "profile.section.appearance": "रूप-रंग",
+        "profile.desc.darkMode": "लाइट और डार्क थीम के बीच स्विच करें",
+        "profile.darkMode": "डार्क मोड",
+
+        "profile.section.language": "भाषा",
+        "profile.desc.language": "अपनी कुकिंग भाषा चुनें",
+        "profile.language": "पसंदीदा भाषा",
+
+        "profile.section.voice": "आवाज़ सेटिंग्स",
+        "profile.desc.voice": "निर्देशों को बोलकर पढ़ने की सुविधा सक्षम करें",
+        "profile.voiceNarration": "वॉइस नरेशन",
+
+        "profile.section.notifications": "सूचनाएं",
+        "profile.desc.notifications": "टाइमर पूरा होने पर सूचना प्राप्त करें",
+        "profile.timerAlerts": "टाइमर अलर्ट",
+
+        "profile.reset": "प्रोफ़ाइल रीसेट करें",
+        "profile.noFavorites": "अभी कोई पसंदीदा नहीं है",
+        "profile.startSaving": "कुकिंग शुरू करें और अपनी पसंदीदा रेसिपी सहेजें!",
+        "profile.browseRecipes": "रेसिपी देखें",
+        "profile.recentlyCooked": "हाल ही में पकाया गया",
+        "profile.noHistory": "अभी कोई कुकिंग इतिहास नहीं है। कुकिंग शुरू करें!",
+        "profile.cookAgain": "फिर से पकाएं",
+        "profile.save": "सहेजें",
+    }
+} as const;
+
+export type Language = keyof typeof translations;
+export type TranslationKey = keyof typeof translations["en-IN"];

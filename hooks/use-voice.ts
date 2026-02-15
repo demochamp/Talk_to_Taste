@@ -146,31 +146,41 @@ export function useVoice(): UseVoiceReturn {
 
     const utter = new SpeechSynthesisUtterance(text)
 
+    // Force load voices
+    let availableVoices = voices.length > 0 ? voices : window.speechSynthesis.getVoices()
+
+    // Retry finding voices if empty
+    if (availableVoices.length === 0) {
+      // Allow a tiny delay or just proceed with lang setting? 
+      // We can't delay synchronously. We proceed, hoping the OS handles the 'lang' tag.
+      console.warn("Voices not loaded yet. Reliance on OS default.")
+    }
+
     if (state.language === "hi-IN") {
-      // Prioritize Hindi voices
-      // 1. Google Hindi (usually best quality)
-      // 2. Microsoft Hindi
-      // 3. Any voice containing "Hindi" or "hi-IN"
+      // Robust Hindi Voice Selection Strategy
+      // 1. Exact match for hi-IN
+      // 2. Starts with hi (hi-IN, hi_IN)
+      // 3. Includes "hindi" or "हिन्दी" in name
       const hiVoice =
-        voices.find(v => v.name.includes("Google") && v.lang.includes("hi")) ||
-        voices.find(v => v.name.includes("Microsoft") && v.lang.includes("hi")) ||
-        voices.find(v => v.lang.includes("hi"))
+        availableVoices.find(v => v.lang === "hi-IN") ||
+        availableVoices.find(v => v.lang.startsWith("hi")) ||
+        availableVoices.find(v => v.name.toLowerCase().includes("hindi")) ||
+        availableVoices.find(v => v.name.includes("हिन्दी"))
 
       if (hiVoice) {
         utter.voice = hiVoice
         utter.lang = "hi-IN"
+        console.log("Using Hindi Voice:", hiVoice.name)
       } else {
-        // Fallback if no Hindi voice found - try to use a generic one but set lang
-        // This might still result in the "numbers only" issue if the engine doesn't support Hindi,
-        // but it's the best we can do.
+        console.warn("No specific Hindi voice found. Falling back to 'hi-IN' locale.")
         utter.lang = "hi-IN"
       }
 
     } else {
+      // English Fallback
       const enVoice =
-        voices.find(v => v.lang.includes("en-IN")) ||
-        voices.find(v => v.lang.includes("en-US")) ||
-        voices.find(v => v.lang.includes("en"))
+        availableVoices.find(v => v.lang === "en-IN") ||
+        availableVoices.find(v => v.lang.startsWith("en"))
 
       if (enVoice) utter.voice = enVoice
       utter.lang = "en-IN"
@@ -186,17 +196,13 @@ export function useVoice(): UseVoiceReturn {
       setState(prev => ({ ...prev, isSpeaking: false }))
 
     utter.onerror = (e) => {
-      // Ignore "interrupted" or "canceled" errors as they happen when we call cancel()
-      // or when the user navigates away.
       if (e.error === "interrupted" || e.error === "canceled") {
         setState(prev => ({ ...prev, isSpeaking: false }))
         return
       }
-
       console.error("Speech synthesis error:", e)
       setState(prev => ({ ...prev, isSpeaking: false }))
     }
-
 
     window.speechSynthesis.speak(utter)
 

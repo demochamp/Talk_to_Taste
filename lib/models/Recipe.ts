@@ -18,16 +18,24 @@ const IngredientSchema = new Schema({
 
 const RecipeSchema = new Schema({
   id: Number, // numeric display id
-  name: String, 
+  name: String,
   nameHindi: String,
   cuisine: String,
   category: String,
   time: String,
+  prepTime: String,
+  cookTime: String,
   servings: Number,
   difficulty: String,
+  rating: Number,
   image: String,
+  description: String,
+  descriptionHindi: String,
   ingredients: [IngredientSchema],
   steps: [StepSchema],
+  whistleCount: Number,
+  youtubeUrl: String,
+  tags: [String],
 })
 
 export default mongoose.models.Recipe ?? mongoose.model("Recipe", RecipeSchema)
