@@ -111,7 +111,7 @@ export function Footer() {
 
         {/* Bottom bar */}
         <div className="mt-16 pt-8 border-t border-border flex flex-col md:flex-row items-center justify-between gap-4">
-          <p className="text-sm text-muted-foreground">© 2026 TalktoTaste. All rights reserved.</p>
+          <p className="text-sm text-muted-foreground">© 2026 TalktoTaste. All rights reserved. <span className="opacity-50 text-xs">v1.1</span></p>
           <p className="text-sm text-muted-foreground flex items-center gap-1">
             Made with <Heart className="w-4 h-4 text-red-500 fill-red-500" /> for Indian kitchens
           </p>

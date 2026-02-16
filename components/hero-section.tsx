@@ -50,7 +50,7 @@ export function HeroSection() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3 }}
-              className="text-3xl sm:text-4xl md:text-6xl lg:text-7xl font-bold leading-tight mb-6"
+              className="text-3xl sm:text-4xl md:text-6xl lg:text-7xl font-bold leading-tight mb-6 max-w-[90vw] mx-auto lg:mx-0 break-words"
             >
               <span className="text-foreground">Cook </span>
               <span className="gradient-text">Hands-Free</span>
