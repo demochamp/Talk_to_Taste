@@ -61,24 +61,7 @@ export function HeroSection() {
               <span className="text-foreground">with Your Voice</span>
             </motion.h1>
 
-            {/* Big Mic Button - Mobile Parity */}
-            <motion.div
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.35 }}
-              className="flex justify-center lg:justify-start mb-8"
-            >
-              <Button
-                size="lg"
-                className={`w-20 h-20 rounded-full shadow-2xl transition-all duration-300 ${isListening
-                    ? "bg-red-500 hover:bg-red-600 shadow-red-500/50 animate-pulse"
-                    : "bg-primary hover:bg-primary/90 shadow-primary/50"
-                  }`}
-                onClick={isListening ? stopListening : startListening}
-              >
-                <Mic className="w-10 h-10 text-white" />
-              </Button>
-            </motion.div>
+
 
             {/* Subheadline */}
             <motion.p
@@ -90,6 +73,34 @@ export function HeroSection() {
               Experience the magic of voice-controlled cooking. Navigate recipes, set timers, and track pressure cooker
               whistles — all without touching your device.
             </motion.p>
+
+            {/* Big Mic Button - Enhanced Animation */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.5 }}
+              className="flex justify-center lg:justify-start mb-10 relative z-20"
+            >
+              <div className="relative group">
+                {/* Decorative pulse ring */}
+                <motion.div
+                  animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.6, 0.3] }}
+                  transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+                  className={`absolute -inset-4 rounded-full blur-xl ${isListening ? "bg-red-500/40" : "bg-primary/40"}`}
+                />
+
+                <Button
+                  size="lg"
+                  className={`relative w-20 h-20 rounded-full shadow-2xl transition-all duration-300 border-4 border-background z-10 ${isListening
+                      ? "bg-red-500 hover:bg-red-600 shadow-red-500/50 animate-pulse"
+                      : "bg-gradient-to-br from-primary to-orange-600 hover:scale-110 shadow-primary/50"
+                    }`}
+                  onClick={isListening ? stopListening : startListening}
+                >
+                  <Mic className="w-8 h-8 text-white" />
+                </Button>
+              </div>
+            </motion.div>
 
             {/* Voice Search Bar */}
             <motion.div
