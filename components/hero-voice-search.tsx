@@ -70,7 +70,7 @@ export function VoiceSearch() {
                 onClick={toggleListening}
                 disabled={!voiceSupported}
             >
-                {isListening ? <VoiceWaveAnimation isActive={true} /> : <Mic className="w-5 h-5" />}
+                <Mic className={`w-5 h-5 ${isListening ? "text-white" : ""}`} />
             </Button>
         </div>
     )
