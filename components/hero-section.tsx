@@ -6,8 +6,11 @@ import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { VoiceWaveAnimation } from "./voice-wave-animation"
 import { VoiceSearch } from "./hero-voice-search"
+import { useVoice } from "@/hooks/use-voice"
 
 export function HeroSection() {
+  const { isListening, startListening, stopListening } = useVoice()
+
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden pt-28 md:pt-20">
       {/* Background Elements */}
@@ -57,6 +60,25 @@ export function HeroSection() {
               <br />
               <span className="text-foreground">with Your Voice</span>
             </motion.h1>
+
+            {/* Big Mic Button - Mobile Parity */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.35 }}
+              className="flex justify-center lg:justify-start mb-8"
+            >
+              <Button
+                size="lg"
+                className={`w-20 h-20 rounded-full shadow-2xl transition-all duration-300 ${isListening
+                    ? "bg-red-500 hover:bg-red-600 shadow-red-500/50 animate-pulse"
+                    : "bg-primary hover:bg-primary/90 shadow-primary/50"
+                  }`}
+                onClick={isListening ? stopListening : startListening}
+              >
+                <Mic className="w-10 h-10 text-white" />
+              </Button>
+            </motion.div>
 
             {/* Subheadline */}
             <motion.p

@@ -39,6 +39,8 @@ export const metadata: Metadata = {
 import { AuthGuard } from "@/components/auth-guard"
 import { UserProvider } from "@/components/user-provider"
 
+import { VoiceProvider } from "@/components/voice-provider"
+
 // ... imports remain the same ...
 
 export default function RootLayout({
@@ -51,9 +53,11 @@ export default function RootLayout({
       <body className="font-sans antialiased overflow-x-hidden">
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
           <UserProvider>
-            <AuthGuard>
-              {children}
-            </AuthGuard>
+            <VoiceProvider>
+              <AuthGuard>
+                {children}
+              </AuthGuard>
+            </VoiceProvider>
           </UserProvider>
         </ThemeProvider>
         <Analytics />

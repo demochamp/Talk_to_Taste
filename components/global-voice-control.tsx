@@ -10,7 +10,7 @@ import { useRouter } from "next/navigation"
 import { VoiceWaveAnimation } from "./voice-wave-animation"
 import { useTheme } from "next-themes"
 
-export function GlobalVoiceControl() {
+export function GlobalVoiceControl({ hideTrigger }: { hideTrigger?: boolean }) {
     const router = useRouter()
     const { setTheme } = useTheme()
     const {
@@ -54,7 +54,7 @@ export function GlobalVoiceControl() {
                 }
             }
         }
-    }, [transcript, router, stopSpeaking])
+    }, [transcript, router, stopSpeaking, setTheme])
 
     const toggleListening = () => {
         if (isListening) {
@@ -63,30 +63,31 @@ export function GlobalVoiceControl() {
             startListening()
         }
     }
-
     if (!isSupported) return null
 
     return (
         <>
-            <Button
-                size="icon"
-                variant="ghost"
-                className={`rounded-full w-10 h-10 transition-all duration-300 ${isListening ? "bg-red-500/10 text-red-500 hover:bg-red-500/20 hover:text-red-600" : "hover:bg-primary/10 hover:text-primary"
-                    }`}
-                onClick={toggleListening}
-                title="Voice Control"
-            >
-                {isListening ? (
-                    <motion.div
-                        animate={{ scale: [1, 1.2, 1] }}
-                        transition={{ repeat: Infinity, duration: 1.5 }}
-                    >
+            {!hideTrigger && (
+                <Button
+                    size="icon"
+                    variant="ghost"
+                    className={`rounded-full w-10 h-10 transition-all duration-300 ${isListening ? "bg-red-500/10 text-red-500 hover:bg-red-500/20 hover:text-red-600" : "hover:bg-primary/10 hover:text-primary"
+                        }`}
+                    onClick={toggleListening}
+                    title="Voice Control"
+                >
+                    {isListening ? (
+                        <motion.div
+                            animate={{ scale: [1, 1.2, 1] }}
+                            transition={{ repeat: Infinity, duration: 1.5 }}
+                        >
+                            <Mic className="w-5 h-5" />
+                        </motion.div>
+                    ) : (
                         <Mic className="w-5 h-5" />
-                    </motion.div>
-                ) : (
-                    <Mic className="w-5 h-5" />
-                )}
-            </Button>
+                    )}
+                </Button>
+            )}
 
             {/* Persistent overlay when listening (Desktop) */}
             <AnimatePresence>

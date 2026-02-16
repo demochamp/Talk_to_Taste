@@ -93,8 +93,9 @@ export function Navigation() {
 
           {/* Right side actions */}
           <div className="flex items-center gap-3">
-            {/* Voice Control */}
-            <GlobalVoiceControl />
+// This tool call is just for planning mental model. I will actually edit global-voice-control.tsx first.
+            // SKIP
+
 
             {/* Theme toggle */}
             {mounted && (
