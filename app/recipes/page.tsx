@@ -134,7 +134,7 @@ export default function RecipesPage() {
             >
               <ChefHat className="w-10 h-10 text-primary" />
             </motion.div>
-            <h1 className="text-4xl md:text-6xl font-bold mb-6">
+            <h1 className="text-3xl md:text-6xl font-bold mb-6">
               Explore <span className="gradient-text">{recipes.length}+ Recipes</span>
             </h1>
             <p className="text-lg text-muted-foreground mb-8">
@@ -302,7 +302,7 @@ export default function RecipesPage() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
+              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
             >
               {filteredRecipes.map((recipe, index) => (
                 <motion.div

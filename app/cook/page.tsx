@@ -54,6 +54,7 @@ export default function CookPage() {
   const [showTimerModal, setShowTimerModal] = useState(false)
   const [newTimerMinutes, setNewTimerMinutes] = useState(5)
   const [showVoiceCommands, setShowVoiceCommands] = useState(false)
+  const [showTools, setShowTools] = useState(false)
   const [showVideo, setShowVideo] = useState(false)
   const { addToHistory, toggleFavorite, isFavorite } = useUserState()
   const hasSpokenRef = useRef<number | null>(null)
@@ -395,6 +396,9 @@ export default function CookPage() {
             </Button>
             <Button variant="ghost" size="icon" className="rounded-full" onClick={() => setShowIngredients(true)}>
               <List className="w-5 h-5" />
+            </Button>
+            <Button variant="ghost" size="icon" className="rounded-full lg:hidden" onClick={() => setShowTools(true)}>
+              <ChefHat className="w-5 h-5" />
             </Button>
             <Button
               variant="ghost"
