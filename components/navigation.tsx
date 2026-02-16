@@ -196,7 +196,59 @@ export function Navigation() {
                   <span className="text-2xl font-semibold text-foreground">Voice Assistant</span>
                   <GlobalVoiceControl />
                 </motion.div>
-                <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.4 }}>
+
+                {/* Theme Toggle */}
+                <motion.div
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.4 }}
+                  className="flex justify-between items-center py-3 border-b border-border"
+                >
+                  <span className="text-2xl font-semibold text-foreground">Theme</span>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+                    className="bg-secondary rounded-full w-10 h-10"
+                  >
+                    {theme === "dark" ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+                  </Button>
+                </motion.div>
+
+                {/* Login/Logout */}
+                {/* Login/Logout */}
+                <motion.div
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.45 }}
+                >
+                  {user?.isLoggedIn ? (
+                    <button
+                      onClick={() => {
+                        logout()
+                        setIsMobileMenuOpen(false)
+                      }}
+                      className="w-full text-left block text-2xl font-semibold text-red-500 hover:text-red-600 py-3 border-b border-border"
+                    >
+                      {t["nav.logout"]}
+                    </button>
+                  ) : (
+                    <Link
+                      href="/login"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      className="block text-2xl font-semibold text-primary hover:text-primary/80 py-3 border-b border-border"
+                    >
+                      {t["nav.login"]}
+                    </Link>
+                  )}
+                </motion.div>
+
+                {/* Profile Link */}
+                <motion.div
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.5 }}
+                >
                   <Link
                     href="/profile"
                     onClick={() => setIsMobileMenuOpen(false)}
@@ -205,10 +257,12 @@ export function Navigation() {
                     {t["nav.profile"]}
                   </Link>
                 </motion.div>
+
+                {/* Desktop CTA turned Mobile */}
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.5 }}
+                  transition={{ delay: 0.55 }}
                   className="pt-6"
                 >
                   <Link href="/recipes" onClick={() => setIsMobileMenuOpen(false)}>
@@ -219,7 +273,7 @@ export function Navigation() {
             </div>
           </motion.div>
         )}
-      </AnimatePresence>
+      </AnimatePresence >
       <HelpAssistant />
     </>
   )
