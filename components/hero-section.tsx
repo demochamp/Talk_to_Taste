@@ -50,7 +50,7 @@ export function HeroSection() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3 }}
-              className="text-4xl md:text-6xl lg:text-7xl font-bold leading-tight mb-6"
+              className="text-3xl sm:text-4xl md:text-6xl lg:text-7xl font-bold leading-tight mb-6"
             >
               <span className="text-foreground">Cook </span>
               <span className="gradient-text">Hands-Free</span>
@@ -63,7 +63,7 @@ export function HeroSection() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.4 }}
-              className="text-lg md:text-xl text-muted-foreground max-w-xl mx-auto lg:mx-0 mb-8"
+              className="text-base sm:text-lg md:text-xl text-muted-foreground max-w-xl mx-auto lg:mx-0 mb-8"
             >
               Experience the magic of voice-controlled cooking. Navigate recipes, set timers, and track pressure cooker
               whistles — all without touching your device.
