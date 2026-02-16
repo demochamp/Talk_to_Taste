@@ -74,31 +74,42 @@ export function HeroSection() {
               whistles — all without touching your device.
             </motion.p>
 
-            {/* Big Mic Button - Enhanced Animation */}
+            {/* Big Mic Button - Dark Mode & Waves */}
             <motion.div
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: 0.5 }}
-              className="flex justify-center lg:justify-start mb-10 relative z-20"
+              className="flex flex-col items-center lg:items-start mb-8 relative z-20"
             >
-              <div className="relative group">
-                {/* Decorative pulse ring */}
-                <motion.div
-                  animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.6, 0.3] }}
-                  transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-                  className={`absolute -inset-4 rounded-full blur-xl ${isListening ? "bg-red-500/40" : "bg-primary/40"}`}
-                />
+              <div className="relative group flex flex-col items-center">
+                <div className="relative">
+                  {/* Decorative pulse ring */}
+                  <motion.div
+                    animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.6, 0.3] }}
+                    transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+                    className={`absolute -inset-4 rounded-full blur-xl ${isListening ? "bg-red-500/20" : "bg-primary/20"}`}
+                  />
 
-                <Button
-                  size="lg"
-                  className={`relative w-24 h-24 rounded-full shadow-2xl transition-all duration-300 border-4 border-background dark:border-white/20 z-10 ${isListening
-                    ? "bg-red-500 hover:bg-red-600 shadow-red-500/50 animate-pulse"
-                    : "bg-gradient-to-br from-primary to-orange-600 hover:scale-110 shadow-primary/50"
-                    }`}
-                  onClick={isListening ? stopListening : startListening}
+                  <Button
+                    size="lg"
+                    className={`relative w-20 h-20 rounded-full shadow-2xl transition-all duration-300 border-4 ${isListening
+                        ? "bg-zinc-950 border-red-500 shadow-red-500/20"
+                        : "bg-zinc-950 border-primary/30 hover:border-primary shadow-primary/20"
+                      }`}
+                    onClick={isListening ? stopListening : startListening}
+                  >
+                    <Mic className={`w-8 h-8 ${isListening ? "text-red-500" : "text-primary"}`} />
+                  </Button>
+                </div>
+
+                {/* Waves Animation - Just Below */}
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: isListening ? 1 : 0.5, height: "auto" }}
+                  className="mt-6 h-8 flex items-center justify-center"
                 >
-                  <Mic className="w-12 h-12 text-white" />
-                </Button>
+                  <VoiceWaveAnimation isActive={isListening} className="h-8 text-primary" />
+                </motion.div>
               </div>
             </motion.div>
 
