@@ -9,6 +9,7 @@ console.log("GITHUB_ID Value (First 4 chars):", process.env.GITHUB_ID?.substring
 
 
 export const authConfig = {
+    trustHost: true,
     providers: [
         Google({
             clientId: process.env.GOOGLE_CLIENT_ID,
