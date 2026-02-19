@@ -8,7 +8,7 @@ const steps = [
     icon: Search,
     number: "01",
     title: "Find Your Recipe",
-    description: "Search from 100+ authentic Indian recipes by name, ingredients, or cuisine type.",
+    description: "Search from 90+ authentic Indian recipes by name, ingredients, or cuisine type.",
   },
   {
     icon: Mic,
@@ -30,7 +30,40 @@ const steps = [
   },
 ]
 
+import { useTranslation } from "@/lib/i18n"
+import { useVoice } from "@/hooks/use-voice"
+
 export function HowItWorks() {
+  const { t } = useTranslation()
+  const { language } = useVoice()
+
+  const steps = [
+    {
+      icon: Search,
+      number: "01",
+      title: t("how_it_works.step1"),
+      description: t("how_it_works.step1_desc"),
+    },
+    {
+      icon: Mic,
+      number: "02",
+      title: t("how_it_works.step2"),
+      description: t("how_it_works.step2_desc"),
+    },
+    {
+      icon: ChefHat,
+      number: "03",
+      title: t("how_it_works.step3"),
+      description: t("how_it_works.step3_desc"),
+    },
+    {
+      icon: Heart,
+      number: "04",
+      title: t("how_it_works.step4"),
+      description: t("how_it_works.step4_desc"),
+    },
+  ]
+
   return (
     <section id="how-it-works" className="py-32 relative overflow-hidden bg-foreground">
       {/* Background pattern */}
@@ -52,9 +85,9 @@ export function HowItWorks() {
           viewport={{ once: true }}
           className="text-center max-w-3xl mx-auto mb-20"
         >
-          <span className="text-sm font-medium text-primary uppercase tracking-wider">Simple Process</span>
-          <h2 className="text-4xl md:text-5xl font-bold mt-4 mb-6 text-background">How It Works</h2>
-          <p className="text-lg text-background/60">Get started with TalktoTaste in four simple steps</p>
+          <span className="text-sm font-medium text-primary uppercase tracking-wider">{t("how_it_works.tag")}</span>
+          <h2 className="text-4xl md:text-5xl font-bold mt-4 mb-6 text-background">{t("how_it_works.title")}</h2>
+          <p className="text-lg text-background/60">{t("how_it_works.subtitle")}</p>
         </motion.div>
 
         {/* Steps */}

@@ -1,179 +1,119 @@
 "use client"
 
-import { useState } from "react"
-import { motion, AnimatePresence } from "framer-motion"
-import { Mic, MicOff, Volume2, SkipForward, RotateCcw, Timer } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { VoiceWaveAnimation } from "./voice-wave-animation"
-
-const voiceCommands = [
-  { command: '"Find Paneer Butter Masala"', response: "Found Paneer Butter Masala. Would you like to start cooking?" },
-  { command: '"Next step"', response: "Step 4: Add tomato puree and cook for 5 minutes..." },
-  { command: '"Set timer for 10 minutes"', response: "Timer set for 10 minutes. I'll notify you when it's done." },
-  { command: '"2 whistles done"', response: "Noted! 2 whistles complete. 1 more whistle to go." },
-  { command: '"Repeat"', response: "Repeating step 4: Add tomato puree and cook for 5 minutes..." },
-]
+import { motion } from "framer-motion"
+import { ChefHat, SkipForward, RotateCcw, Volume2, Globe, Command } from "lucide-react"
+import { useVoice } from "@/hooks/use-voice"
 
 export function VoiceDemo() {
-  const [isListening, setIsListening] = useState(false)
-  const [currentCommand, setCurrentCommand] = useState(0)
-  const [showResponse, setShowResponse] = useState(false)
+  const { language } = useVoice()
+  const isHindi = language === "hi-IN"
 
-  const handleListen = () => {
-    setIsListening(true)
-    setShowResponse(false)
-
-    setTimeout(() => {
-      setIsListening(false)
-      setShowResponse(true)
-    }, 2000)
-  }
-
-  const nextCommand = () => {
-    setCurrentCommand((prev) => (prev + 1) % voiceCommands.length)
-    setShowResponse(false)
-  }
+  const categories = [
+    {
+      title: isHindi ? "कुकिंग कंट्रोल" : "Cooking Controls",
+      icon: ChefHat,
+      color: "text-orange-500",
+      bgColor: "bg-orange-500/10",
+      commands: [
+        { en: "Start cooking", hinglish: "Shuru karo", hi: "शुरू करो" },
+        { en: "Next step", hinglish: "Agla step", hi: "अगला स्टेप" },
+        { en: "Previous step", hinglish: "Pichla step", hi: "पिछला स्टेप" },
+        { en: "Repeat step", hinglish: "Fir se bolo", hi: "फिर से बोलो" },
+        { en: "Set timer for 5 mins", hinglish: "5 min ka timer lagao", hi: "5 मिनट का टाइमर" },
+        { en: "2 whistles done", hinglish: "2 seeti ho gayi", hi: "2 सीटी हो गई" },
+        { en: "Stop cooking", hinglish: "Ruko / Bas karo", hi: "रुको / बस करो" },
+      ]
+    },
+    {
+      title: isHindi ? "नेविगेशन" : "Navigation",
+      icon: SkipForward,
+      color: "text-blue-500",
+      bgColor: "bg-blue-500/10",
+      commands: [
+        { en: "Go to Home", hinglish: "Ghar le chalo", hi: "घर ले चलो" },
+        { en: "Show Recipes", hinglish: "Recipes dikhao", hi: "रेसिपी दिखाओ" },
+        { en: "Open Profile", hinglish: "Profile kholo", hi: "प्रोफाइल खोलो" },
+        { en: "Go to Admin", hinglish: "Admin page dikhao", hi: "एडमिन पेज दिखाओ" },
+        { en: "How does it work?", hinglish: "Kaise kaam karta hai?", hi: "कैसे काम करता है?" },
+      ]
+    },
+    {
+      title: isHindi ? "सर्च और सेटिंग्स" : "Search & System",
+      icon: RotateCcw,
+      color: "text-purple-500",
+      bgColor: "bg-purple-500/10",
+      commands: [
+        { en: "Find Paneer recipes", hinglish: "Paneer ki recipe dhundo", hi: "पनीर की रेसिपी ढूंढो" },
+        { en: "Recipes with potato", hinglish: "Aloo wale recipes", hi: "आलू वाली रेसिपी" },
+        { en: "Login / Logout", hinglish: "Login karo / Bahar niklo", hi: "लॉगिन / लॉगआउट" },
+        { en: "Dark Mode", hinglish: "Dark mode lagao", hi: "डार्क मोड लगाओ" },
+        { en: "Speak in Hindi", hinglish: "Hindi mein bolo", hi: "हिंदी में बोलो" },
+      ]
+    },
+  ]
 
   return (
-    <section className="py-32 relative overflow-hidden">
+    <section id="voice-demo" className="py-24 relative overflow-hidden bg-secondary/30">
       <div className="container mx-auto px-6">
-        <div className="grid lg:grid-cols-2 gap-16 items-center">
-          {/* Left - Demo Interface */}
-          <motion.div
-            initial={{ opacity: 0, x: -50 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true }}
-            className="relative"
-          >
-            <div className="relative max-w-md mx-auto">
-              {/* Glow effect */}
-              <motion.div
-                animate={{
-                  scale: isListening ? [1, 1.1, 1] : 1,
-                  opacity: isListening ? [0.3, 0.6, 0.3] : 0.2,
-                }}
-                transition={{ duration: 1, repeat: isListening ? Number.POSITIVE_INFINITY : 0 }}
-                className="absolute inset-0 bg-primary/30 rounded-[3rem] blur-3xl"
-              />
+        <div className="text-center max-w-3xl mx-auto mb-16">
+          <span className="text-sm font-medium text-primary uppercase tracking-wider">
+            {isHindi ? "वॉइस कमांड गाइड" : "Voice Command Guide"}
+          </span>
+          <h2 className="text-3xl md:text-5xl font-bold mt-4 mb-6">
+            {isHindi ? (
+              <>अपनी आवाज़ से <span className="text-primary">किचन को कंट्रोल करें</span></>
+            ) : (
+              <>Master Your Kitchen with <span className="text-primary">Voice</span></>
+            )}
+          </h2>
+          <p className="text-lg text-muted-foreground">
+            {isHindi
+              ? "अंग्रेजी, हिंदी या हिंग्लिश में बात करें। यहाँ आपके लिए सभी कमांड्स की लिस्ट है।"
+              : "Speak naturally in English, Hindi, or Hinglish. Here's your cheat sheet to controlling the entire experience."}
+          </p>
+        </div>
 
-              {/* Main card */}
-              <div className="relative glass-card rounded-[2rem] p-8 shadow-2xl">
-                {/* Header */}
-                <div className="flex items-center justify-between mb-8">
-                  <div className="flex items-center gap-3">
-                    <div className="w-3 h-3 rounded-full bg-green-500 animate-pulse" />
-                    <span className="text-sm font-medium text-foreground">
-                      {isListening ? "Listening..." : "Ready"}
-                    </span>
+        <div className="grid lg:grid-cols-3 gap-8">
+          {categories.map((category, idx) => (
+            <motion.div
+              key={idx}
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: idx * 0.1 }}
+              className="bg-card rounded-2xl border border-border overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300"
+            >
+              <div className="p-6 border-b border-border bg-card/50 backdrop-blur-sm">
+                <div className="flex items-center gap-3 mb-2">
+                  <div className={`p-2.5 rounded-xl ${category.bgColor}`}>
+                    <category.icon className={`w-6 h-6 ${category.color}`} />
                   </div>
-                  <div className="flex gap-2">
-                    <Button variant="ghost" size="icon" className="rounded-full" onClick={nextCommand}>
-                      <SkipForward className="w-4 h-4" />
-                    </Button>
-                  </div>
-                </div>
-
-                {/* Voice visualization */}
-                <div className="py-8">
-                  <VoiceWaveAnimation isActive={isListening} />
-                </div>
-
-                {/* Command display */}
-                <AnimatePresence mode="wait">
-                  <motion.div
-                    key={currentCommand}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -20 }}
-                    className="text-center mb-8"
-                  >
-                    <p className="text-sm text-muted-foreground mb-2">Try saying:</p>
-                    <p className="text-xl font-semibold text-foreground">{voiceCommands[currentCommand].command}</p>
-                  </motion.div>
-                </AnimatePresence>
-
-                {/* Response */}
-                <AnimatePresence>
-                  {showResponse && (
-                    <motion.div
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0 }}
-                      className="p-4 rounded-2xl bg-primary/10 border border-primary/20"
-                    >
-                      <div className="flex items-start gap-3">
-                        <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center shrink-0">
-                          <Volume2 className="w-4 h-4 text-primary-foreground" />
-                        </div>
-                        <p className="text-sm text-foreground">{voiceCommands[currentCommand].response}</p>
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-
-                {/* Mic button */}
-                <div className="flex justify-center mt-8">
-                  <motion.button
-                    whileHover={{ scale: 1.1 }}
-                    whileTap={{ scale: 0.9 }}
-                    onClick={handleListen}
-                    className={`w-20 h-20 rounded-full flex items-center justify-center shadow-xl transition-all duration-300 ${
-                      isListening
-                        ? "bg-destructive animate-pulse-glow"
-                        : "bg-primary hover:bg-primary/90 shadow-primary/30"
-                    }`}
-                  >
-                    {isListening ? (
-                      <MicOff className="w-8 h-8 text-white" />
-                    ) : (
-                      <Mic className="w-8 h-8 text-primary-foreground" />
-                    )}
-                  </motion.button>
+                  <h3 className="font-bold text-lg">{category.title}</h3>
                 </div>
               </div>
-            </div>
-          </motion.div>
 
-          {/* Right - Content */}
-          <motion.div
-            initial={{ opacity: 0, x: 50 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true }}
-            className="lg:pl-8"
-          >
-            <span className="text-sm font-medium text-primary uppercase tracking-wider">Voice Control</span>
-            <h2 className="text-4xl md:text-5xl font-bold mt-4 mb-6">
-              Cook with Your
-              <span className="gradient-text"> Natural Voice</span>
-            </h2>
-            <p className="text-lg text-muted-foreground mb-8">
-              No more messy phone screens while cooking. Simply speak your commands and TalktoTaste will guide you
-              through every step.
-            </p>
-
-            {/* Command examples */}
-            <div className="space-y-4">
-              {[
-                { icon: SkipForward, text: '"Next step" - Move to the next instruction' },
-                { icon: RotateCcw, text: '"Repeat" - Hear the current step again' },
-                { icon: Timer, text: '"Set timer" - Voice-controlled timers' },
-              ].map((item, index) => (
-                <motion.div
-                  key={index}
-                  initial={{ opacity: 0, x: 20 }}
-                  whileInView={{ opacity: 1, x: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: index * 0.1 }}
-                  className="flex items-center gap-4 p-4 rounded-2xl bg-card border border-border"
-                >
-                  <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
-                    <item.icon className="w-5 h-5 text-primary" />
-                  </div>
-                  <span className="text-foreground">{item.text}</span>
-                </motion.div>
-              ))}
-            </div>
-          </motion.div>
+              <div className="p-0">
+                <table className="w-full text-left text-sm">
+                  <thead className="bg-muted/50 text-muted-foreground font-medium">
+                    <tr>
+                      <th className="px-4 py-3 font-semibold w-1/3">English</th>
+                      <th className="px-4 py-3 font-semibold w-1/3">Hinglish</th>
+                      <th className="px-4 py-3 font-semibold w-1/3 font-hindi">हिंदी</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border/50">
+                    {category.commands.map((cmd, i) => (
+                      <tr key={i} className="hover:bg-muted/30 transition-colors">
+                        <td className="px-4 py-3 font-medium text-foreground/90">{cmd.en}</td>
+                        <td className="px-4 py-3 text-muted-foreground">{cmd.hinglish}</td>
+                        <td className="px-4 py-3 text-foreground/80 font-hindi">{cmd.hi}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </motion.div>
+          ))}
         </div>
       </div>
     </section>

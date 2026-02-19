@@ -1,0 +1,139 @@
+﻿
+> talktotaste@0.1.0 build
+> next build
+
+node.exe : [baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`
+At line:1 char:1
++ & "C:\Program Files\nodejs/node.exe" "C:\Program Files\nodejs/node_mo ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo              : NotSpe    cified: ([baseli    ne-brows...ping@    latest -D`:Strin    g) [], RemoteExc    eption
+    + FullyQualified    ErrorId : Native    CommandError
+ 
+ ΓÜá Found lockfile missing swc dependencies, patching...
+'pnpm' is not recognized as an internal or external command,
+operable program or batch file.
+'pnpm' is not recognized as an internal or external command,
+operable program or batch file.
+'pnpm' is not recognized as an internal or external command,
+operable program or batch file.
+'pnpm' is not recognized as an internal or external command,
+operable program or batch file.
+'pnpm' is not recognized as an internal or external command,
+operable program or batch file.
+'pnpm' is not recognized as an internal or external command,
+operable program or batch file.
+'pnpm' is not recognized as an internal or external command,
+operable program or batch file.
+ Γ¿» Failed to patch lockfile, please try uninstalling and reinstalling next in this workspace
+Error: Failed to get registry from "pnpm".
+    at ignore-listed frames {
+  [cause]: Error: Command failed: pnpm config get registry 
+  'pnpm' is not recognized as an internal or external command,
+  operable program or batch file.
+  
+      at ignore-listed frames {
+    status: 1,
+    signal: null,
+    output: [
+      null,
+      <Buffer >,
+      <Buffer 27 70 6e 70 6d 27 20 69 73 20 6e 6f 74 20 72 65 63 6f 67 6e 69 7a 65 64 20 61 73 20 61 6e 20 69 6e 74 65 72 6e 61 6c 20 6f 72 20 65 78 74 65 72 6e 61 ... 45 more bytes>
+    ],
+    pid: 2968,
+    stdout: <Buffer >,
+    stderr: <Buffer 27 70 6e 70 6d 27 20 69 73 20 6e 6f 74 20 72 65 63 6f 67 6e 69 7a 65 64 20 61 73 20 61 6e 20 69 6e 74 65 72 6e 61 6c 20 6f 72 20 65 78 74 65 72 6e 61 ... 45 more bytes>
+  }
+}
+   Γû▓ Next.js 16.0.10 (Turbopack)
+   - Environments: .env.local
+
+ ΓÜá The "middleware" file convention is deprecated. Please use "proxy" instead. Learn more: https://nextjs.org/docs/messages/middleware-to-proxy
+   Creating an optimized production build ...
+[baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`
+ ΓÜá Found lockfile missing swc dependencies, patching...
+'pnpm' is not recognized as an internal or external command,
+operable program or batch file.
+'pnpm' is not recognized as an internal or external command,
+operable program or batch file.
+'pnpm' is not recognized as an internal or external command,
+operable program or batch file.
+'pnpm' is not recognized as an internal or external command,
+operable program or batch file.
+'pnpm' is not recognized as an internal or external command,
+operable program or batch file.
+'pnpm' is not recognized as an internal or external command,
+operable program or batch file.
+'pnpm' is not recognized as an internal or external command,
+operable program or batch file.
+ Γ¿» Failed to patch lockfile, please try uninstalling and reinstalling next in this workspace
+Error: Failed to get registry from "pnpm".
+    at ignore-listed frames {
+  [cause]: Error: Command failed: pnpm config get registry 
+  'pnpm' is not recognized as an internal or external command,
+  operable program or batch file.
+  
+      at ignore-listed frames {
+    status: 1,
+    signal: null,
+    output: [
+      null,
+      <Buffer >,
+      <Buffer 27 70 6e 70 6d 27 20 69 73 20 6e 6f 74 20 72 65 63 6f 67 6e 69 7a 65 64 20 61 73 20 61 6e 20 69 6e 74 65 72 6e 61 6c 20 6f 72 20 65 78 74 65 72 6e 61 ... 45 more bytes>
+    ],
+    pid: 2684,
+    stdout: <Buffer >,
+    stderr: <Buffer 27 70 6e 70 6d 27 20 69 73 20 6e 6f 74 20 72 65 63 6f 67 6e 69 7a 65 64 20 61 73 20 61 6e 20 69 6e 74 65 72 6e 61 6c 20 6f 72 20 65 78 74 65 72 6e 61 ... 45 more bytes>
+  }
+}
+ Γ£ô Compiled successfully in 11.4s
+   Skipping validation of types
+   Collecting page data using 3 workers ...
+[baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`
+[baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`
+[baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`
+Auth Config Loaded
+GOOGLE_CLIENT_ID: Set
+GITHUB_ID: Set
+GITHUB_ID Value (First 4 chars): Ov23
+Auth Config Loaded
+GOOGLE_CLIENT_ID: Set
+GITHUB_ID: Set
+GITHUB_ID Value (First 4 chars): Ov23
+   Generating static pages using 3 workers (0/15) ...
+[baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`
+Auth Config Loaded
+GOOGLE_CLIENT_ID: Set
+GITHUB_ID: Set
+GITHUB_ID Value (First 4 chars): Ov23
+   Generating static pages using 3 workers (3/15) 
+   Generating static pages using 3 workers (7/15) 
+   Generating static pages using 3 workers (11/15) 
+ Γ£ô Generating static pages using 3 workers (15/15) in 2.3s
+   Finalizing page optimization ...
+
+Route (app)
+Γöî Γùï /
+Γö£ Γùï /_not-found
+Γö£ Γùï /admin
+Γö£ ╞Æ /api/admin/users
+Γö£ ╞Æ /api/auth/[...nextauth]
+Γö£ ╞Æ /api/kitchen-help
+Γö£ ╞Æ /api/recipes
+Γö£ ╞Æ /api/recipes/[id]
+Γö£ ╞Æ /api/seed
+Γö£ ╞Æ /api/tts
+Γö£ ╞Æ /api/voice-search
+Γö£ ╞Æ /api/youtube
+Γö£ Γùï /cook
+Γö£ Γùï /login
+Γö£ Γùï /profile
+Γö£ Γùï /recipes
+Γöö ╞Æ /recipes/[id]
+
+
+╞Æ Proxy (Middleware)
+
+Γùï  (Static)   prerendered as static content
+╞Æ  (Dynamic)  server-rendered on demand
+
+

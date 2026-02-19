@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from "react"
 import { UserState } from "@/lib/types"
+import { useSession, signIn, signOut } from "next-auth/react"
 
 const DEFAULT_STATE: UserState = {
     name: "Guest Chef",
@@ -25,9 +26,12 @@ interface UserContextType {
     addToHistory: (recipeId: number) => void
     updateSettings: (newSettings: Partial<UserState["settings"]>) => void
     updateName: (name: string) => void
-    login: (name: string, email: string, role?: "user" | "admin") => void
+    login: (provider?: string) => void
     logout: () => void
     isFavorite: (id: number) => boolean
+    isLoginModalOpen: boolean
+    openLoginModal: () => void
+    closeLoginModal: () => void
 }
 
 export const UserContext = createContext<UserContextType | null>(null)
@@ -35,15 +39,24 @@ export const UserContext = createContext<UserContextType | null>(null)
 export { type UserState } from "@/lib/types"
 
 export function UserProvider({ children }: { children: React.ReactNode }) {
+    const { data: session, status } = useSession()
     const [user, setUser] = useState<UserState>(DEFAULT_STATE)
     const [isLoaded, setIsLoaded] = useState(false)
+    const [isLoginModalOpen, setIsLoginModalOpen] = useState(false)
 
-    // Load from localStorage on mount
+    // Load from localStorage on mount (preserve settings/favorites)
     useEffect(() => {
         const saved = localStorage.getItem("talktotaste-user")
         if (saved) {
             try {
-                setUser({ ...DEFAULT_STATE, ...JSON.parse(saved) })
+                const parsed = JSON.parse(saved)
+                // Merge saved settings/favorites but do NOT overwrite auth state yet
+                setUser(prev => ({
+                    ...prev,
+                    favorites: parsed.favorites || [],
+                    history: parsed.history || [],
+                    settings: parsed.settings || DEFAULT_STATE.settings
+                }))
             } catch (e) {
                 console.error("Failed to parse user state", e)
             }
@@ -51,7 +64,29 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
         setIsLoaded(true)
     }, [])
 
-    // Save to localStorage on change
+    // Sync with NextAuth session
+    useEffect(() => {
+        if (status === "authenticated" && session?.user) {
+            setUser(prev => ({
+                ...prev,
+                name: session.user.name || prev.name,
+                email: session.user.email || prev.email,
+                // @ts-ignore - Role is added in custom type but TS might complain without restart
+                role: (session.user as any).role || "user",
+                isLoggedIn: true
+            }))
+        } else if (status === "unauthenticated") {
+            setUser(prev => ({
+                ...prev,
+                name: "Guest Chef",
+                email: "",
+                role: "user",
+                isLoggedIn: false
+            }))
+        }
+    }, [session, status])
+
+    // Save to localStorage on change (only settings/favs, not sensitive auth if possible, but keeping consistent)
     useEffect(() => {
         if (isLoaded) {
             localStorage.setItem("talktotaste-user", JSON.stringify(user))
@@ -89,26 +124,37 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
         setUser((prev: UserState) => ({ ...prev, name }))
     }, [])
 
-    const login = useCallback((name: string, email: string, role: "user" | "admin" = "user") => {
-        setUser((prev: UserState) => ({ ...prev, name, email, role, isLoggedIn: true }))
+    const login = useCallback((provider?: string) => {
+        if (provider) {
+            signIn(provider)
+        } else {
+            setIsLoginModalOpen(true)
+        }
     }, [])
 
     const logout = useCallback(() => {
-        setUser(DEFAULT_STATE)
+        signOut()
     }, [])
+
+    const openLoginModal = useCallback(() => setIsLoginModalOpen(true), [])
+    const closeLoginModal = useCallback(() => setIsLoginModalOpen(false), [])
 
     const isFavorite = useCallback((id: number) => user.favorites.includes(id), [user.favorites])
 
     const value = {
         user,
-        isLoaded,
+        // Combine internal loaded state with session loaded state
+        isLoaded: isLoaded && status !== "loading",
         toggleFavorite,
         addToHistory,
         updateSettings,
         updateName,
         login,
         logout,
-        isFavorite
+        isFavorite,
+        isLoginModalOpen,
+        openLoginModal,
+        closeLoginModal
     }
 
     return (

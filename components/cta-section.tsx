@@ -74,7 +74,7 @@ export function CTASection() {
                 className="rounded-full border-2 border-white text-white hover:bg-white/10 gap-2 px-8 h-14 text-lg bg-transparent"
                 asChild
               >
-                <Link href="/recipes">Browse 100+ Recipes</Link>
+                <Link href="/recipes">Browse 90+ Recipes</Link>
               </Button>
             </motion.div>
           </div>

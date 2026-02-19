@@ -4,7 +4,8 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { useRouter } from "next/navigation"
 import { useState, useEffect } from "react"
-import { useVoice, parseVoiceCommand } from "@/hooks/use-voice"
+import { useVoice } from "@/hooks/use-voice"
+import { processVoiceCommand } from "@/lib/voice/command-processor"
 import { VoiceWaveAnimation } from "./voice-wave-animation"
 
 export function VoiceSearch() {
@@ -16,27 +17,29 @@ export function VoiceSearch() {
         startListening,
         stopListening,
         isSupported: voiceSupported,
+        mode
     } = useVoice()
 
     const toggleListening = () => {
         if (isListening) {
             stopListening()
         } else {
-            startListening()
+            startListening({ mode: "SEARCH" })
         }
     }
 
-    // Handle voice commands/search
+    // Handle voice commands/search - ONLY IN SEARCH MODE
     useEffect(() => {
-        if (transcript) {
-            const command = parseVoiceCommand(transcript)
-            if (command) {
-                if (command.action === "SEARCH_RECIPE") {
-                    router.push(`/recipes?search=${encodeURIComponent(command.params.query as string)}`)
+        if (transcript && mode === "SEARCH") {
+            const command = processVoiceCommand(transcript)
+
+            if (command && command.confidence > 0.6) {
+                if (command.intent === "SEARCH_RECIPE") {
+                    router.push(`/recipes?search=${encodeURIComponent(command.params?.value as string)}`)
                     return
                 }
-                if (command.action === "SEARCH_BY_INGREDIENTS") {
-                    router.push(`/recipes?ingredients=${encodeURIComponent(command.params.ingredients as string)}`)
+                if (command.intent === "FILTER_INGREDIENTS") {
+                    router.push(`/recipes?ingredients=${encodeURIComponent(command.params?.value as string)}`)
                     return
                 }
             }
@@ -45,7 +48,7 @@ export function VoiceSearch() {
                 setQuery(transcript.replace(/\.$/, ""))
             }
         }
-    }, [transcript, isListening, router])
+    }, [transcript, isListening, router, mode])
 
     const handleSearch = () => {
         if (query.trim()) {

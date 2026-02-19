@@ -77,7 +77,7 @@ export default function LogoAnimation() {
         {/* Feature Badges */}
         <div className="flex flex-wrap gap-2 justify-center pt-4 animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
           <div className="px-4 py-2 bg-orange-100 text-orange-700 rounded-full text-sm font-medium border border-orange-300 hover:bg-orange-200 transition-colors">
-            🎤 100+ Recipes
+            🎤 90+ Recipes
           </div>
           <div className="px-4 py-2 bg-orange-100 text-orange-700 rounded-full text-sm font-medium border border-orange-300 hover:bg-orange-200 transition-colors">
             🌍 2 Languages

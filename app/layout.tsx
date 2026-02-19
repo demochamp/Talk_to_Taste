@@ -36,10 +36,12 @@ export const metadata: Metadata = {
   ]
 }
 
-import { AuthGuard } from "@/components/auth-guard"
+import { AuthProvider } from "@/components/auth-provider"
 import { UserProvider } from "@/components/user-provider"
-
 import { VoiceProvider } from "@/components/voice-provider"
+import { LanguageSelectorModal } from "@/components/language-selector-modal"
+import { LoginModal } from "@/components/auth/login-modal"
+import { ScrollGate } from "@/components/auth/scroll-gate"
 
 // ... imports remain the same ...
 
@@ -52,13 +54,16 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning className={`${playfair.variable} ${inter.variable}`}>
       <body className="font-sans antialiased overflow-x-hidden">
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
-          <UserProvider>
-            <VoiceProvider>
-              <AuthGuard>
+          <AuthProvider>
+            <UserProvider>
+              <VoiceProvider>
+                <LanguageSelectorModal />
+                <LoginModal />
+                <ScrollGate />
                 {children}
-              </AuthGuard>
-            </VoiceProvider>
-          </UserProvider>
+              </VoiceProvider>
+            </UserProvider>
+          </AuthProvider>
         </ThemeProvider>
         <Analytics />
       </body>

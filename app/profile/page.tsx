@@ -30,6 +30,7 @@ import { recipes } from "@/lib/recipes-data"
 import Link from "next/link"
 import { useUserState } from "@/hooks/use-user-state"
 import { translations } from "@/lib/translations"
+import { useVoice } from "@/hooks/use-voice"
 
 export default function ProfilePage() {
   const { theme, setTheme } = useTheme()
@@ -37,9 +38,10 @@ export default function ProfilePage() {
   const [isEditing, setIsEditing] = useState(false)
 
   const { user, updateName, updateSettings } = useUserState()
+  const { language } = useVoice()
   const [userName, setUserName] = useState(user.name)
 
-  const t = translations[user.settings.language || "en-IN"]
+  const t = translations[language]
 
   // Sync local name state when user data loads
   useEffect(() => {

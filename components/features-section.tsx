@@ -30,7 +30,7 @@ const features = [
   },
   {
     icon: ChefHat,
-    title: "100+ Recipes",
+    title: "90+ Recipes",
     description: "Explore authentic Indian recipes with detailed step-by-step instructions.",
     gradient: "from-pink-500 to-rose-500",
   },
@@ -54,7 +54,64 @@ const features = [
   },
 ]
 
+import { useTranslation } from "@/lib/i18n"
+import { useVoice } from "@/hooks/use-voice"
+
 export function FeaturesSection() {
+  const { t } = useTranslation()
+  const { language } = useVoice()
+
+  const features = [
+    {
+      icon: Mic,
+      title: t("features.voice_control"),
+      description: t("features.voice_control_desc"),
+      gradient: "from-orange-500 to-red-500",
+    },
+    {
+      icon: Timer,
+      title: t("features.smart_timers"),
+      description: t("features.smart_timers_desc"),
+      gradient: "from-amber-500 to-orange-500",
+    },
+    {
+      icon: Gauge,
+      title: t("features.whistle_tracking"),
+      description: t("features.whistle_tracking_desc"),
+      gradient: "from-emerald-500 to-teal-500",
+    },
+    {
+      icon: Languages,
+      title: t("features.bilingual"),
+      description: t("features.bilingual_desc"),
+      gradient: "from-blue-500 to-indigo-500",
+    },
+    {
+      icon: ChefHat,
+      title: t("features.recipes_count"),
+      description: t("features.recipes_count_desc"),
+      gradient: "from-pink-500 to-rose-500",
+    },
+    {
+      icon: Accessibility,
+      title: t("features.accessible"),
+      description: t("features.accessible_desc"),
+      gradient: "from-violet-500 to-purple-500",
+    },
+    {
+      icon: Bell,
+      title: t("features.reminders"),
+      description: t("features.reminders_desc"),
+      gradient: "from-cyan-500 to-blue-500",
+    },
+    {
+      icon: Heart,
+      title: t("features.favorites"),
+      description: t("features.favorites_desc"),
+      gradient: "from-rose-500 to-pink-500",
+    },
+  ]
+
   return (
     <section id="features" className="py-32 relative overflow-hidden">
       {/* Background decoration */}
@@ -75,15 +132,16 @@ export function FeaturesSection() {
             viewport={{ once: true }}
             className="text-sm font-medium text-primary uppercase tracking-wider"
           >
-            Powerful Features
+            {t("features.title")}
           </motion.span>
           <h2 className="text-4xl md:text-5xl font-bold mt-4 mb-6 text-balance">
-            Everything You Need for
-            <span className="gradient-text"> Hands-Free Cooking</span>
+            {language === "hi-IN" ? "हाथों से मुक्त खाना पकाने के लिए" : "Everything You Need for"}
+            <span className="gradient-text"> {language === "hi-IN" ? "सब कुछ" : "Hands-Free Cooking"}</span>
           </h2>
           <p className="text-lg text-muted-foreground">
-            Experience a revolutionary way to cook with voice-controlled features designed for the modern Indian
-            kitchen.
+            {language === "hi-IN"
+              ? "आधुनिक भारतीय रसोई के लिए डिज़ाइन की गई वॉयस-कंट्रोल्ड सुविधाओं के साथ खाना पकाने का एक क्रांतिकारी तरीका अनुभव करें।"
+              : "Experience a revolutionary way to cook with voice-controlled features designed for the modern Indian kitchen."}
           </p>
         </motion.div>
 

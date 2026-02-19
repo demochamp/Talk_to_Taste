@@ -1,42 +1,35 @@
 "use client"
 
-import { motion } from "framer-motion"
-import { ChefHat, Github, Twitter, Instagram, Youtube, Heart } from "lucide-react"
+import { ChefHat, Heart } from "lucide-react"
 import Link from "next/link"
 
-const footerLinks = {
+import { useTranslation, TranslationKey } from "@/lib/i18n"
+
+const footerLinks = (t: (key: TranslationKey) => string) => ({
   product: [
-    { label: "Features", href: "#features" },
-    { label: "Recipes", href: "/recipes" },
-    { label: "Voice Demo", href: "#voice-demo" },
-    { label: "How It Works", href: "#how-it-works" },
+    { label: t("footer.links.features"), href: "#features" },
+    { label: t("footer.links.recipes"), href: "/recipes" },
+    { label: t("footer.links.voiceDemo"), href: "#voice-demo" },
+    { label: t("footer.links.howItWorks"), href: "#how-it-works" },
   ],
   cuisines: [
-    { label: "North Indian", href: "/recipes?cuisine=north-indian" },
-    { label: "South Indian", href: "/recipes?cuisine=south-indian" },
-    { label: "Punjabi", href: "/recipes?cuisine=punjabi" },
-    { label: "Desserts", href: "/recipes?cuisine=desserts" },
+    { label: t("footer.links.northIndian"), href: "/recipes?cuisine=north-indian" },
+    { label: t("footer.links.southIndian"), href: "/recipes?cuisine=south-indian" },
+    { label: t("footer.links.punjabi"), href: "/recipes?cuisine=punjabi" },
+    { label: t("footer.links.desserts"), href: "/recipes?cuisine=desserts" },
   ],
-  support: [
-    { label: "Help Center", href: "/help" },
-    { label: "Contact Us", href: "/contact" },
-    { label: "Privacy Policy", href: "/privacy" },
-    { label: "Terms of Service", href: "/terms" },
-  ],
-}
 
-const socialLinks = [
-  { icon: Twitter, href: "#", label: "Twitter" },
-  { icon: Instagram, href: "#", label: "Instagram" },
-  { icon: Youtube, href: "#", label: "YouTube" },
-  { icon: Github, href: "#", label: "GitHub" },
-]
+})
+
 
 export function Footer() {
+  const { t } = useTranslation()
+  const links = footerLinks(t)
+
   return (
     <footer className="bg-secondary/50 border-t border-border">
       <div className="container mx-auto px-6 py-16">
-        <div className="grid md:grid-cols-2 lg:grid-cols-5 gap-12">
+        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-12">
           {/* Brand */}
           <div className="lg:col-span-2">
             <Link href="/" className="flex items-center gap-3 mb-6">
@@ -45,34 +38,36 @@ export function Footer() {
               </div>
               <div>
                 <span className="text-xl font-bold gradient-text">TalktoTaste</span>
-                <p className="text-xs text-muted-foreground">Voice Kitchen Assistant</p>
+                <p className="text-xs text-muted-foreground">{t('brand.tagline')}</p>
               </div>
             </Link>
             <p className="text-muted-foreground mb-6 max-w-sm">
-              Your AI-powered voice-first smart kitchen assistant for authentic Indian cooking. Cook hands-free, cook
-              with confidence.
+              {t('footer.slogan')}
             </p>
             {/* Social links */}
             <div className="flex gap-4">
-              {socialLinks.map((social) => (
-                <motion.a
-                  key={social.label}
-                  href={social.href}
-                  whileHover={{ y: -3 }}
-                  className="w-10 h-10 rounded-xl bg-card border border-border flex items-center justify-center text-muted-foreground hover:text-primary hover:border-primary/30 transition-colors"
-                  aria-label={social.label}
-                >
-                  <social.icon className="w-5 h-5" />
-                </motion.a>
-              ))}
             </div>
           </div>
 
           {/* Links */}
           <div>
-            <h4 className="font-semibold text-foreground mb-4">Product</h4>
+            <h4 className="font-semibold text-foreground mb-4">{t('footer.product')}</h4>
             <ul className="space-y-3">
-              {footerLinks.product.map((link) => (
+              {links.product.map((link) => (
+                <li key={link.label}>
+                  <Link href={link.href} className="text-muted-foreground hover:text-primary transition-colors">
+                    {/* Simplified for now as links are dynamic array. Ideally map these keys too */}
+                    {link.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <div>
+            <h4 className="font-semibold text-foreground mb-4">{t('footer.cuisines')}</h4>
+            <ul className="space-y-3">
+              {links.cuisines.map((link) => (
                 <li key={link.label}>
                   <Link href={link.href} className="text-muted-foreground hover:text-primary transition-colors">
                     {link.label}
@@ -82,38 +77,14 @@ export function Footer() {
             </ul>
           </div>
 
-          <div>
-            <h4 className="font-semibold text-foreground mb-4">Cuisines</h4>
-            <ul className="space-y-3">
-              {footerLinks.cuisines.map((link) => (
-                <li key={link.label}>
-                  <Link href={link.href} className="text-muted-foreground hover:text-primary transition-colors">
-                    {link.label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
 
-          <div>
-            <h4 className="font-semibold text-foreground mb-4">Support</h4>
-            <ul className="space-y-3">
-              {footerLinks.support.map((link) => (
-                <li key={link.label}>
-                  <Link href={link.href} className="text-muted-foreground hover:text-primary transition-colors">
-                    {link.label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
         </div>
 
         {/* Bottom bar */}
         <div className="mt-16 pt-8 border-t border-border flex flex-col md:flex-row items-center justify-between gap-4">
-          <p className="text-sm text-muted-foreground">© 2026 TalktoTaste. All rights reserved. <span className="opacity-50 text-xs">v1.1</span></p>
+          <p className="text-sm text-muted-foreground"> <span className="opacity-50 text-xs"></span></p>
           <p className="text-sm text-muted-foreground flex items-center gap-1">
-            Made with <Heart className="w-4 h-4 text-red-500 fill-red-500" /> for Indian kitchens
+            {t('footer.made_with')} <Heart className="w-4 h-4 text-red-500 fill-red-500" />
           </p>
         </div>
       </div>

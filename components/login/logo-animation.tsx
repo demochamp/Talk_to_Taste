@@ -27,10 +27,10 @@ export function LogoAnimation() {
     }, [isHovered]);
 
     return (
-        <div className="flex flex-col items-center justify-center space-y-8">
+        <div className="flex flex-col items-center justify-center space-y-4">
             {/* Main Logo Container */}
             <div
-                className="relative w-48 h-48 md:w-56 md:h-56"
+                className="relative w-32 h-32 md:w-40 md:h-40"
                 onMouseEnter={() => setIsHovered(true)}
                 onMouseLeave={() => setIsHovered(false)}
             >
@@ -66,18 +66,18 @@ export function LogoAnimation() {
             </div>
 
             {/* Text Content */}
-            <div className="text-center space-y-4 animate-slide-in-right">
-                <h2 className="text-3xl md:text-4xl font-bold text-gray-900">
+            <div className="text-center space-y-3 animate-slide-in-right">
+                <h2 className="text-2xl md:text-3xl font-bold text-gray-900">
                     Cook with <span className="bg-gradient-to-r from-orange-500 to-orange-600 bg-clip-text text-transparent">Voice</span>
                 </h2>
-                <p className="text-lg text-gray-600 max-w-sm mx-auto">
+                <p className="text-sm text-gray-600 max-w-sm mx-auto">
                     Experience hands-free cooking with our voice-controlled recipe assistant. <span className="font-semibold text-orange-500">Perfect for Indian kitchens.</span>
                 </p>
 
                 {/* Feature Badges */}
-                <div className="flex flex-wrap gap-2 justify-center pt-4 animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
-                    <div className="px-4 py-2 bg-orange-100 text-orange-700 rounded-full text-sm font-medium border border-orange-300 hover:bg-orange-200 transition-colors">
-                        🎤 100+ Recipes
+                <div className="flex flex-wrap gap-2 justify-center pt-2 animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
+                    <div className="px-3 py-1 bg-orange-100 text-orange-700 rounded-full text-xs font-medium border border-orange-300 hover:bg-orange-200 transition-colors">
+                        🎤 90+ Recipes
                     </div>
                     <div className="px-4 py-2 bg-orange-100 text-orange-700 rounded-full text-sm font-medium border border-orange-300 hover:bg-orange-200 transition-colors">
                         🌍 2 Languages

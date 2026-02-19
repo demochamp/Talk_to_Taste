@@ -5,7 +5,8 @@ import { motion, AnimatePresence } from "framer-motion"
 import { ChefHat, X, MessageCircle, ChevronRight, HelpCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { usePathname } from "next/navigation"
-import { useVoice, parseVoiceCommand } from "@/hooks/use-voice"
+import { useVoice } from "@/hooks/use-voice"
+import { processVoiceCommand } from "@/lib/voice/command-processor"
 
 export function HelpAssistant() {
     const pathname = usePathname()
@@ -16,8 +17,8 @@ export function HelpAssistant() {
     // Auto-open on "Help" command
     useEffect(() => {
         if (transcript) {
-            const command = parseVoiceCommand(transcript)
-            if (command && command.action === "OPEN_HELP") {
+            const command = processVoiceCommand(transcript)
+            if (command && command.intent === "SHOW_COMMANDS") {
                 setIsOpen(true)
                 speak("Here are some things you can say.")
             }

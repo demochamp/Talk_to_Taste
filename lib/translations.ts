@@ -46,6 +46,21 @@ export const translations = {
         "profile.noHistory": "No cooking history yet. Start cooking!",
         "profile.cookAgain": "Cook Again",
         "profile.save": "Save",
+
+        "footer.links.features": "Features",
+        "footer.links.recipes": "Recipes",
+        "footer.links.voiceDemo": "Voice Demo",
+        "footer.links.howItWorks": "How It Works",
+        "footer.links.northIndian": "North Indian",
+        "footer.links.southIndian": "South Indian",
+        "footer.links.punjabi": "Punjabi",
+        "footer.links.desserts": "Desserts",
+        "footer.links.help": "Help Center",
+        "footer.links.contact": "Contact Us",
+        "footer.links.privacy": "Privacy Policy",
+        "footer.links.terms": "Terms of Service",
+
+        "how_it_works.tag": "Simple Process",
     },
     "hi-IN": {
         "nav.home": "होम",
@@ -94,6 +109,30 @@ export const translations = {
         "profile.noHistory": "अभी कोई कुकिंग इतिहास नहीं है। कुकिंग शुरू करें!",
         "profile.cookAgain": "फिर से पकाएं",
         "profile.save": "सहेजें",
+
+        "footer.links.features": "विशेषताएं",
+        "footer.links.recipes": "रेसिपी",
+        "footer.links.voiceDemo": "वॉइस डेमो",
+        "footer.links.howItWorks": "यह कैसे काम करता है",
+        "footer.links.northIndian": "नॉर्थ इंडियन",
+        "footer.links.southIndian": "साउथ इंडियन",
+        "footer.links.punjabi": "पंजाबी",
+        "footer.links.desserts": "मिठाई",
+        "footer.links.help": "सहायता केंद्र",
+        "footer.links.contact": "संपर्क करें",
+        "footer.links.privacy": "गोपनीयता नीति",
+        "footer.links.terms": "सेवा की शर्तें",
+
+        "how_it_works.tag": "सरल प्रक्रिया",
+
+        "brand.tagline": "वॉइस किचन",
+        "footer.slogan": "हिंदी और अंग्रेजी में वॉयस-गाइडेड कुकिंग निर्देशों के साथ प्रामाणिक भारतीय व्यंजनों की खोज करें",
+        "footer.product": "उत्पाद",
+        "footer.cuisines": "व्यंजन",
+        "footer.support": "सहायता",
+        "footer.rights": "© 2024 टॉकटूटेस्ट। सर्वाधिकार सुरक्षित।",
+        "footer.made_with": "के साथ बनाया गया",
+        "footer.for_indian": "भारतीय भोजन प्रेमियों के लिए",
     }
 } as const;
 

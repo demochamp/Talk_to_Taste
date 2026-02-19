@@ -1,18 +1,15 @@
 import { NextResponse } from "next/server"
-import connectDB from "@/lib/mongodb"
-import Recipe from "@/lib/models/Recipe"
+import { recipes } from "@/lib/recipes-data"
 
 export async function GET(
   req: Request,
   context: { params: Promise<{ id: string }> }
 ) {
   try {
-    await connectDB()
     const params = await context.params
-    const id = params.id
-    const recipeId = parseInt(id)
+    const id = parseInt(params.id)
 
-    const recipe = await Recipe.findOne({ id: recipeId })
+    const recipe = recipes.find((r) => r.id === id)
 
     if (!recipe) {
       return NextResponse.json(

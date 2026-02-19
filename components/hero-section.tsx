@@ -7,9 +7,11 @@ import Link from "next/link"
 import { VoiceWaveAnimation } from "./voice-wave-animation"
 import { VoiceSearch } from "./hero-voice-search"
 import { useVoice } from "@/hooks/use-voice"
+import { useTranslation } from "@/lib/i18n"
 
 export function HeroSection() {
   const { isListening, startListening, stopListening } = useVoice()
+  const { t } = useTranslation()
 
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden pt-28 md:pt-20">
@@ -45,7 +47,7 @@ export function HeroSection() {
               className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 mb-8"
             >
               <Sparkles className="w-4 h-4 text-primary" />
-              <span className="text-sm font-medium text-primary">AI-Powered Voice Assistant</span>
+              <span className="text-sm font-medium text-primary">{t('brand.tagline')}</span>
             </motion.div>
 
             {/* Headline */}
@@ -55,10 +57,7 @@ export function HeroSection() {
               transition={{ delay: 0.3 }}
               className="text-3xl sm:text-4xl md:text-6xl lg:text-7xl font-bold leading-tight mb-6 max-w-[90vw] mx-auto lg:mx-0 break-words"
             >
-              <span className="text-foreground">Cook </span>
-              <span className="gradient-text">Hands-Free</span>
-              <br />
-              <span className="text-foreground">with Your Voice</span>
+              <span className="text-foreground">{t('hero.title')}</span>
             </motion.h1>
 
 
@@ -70,48 +69,10 @@ export function HeroSection() {
               transition={{ delay: 0.4 }}
               className="text-base sm:text-lg md:text-xl text-muted-foreground max-w-xl mx-auto lg:mx-0 mb-8"
             >
-              Experience the magic of voice-controlled cooking. Navigate recipes, set timers, and track pressure cooker
-              whistles — all without touching your device.
+              {t('hero.subtitle')}
             </motion.p>
 
-            {/* Big Mic Button - Dark Mode & Waves */}
-            <motion.div
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.5 }}
-              className="flex flex-col items-center lg:items-start mb-8 relative z-20"
-            >
-              <div className="relative group flex flex-col items-center">
-                <div className="relative">
-                  {/* Decorative pulse ring */}
-                  <motion.div
-                    animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.6, 0.3] }}
-                    transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-                    className={`absolute -inset-4 rounded-full blur-xl ${isListening ? "bg-red-500/20" : "bg-primary/20"}`}
-                  />
 
-                  <Button
-                    size="lg"
-                    className={`relative w-16 h-16 p-0 rounded-full shadow-2xl transition-all duration-300 border-4 ${isListening
-                      ? "bg-zinc-950 border-red-500 shadow-red-500/20"
-                      : "bg-zinc-950 border-primary/30 hover:border-primary shadow-primary/20"
-                      }`}
-                    onClick={isListening ? stopListening : startListening}
-                  >
-                    <Mic className={`w-[4.5rem] h-[4.5rem] ${isListening ? "text-red-500" : "text-primary"}`} />
-                  </Button>
-                </div>
-
-                {/* Waves Animation - Just Below */}
-                <motion.div
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: isListening ? 1 : 0.5, height: "auto" }}
-                  className="mt-6 h-8 flex items-center justify-center"
-                >
-                  <VoiceWaveAnimation isActive={isListening} className="h-8 text-primary" />
-                </motion.div>
-              </div>
-            </motion.div>
 
             {/* Voice Search Bar */}
             <motion.div
@@ -136,17 +97,11 @@ export function HeroSection() {
                   className="rounded-full bg-primary hover:bg-primary/90 shadow-xl shadow-primary/30 gap-2 px-8 h-14 text-lg"
                   asChild
                 >
-                  <Link href="/cook">
+                  <Link href="/recipes">
                     <Mic className="w-5 h-5" />
-                    Start Cooking Now
+                    {t('hero.start_cooking')}
                     <ArrowRight className="w-5 h-5" />
                   </Link>
-                </Button>
-              </motion.div>
-              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                <Button size="lg" variant="outline" className="rounded-full gap-2 px-8 h-14 text-lg bg-transparent">
-                  <Play className="w-5 h-5" />
-                  Watch Demo
                 </Button>
               </motion.div>
             </motion.div>
@@ -159,7 +114,7 @@ export function HeroSection() {
               className="flex flex-wrap gap-8 justify-center lg:justify-start mt-12"
             >
               {[
-                { value: "100+", label: "Indian Recipes" },
+                { value: "90+", label: "Indian Recipes" },
                 { value: "2", label: "Languages" },
                 { value: "24/7", label: "Voice Support" },
               ].map((stat, index) => (
