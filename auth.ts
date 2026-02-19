@@ -6,12 +6,15 @@ import Credentials from "next-auth/providers/credentials"
 import bcrypt from "bcryptjs"
 import { sendAdminNotification } from "@/lib/mail"
 
+console.log("Initializing NextAuth with secret:", process.env.AUTH_SECRET ? "Present" : "Missing");
+
 export const { handlers, auth, signIn, signOut } = NextAuth({
     ...authConfig,
+    secret: process.env.AUTH_SECRET,
     adapter: MongoDBAdapter(clientPromise),
     session: { strategy: "jwt" },
     providers: [
-        ...authConfig.providers, // Keep Google/GitHub from config
+        ...authConfig.providers,
         Credentials({
             name: "Credentials",
             credentials: {
