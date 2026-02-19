@@ -5,10 +5,11 @@ import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Mic, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { useVoice, parseVoiceCommand } from "@/hooks/use-voice"
+import { useVoice } from "@/hooks/use-voice"
 import { useRouter } from "next/navigation"
 import { VoiceWaveAnimation } from "./voice-wave-animation"
 import { useTheme } from "next-themes"
+import { processVoiceCommand } from "@/lib/voice/command-processor"
 
 export function GlobalVoiceControl({ hideTrigger }: { hideTrigger?: boolean }) {
     const router = useRouter()
@@ -19,42 +20,35 @@ export function GlobalVoiceControl({ hideTrigger }: { hideTrigger?: boolean }) {
         startListening,
         stopListening,
         isSupported,
-        isSpeaking,
         stopSpeaking
     } = useVoice()
 
     // Handle global commands
     useEffect(() => {
         if (transcript) {
-            const command = parseVoiceCommand(transcript)
-            if (command) {
-                switch (command.action) {
-                    case "NAVIGATE_HOME":
+            const match = processVoiceCommand(transcript)
+            if (match.confidence > 0.8) { // Only act on high confidence
+                switch (match.intent) {
+                    case "NAV_HOME":
                         router.push("/")
                         break
-                    case "NAVIGATE_RECIPES":
+                    case "NAV_RECIPES":
                         router.push("/recipes")
                         break
-                    case "NAVIGATE_PROFILE":
+                    case "NAV_PROFILE":
                         router.push("/profile")
                         break
-                    case "SEARCH_RECIPE":
-                        router.push(`/recipes?search=${encodeURIComponent(command.params.query as string)}`)
+                    case "NAV_FEATURES":
+                        router.push("/#features")
                         break
-                    case "SEARCH_BY_INGREDIENTS":
-                        router.push(`/recipes?ingredients=${encodeURIComponent(command.params.ingredients as string)}`)
+                    case "NAV_HOW_IT_WORKS":
+                        router.push("/#how-it-works")
                         break
-                    case "SET_THEME":
-                        setTheme(command.params.theme as string)
-                        break
-                    case "STOP":
-                    case "PAUSE":
-                        stopSpeaking()
-                        break
+                    // Add other global handlers here
                 }
             }
         }
-    }, [transcript, router, stopSpeaking, setTheme])
+    }, [transcript, router])
 
     const toggleListening = () => {
         if (isListening) {

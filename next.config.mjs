@@ -7,7 +7,8 @@ const nextConfig = {
     unoptimized: true,
   },
   devIndicators: {
-    buildActivity: false,
+    buildActivity: true,
+    appIsrStatus: true,
   },
 }
 

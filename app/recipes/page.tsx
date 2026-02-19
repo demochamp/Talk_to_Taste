@@ -9,14 +9,19 @@ import { Navigation } from "@/components/navigation"
 import { Footer } from "@/components/footer"
 import Link from "next/link"
 import { useSearchParams } from "next/navigation"
-import { useVoice, parseVoiceCommand } from "@/hooks/use-voice"
+import { useVoice } from "@/hooks/use-voice"
 import { VoiceWaveAnimation } from "@/components/voice-wave-animation"
 import { useUserState } from "@/hooks/use-user-state"
+import { processVoiceCommand } from "@/lib/voice/command-processor"
+import { useRouter } from "next/navigation"
+import { useTranslation } from "@/lib/i18n"
 
 
 export default function RecipesPage() {
+  const { t } = useTranslation()
   const { toggleFavorite, isFavorite } = useUserState()
   const searchParams = useSearchParams()
+  const router = useRouter()
   const [searchQuery, setSearchQuery] = useState("")
 
   useEffect(() => {
@@ -31,6 +36,7 @@ export default function RecipesPage() {
   const [selectedCategory, setSelectedCategory] = useState("All")
   const [isFilterOpen, setIsFilterOpen] = useState(false)
   const [isCategoryOpen, setIsCategoryOpen] = useState(false)
+  const [showAllCuisines, setShowAllCuisines] = useState(false)
 
   const cuisines = useMemo(
     () => ["All", ...Array.from(new Set(recipes.map(r => r.cuisine)))],
@@ -57,6 +63,8 @@ export default function RecipesPage() {
     startListening,
     stopListening,
     isSupported: voiceSupported,
+    mode,
+    language,
   } = useVoice()
 
   // Toggle voice listening
@@ -64,34 +72,11 @@ export default function RecipesPage() {
     if (isListening) {
       stopListening()
     } else {
-      startListening()
+      startListening({ mode: "SEARCH" })
     }
   }
 
-  // Handle voice commands/search
-  useEffect(() => {
-    if (transcript) {
-      // Check for specific commands first
-      const command = parseVoiceCommand(transcript)
-      if (command) {
-        if (command.action === "SEARCH_RECIPE") {
-          setSearchQuery(command.params.query as string)
-          return
-        }
-        if (command.action === "SEARCH_BY_INGREDIENTS") {
-          setSearchQuery(command.params.ingredients as string)
-          return
-        }
-      }
-
-      // Default: If listening and speaking, update search query directly
-      // This makes it feel like "dictation" for the search box
-      if (isListening) {
-        // Optional: debounce or just set it
-        setSearchQuery(transcript.replace(/\.$/, "")) // remove trailing dot
-      }
-    }
-  }, [transcript, isListening])
+  // Handle voice transcript - NOW ONLY IN SEARCH MODE
 
   const filteredRecipes = useMemo(() => {
     return recipes.filter((recipe) => {
@@ -100,10 +85,16 @@ export default function RecipesPage() {
       const matchesSearch =
         (recipe.name || "").toLowerCase().includes(q) ||
         (recipe.nameHindi || "").toLowerCase().includes(q) ||
+        (recipe.nameHinglish || "").toLowerCase().includes(q) ||
+        (recipe.synonyms || []).some((s: string) => s.toLowerCase().includes(q)) ||
         (recipe.tags || []).some((tag: string) => tag.toLowerCase().includes(q)) ||
         (recipe.ingredients || []).some((ing: any) =>
           (ing.item || "").toLowerCase().includes(q) ||
           (ing.itemHindi || "").toLowerCase().includes(q)
+        ) ||
+        (recipe.steps || []).some((step: any) =>
+          (step.instruction || "").toLowerCase().includes(q) ||
+          (step.instructionHindi || "").toLowerCase().includes(q)
         )
 
       const matchesCuisine = selectedCuisine === "All" || recipe.cuisine === selectedCuisine
@@ -112,6 +103,77 @@ export default function RecipesPage() {
       return matchesSearch && matchesCuisine && matchesDifficulty && matchesCategory
     })
   }, [recipes, searchQuery, selectedCuisine, selectedDifficulty, selectedCategory])
+
+  // Handle voice transcript
+  useEffect(() => {
+    if (isListening && transcript && mode === "SEARCH") {
+      // Process the command
+      const { intent, params } = processVoiceCommand(transcript)
+
+      console.log("Recipes Voice Command:", intent, params, transcript)
+
+      // Handle standard search if not a specific command
+      if (intent === "UNKNOWN" || intent === "NAV_RECIPES") {
+        setSearchQuery(transcript)
+        return
+      }
+
+      // Handle specific commands
+      switch (intent) {
+        case "FILTER_CATEGORY":
+          if (params?.category) {
+            setSelectedCategory(String(params.category))
+            setSearchQuery("") // Clear text search to show category
+          }
+          break
+
+        case "FILTER_DIFFICULTY":
+          if (params?.difficulty) {
+            setSelectedDifficulty(String(params.difficulty))
+            setSearchQuery("")
+          }
+          break
+
+        case "FILTER_CUISINE":
+          if (params?.cuisine) {
+            setSelectedCuisine(String(params.cuisine))
+            setSearchQuery("")
+          }
+          break
+
+        case "FILTER_INGREDIENTS":
+          if (params?.ingredient) {
+            setSearchQuery(String(params.ingredient))
+            // Reset other filters to ensure we find matches across all
+            setSelectedCategory("All")
+            setSelectedCuisine("All")
+            setSelectedDifficulty("All")
+          }
+          break
+
+        case "OPEN_RECIPE":
+          // If we have a specific ID from the command processor, use it
+          if (params?.value) {
+            router.push(`/cook?recipe=${params.value}`)
+            return
+          }
+
+          // Fallback: Open the first result if available
+          if (filteredRecipes.length > 0) {
+            const recipeToOpen = filteredRecipes[0]
+            router.push(`/cook?recipe=${recipeToOpen.id}`)
+          }
+          break
+
+        default:
+          // For other intents (like NAV_HOME), we might want to let a global handler deal with it?
+          // Or here we just treat as search query if it's not a filter
+          setSearchQuery(transcript)
+      }
+    }
+  }, [isListening, transcript, mode, filteredRecipes, router])
+
+
 
   return (
     <main className="min-h-screen bg-background">
@@ -135,10 +197,10 @@ export default function RecipesPage() {
               <ChefHat className="w-10 h-10 text-primary" />
             </motion.div>
             <h1 className="text-3xl md:text-6xl font-bold mb-6">
-              Explore <span className="gradient-text">{recipes.length}+ Recipes</span>
+              {t("recipes.explore_title")}
             </h1>
             <p className="text-lg text-muted-foreground mb-8">
-              Discover authentic Indian recipes with voice-guided cooking instructions in Hindi and English
+              {t("recipes.explore_subtitle")}
             </p>
 
             {/* Search bar */}
@@ -146,7 +208,7 @@ export default function RecipesPage() {
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
               <Input
                 type="text"
-                placeholder="Search recipes, ingredients, or cuisine..."
+                placeholder={t("recipes.search_placeholder")}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-12 pr-12 h-14 rounded-full text-lg border-2 focus:border-primary"
@@ -169,8 +231,8 @@ export default function RecipesPage() {
         <div className="container mx-auto px-6">
           <div className="flex flex-wrap items-center gap-4">
             {/* Cuisine filters - horizontal scroll on mobile */}
-            <div className="flex items-center gap-2 overflow-x-auto pb-2 md:pb-0 scrollbar-hide">
-              {cuisines.slice(0, 8).map((cuisine) => (
+            <div className={`flex items-center gap-2 overflow-x-auto pb-2 md:pb-0 scrollbar-hide ${showAllCuisines ? "flex-wrap" : ""}`}>
+              {cuisines.slice(0, showAllCuisines ? undefined : 8).map((cuisine) => (
                 <Button
                   key={cuisine}
                   variant={selectedCuisine === cuisine ? "default" : "outline"}
@@ -178,12 +240,17 @@ export default function RecipesPage() {
                   onClick={() => setSelectedCuisine(cuisine)}
                   className="rounded-full whitespace-nowrap"
                 >
-                  {cuisine}
+                  {cuisine === "All" ? t("recipes.filter_all") : t(`cuisine.${cuisine}` as any)}
                 </Button>
               ))}
               {cuisines.length > 8 && (
-                <Button variant="outline" size="sm" className="rounded-full whitespace-nowrap bg-transparent">
-                  +{cuisines.length - 8} more
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="rounded-full whitespace-nowrap bg-transparent"
+                  onClick={() => setShowAllCuisines(!showAllCuisines)}
+                >
+                  {showAllCuisines ? t("recipes.show_less") : t("recipes.show_more").replace("{count}", (cuisines.length - 8).toString())}
                 </Button>
               )}
             </div>
@@ -197,7 +264,7 @@ export default function RecipesPage() {
                 className="rounded-full gap-2"
               >
                 <Filter className="w-4 h-4" />
-                Category: {selectedCategory}
+                {t("recipes.filter_category")}: {selectedCategory === "All" ? t("recipes.filter_all") : t(`category.${selectedCategory}` as any)}
                 <ChevronDown className="w-4 h-4" />
               </Button>
 
@@ -219,7 +286,7 @@ export default function RecipesPage() {
                         className={`block w-full text-left px-4 py-2 rounded-lg text-sm transition-colors ${selectedCategory === cat ? "bg-primary text-primary-foreground" : "hover:bg-secondary"
                           }`}
                       >
-                        {cat}
+                        {cat === "All" ? t("recipes.filter_all") : t(`category.${cat}` as any)}
                       </button>
                     ))}
                   </motion.div>
@@ -236,7 +303,7 @@ export default function RecipesPage() {
                 className="rounded-full gap-2"
               >
                 <Flame className="w-4 h-4" />
-                Difficulty: {selectedDifficulty}
+                {t("recipes.filter_difficulty")}: {selectedDifficulty === "All" ? t("recipes.filter_all") : t(`difficulty.${selectedDifficulty}` as any)}
                 <ChevronDown className="w-4 h-4" />
               </Button>
 
@@ -258,7 +325,7 @@ export default function RecipesPage() {
                         className={`block w-full text-left px-4 py-2 rounded-lg text-sm transition-colors ${selectedDifficulty === diff ? "bg-primary text-primary-foreground" : "hover:bg-secondary"
                           }`}
                       >
-                        {diff}
+                        {diff === "All" ? t("recipes.filter_all") : t(`difficulty.${diff}` as any)}
                       </button>
                     ))}
                   </motion.div>
@@ -283,12 +350,12 @@ export default function RecipesPage() {
                   className="rounded-full gap-1"
                 >
                   <X className="w-4 h-4" />
-                  Clear
+                  {t("recipes.clear_filters")}
                 </Button>
               )}
 
             {/* Results count */}
-            <span className="text-sm text-muted-foreground ml-auto">{filteredRecipes.length} recipes found</span>
+            <span className="text-sm text-muted-foreground ml-auto">{filteredRecipes.length} {t("recipes.found")}</span>
           </div>
         </div>
       </section>
@@ -304,6 +371,7 @@ export default function RecipesPage() {
               exit={{ opacity: 0 }}
               className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
             >
+              { }
               {filteredRecipes.map((recipe, index) => (
                 <motion.div
                   key={recipe.id}
@@ -328,19 +396,19 @@ export default function RecipesPage() {
                         <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
 
                         {/* Rating */}
-                        <div className="absolute top-3 right-3 flex items-center gap-1 px-2 py-1 rounded-full bg-white/90 text-xs font-medium">
+                        <div className="absolute top-3 right-3 flex items-center gap-1 px-2 py-1 rounded-full bg-background/80 backdrop-blur-sm text-xs font-medium text-foreground">
                           <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
                           {recipe.rating}
                         </div>
 
                         {/* Cuisine badge */}
-                        <div className="absolute top-3 left-3 px-2 py-1 rounded-full bg-primary/90 text-primary-foreground text-xs font-medium">
-                          {recipe.cuisine}
+                        <div className="absolute top-3 left-3 px-2 py-1 rounded-full bg-primary/90 text-primary-foreground text-xs font-medium shadow-sm">
+                          {t(`cuisine.${recipe.cuisine}` as any)}
                         </div>
 
                         {/* Whistle indicator for pressure cooker recipes */}
                         {recipe.whistleCount && (
-                          <div className="absolute bottom-3 right-3 px-2 py-1 rounded-full bg-white/90 text-xs font-medium flex items-center gap-1">
+                          <div className="absolute bottom-3 right-3 px-2 py-1 rounded-full bg-background/80 backdrop-blur-sm text-xs font-medium flex items-center gap-1 text-foreground">
                             <span>🎺</span>
                             {recipe.whistleCount}
                           </div>
@@ -353,7 +421,7 @@ export default function RecipesPage() {
                             e.stopPropagation()
                             toggleFavorite(recipe.id)
                           }}
-                          className="absolute bottom-3 left-3 w-8 h-8 rounded-full bg-white/90 flex items-center justify-center hover:bg-white transition-colors z-20"
+                          className="absolute bottom-3 left-3 w-8 h-8 rounded-full bg-background/80 backdrop-blur-sm flex items-center justify-center hover:bg-background transition-colors z-20"
                         >
                           <Heart
                             className={`w-4 h-4 ${isFavorite(recipe.id) ? "fill-red-500 text-red-500" : "text-muted-foreground"
@@ -377,9 +445,11 @@ export default function RecipesPage() {
                       {/* Content */}
                       <div className="p-4">
                         <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors mb-1">
-                          {recipe.name}
+                          {language === "hi-IN" ? (recipe.nameHindi || recipe.name) : recipe.name}
                         </h3>
-                        <p className="text-xs text-muted-foreground mb-2">{recipe.nameHindi}</p>
+                        <p className="text-xs text-muted-foreground mb-2">
+                          {language === "hi-IN" ? recipe.name : recipe.nameHindi}
+                        </p>
                         <div className="flex items-center gap-3 text-xs text-muted-foreground">
                           <span className="flex items-center gap-1">
                             <Clock className="w-3 h-3" />
@@ -391,7 +461,7 @@ export default function RecipesPage() {
                           </span>
                           <span className="flex items-center gap-1">
                             <Flame className="w-3 h-3" />
-                            {recipe.difficulty}
+                            {t(`difficulty.${recipe.difficulty}` as any)}
                           </span>
                         </div>
                       </div>
@@ -408,8 +478,8 @@ export default function RecipesPage() {
               <div className="w-20 h-20 rounded-full bg-secondary flex items-center justify-center mx-auto mb-6">
                 <Search className="w-10 h-10 text-muted-foreground" />
               </div>
-              <h3 className="text-xl font-semibold mb-2">No recipes found</h3>
-              <p className="text-muted-foreground mb-6">Try adjusting your search or filters</p>
+              <h3 className="text-xl font-semibold mb-2">{t("recipes.no_results")}</h3>
+              <p className="text-muted-foreground mb-6">{t("recipes.try_adjusting")}</p>
               <Button
                 onClick={() => {
                   setSelectedCuisine("All")
@@ -419,7 +489,7 @@ export default function RecipesPage() {
                 }}
                 className="rounded-full"
               >
-                Clear All Filters
+                {t("recipes.clear_filters")}
               </Button>
             </motion.div>
           )}

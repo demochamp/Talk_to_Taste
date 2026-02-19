@@ -4,71 +4,18 @@ import { motion } from "framer-motion"
 import { Clock, Users, Flame, Star, ArrowRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
+import { useTranslation } from "@/lib/i18n"
+import { useVoice } from "@/hooks/use-voice"
 
-const recipes = [
-  {
-    id: 1,
-    name: "Paneer Butter Masala",
-    cuisine: "North Indian",
-    time: "45 mins",
-    servings: 4,
-    difficulty: "Medium",
-    rating: 4.9,
-    image: "/paneer-butter-masala-rich-creamy-curry.jpg",
-  },
-  {
-    id: 2,
-    name: "Biryani",
-    cuisine: "Hyderabadi",
-    time: "90 mins",
-    servings: 6,
-    difficulty: "Hard",
-    rating: 4.8,
-    image: "/hyderabadi-biryani-layered-rice.jpg",
-  },
-  {
-    id: 3,
-    name: "Masala Dosa",
-    cuisine: "South Indian",
-    time: "30 mins",
-    servings: 2,
-    difficulty: "Easy",
-    rating: 4.7,
-    image: "/crispy-masala-dosa-with-chutney.jpg",
-  },
-  {
-    id: 4,
-    name: "Dal Makhani",
-    cuisine: "Punjabi",
-    time: "60 mins",
-    servings: 4,
-    difficulty: "Medium",
-    rating: 4.9,
-    image: "/dal-makhani-creamy-lentils.jpg",
-  },
-  {
-    id: 5,
-    name: "Chole Bhature",
-    cuisine: "North Indian",
-    time: "50 mins",
-    servings: 4,
-    difficulty: "Medium",
-    rating: 4.8,
-    image: "/chole-bhature-chickpea-curry-fried-bread.jpg",
-  },
-  {
-    id: 6,
-    name: "Gulab Jamun",
-    cuisine: "Dessert",
-    time: "40 mins",
-    servings: 8,
-    difficulty: "Medium",
-    rating: 4.9,
-    image: "/gulab-jamun-sweet-dessert.jpg",
-  },
-]
+import { recipes } from "@/lib/recipes-data"
+
+// Filter or slice to show only a subset if needed, e.g., first 6
+const showcaseRecipes = recipes.slice(0, 6);
 
 export function RecipeShowcase() {
+  const { t } = useTranslation()
+  const { language } = useVoice()
+
   return (
     <section className="py-32 relative overflow-hidden bg-secondary/30">
       <div className="container mx-auto px-6">
@@ -80,17 +27,17 @@ export function RecipeShowcase() {
           className="flex flex-col md:flex-row md:items-end md:justify-between gap-6 mb-16"
         >
           <div>
-            <span className="text-sm font-medium text-primary uppercase tracking-wider">Recipe Collection</span>
+            <span className="text-sm font-medium text-primary uppercase tracking-wider">{t("recipe_showcase.collection")}</span>
             <h2 className="text-4xl md:text-5xl font-bold mt-4 text-balance">
-              Discover <span className="gradient-text">100+ Authentic</span>
+              {t("recipe_showcase.title_prefix")} <span className="gradient-text">{t("recipe_showcase.title_highlight")}</span>
               <br />
-              Indian Recipes
+              {t("recipe_showcase.title_suffix")}
             </h2>
           </div>
           <motion.div whileHover={{ x: 5 }}>
             <Button variant="outline" className="rounded-full gap-2 bg-transparent" asChild>
               <Link href="/recipes">
-                View All Recipes
+                {t("recipe_showcase.view_all")}
                 <ArrowRight className="w-4 h-4" />
               </Link>
             </Button>
@@ -99,7 +46,7 @@ export function RecipeShowcase() {
 
         {/* Recipes grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {recipes.map((recipe, index) => (
+          {showcaseRecipes.map((recipe, index) => (
             <motion.div
               key={recipe.id}
               initial={{ opacity: 0, y: 30 }}
@@ -125,21 +72,21 @@ export function RecipeShowcase() {
                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
 
                     {/* Rating badge */}
-                    <div className="absolute top-4 right-4 flex items-center gap-1 px-3 py-1.5 rounded-full bg-white/90 backdrop-blur-sm">
+                    <div className="absolute top-4 right-4 flex items-center gap-1 px-3 py-1.5 rounded-full bg-background/80 backdrop-blur-sm shadow-sm">
                       <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
                       <span className="text-sm font-semibold text-foreground">{recipe.rating}</span>
                     </div>
 
                     {/* Cuisine badge */}
                     <div className="absolute top-4 left-4 px-3 py-1.5 rounded-full bg-primary/90 text-primary-foreground text-xs font-medium">
-                      {recipe.cuisine}
+                      {t(`cuisine.${recipe.cuisine}` as any)}
                     </div>
                   </div>
 
                   {/* Content */}
                   <div className="p-6">
                     <h3 className="text-xl font-semibold text-foreground group-hover:text-primary transition-colors mb-4">
-                      {recipe.name}
+                      {language === "hi-IN" ? (recipe.nameHindi || recipe.name) : recipe.name}
                     </h3>
 
                     <div className="flex items-center gap-4 text-sm text-muted-foreground">
@@ -149,11 +96,11 @@ export function RecipeShowcase() {
                       </div>
                       <div className="flex items-center gap-1.5">
                         <Users className="w-4 h-4" />
-                        <span>{recipe.servings} servings</span>
+                        <span>{recipe.servings} {t("recipe.servings")}</span>
                       </div>
                       <div className="flex items-center gap-1.5">
                         <Flame className="w-4 h-4" />
-                        <span>{recipe.difficulty}</span>
+                        <span>{t(`difficulty.${recipe.difficulty}` as any)}</span>
                       </div>
                     </div>
                   </div>

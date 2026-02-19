@@ -92,13 +92,13 @@ export function HeroSection() {
 
                   <Button
                     size="lg"
-                    className={`relative w-20 h-20 rounded-full shadow-2xl transition-all duration-300 border-4 ${isListening
+                    className={`relative w-16 h-16 p-0 rounded-full shadow-2xl transition-all duration-300 border-4 ${isListening
                       ? "bg-zinc-950 border-red-500 shadow-red-500/20"
                       : "bg-zinc-950 border-primary/30 hover:border-primary shadow-primary/20"
                       }`}
                     onClick={isListening ? stopListening : startListening}
                   >
-                    <Mic className={`w-12 h-12 ${isListening ? "text-red-500" : "text-primary"}`} />
+                    <Mic className={`w-[4.5rem] h-[4.5rem] ${isListening ? "text-red-500" : "text-primary"}`} />
                   </Button>
                 </div>
 

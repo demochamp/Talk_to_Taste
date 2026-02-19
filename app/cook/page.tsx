@@ -32,19 +32,102 @@ import {
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
 import { VoiceWaveAnimation } from "@/components/voice-wave-animation"
-import { useVoice, parseVoiceCommand } from "@/hooks/use-voice"
+import { useVoice } from "@/hooks/use-voice"
+import { processVoiceCommand } from "@/lib/voice/command-processor"
 import { useUserState } from "@/hooks/use-user-state"
 
 import Link from "next/link"
 import { useSearchParams, useRouter } from "next/navigation"
 
+// Helper to safely get instruction text, avoiding duration strings
+function getStepInstruction(step: any, language: string) {
+  if (!step) return { text: "", isFallback: false }
+
+  // Prioritize Hindi if selected
+  let text = step.instruction // Default to English first
+  let isFallback = false
+  let debugMsg = ""
+
+  if (language === "hi-IN") {
+    if (step.instructionHindi && step.instructionHindi.length > 2) {
+      text = step.instructionHindi
+      debugMsg = "Found Hindi instruction"
+    } else {
+      isFallback = true // Mark as fallback if Hindi missing/too short
+      debugMsg = "Missing Hindi instruction, falling back to English"
+    }
+  }
+
+  // Clean the text
+  if (text) text = text.trim()
+
+  // Remove leading numbering like "1.", "Step 1", etc.
+  if (text) {
+    const original = text
+    text = text.replace(/^step\s*\d+[:\.]?\s*/i, "")
+    text = text.replace(/^\d+[:\.]\s*/, "")
+    if (text !== original) debugMsg += " (Stripped numbering)"
+  }
+
+  // --- SAFEGUARD: DURATION / NUMBER DETECTION ---
+  // Returns true if text matches: "20 mins", "10", "5 sec", "20-30 minutes"
+  const isInvalid =
+    !text ||
+    text.length < 2 || // Too short
+    /^\d+$/.test(text) || // Just numbers
+    /^\d+\s*(?:-|–|to)\s*\d+$/.test(text) || // "20-30"
+    /^\d+\s*(?:min|mins|minute|minutes|sec|second|seconds|hr|hour|hours)s?$/i.test(text) // "20 mins"
+
+  if (isInvalid) {
+    // If invalid, try falling back to English instruction if we weren't already
+    if (!isFallback && step.instruction && step.instruction.length > 5) {
+      console.warn(`TalkToTaste: Invalid text ("${text}"), falling back to English.`)
+      return { text: step.instruction, isFallback: true, debug: "Invalid Hindi, used English fallback" }
+    }
+    return { text: "", isFallback: false, debug: `Invalid text: ${text}` }
+  }
+
+  // console.log(`[Voice Debug] Step ${step.step} (${language}): ${debugMsg} -> "${text.substring(0, 20)}..."`)
+  return { text, isFallback, debug: debugMsg }
+}
+
+function getYoutubeEmbedUrl(url: string) {
+  if (!url) return ""
+
+  // Handle already embedded URLs
+  if (url.includes("/embed/")) return url
+
+  // Handle standard watch URLs
+  const vParam = url.split("v=")[1]
+  if (vParam) {
+    const id = vParam.split("&")[0]
+    const finalUrl = `https://www.youtube.com/embed/${id}`
+    console.log(`[YouTube] Converted ${url} -> ${finalUrl}`)
+    return finalUrl
+  }
+
+  // Handle short URLs (youtu.be)
+  if (url.includes("youtu.be/")) {
+    const id = url.split("youtu.be/")[1]?.split("?")[0]
+    if (id) {
+      const finalUrl = `https://www.youtube.com/embed/${id}`
+      console.log(`[YouTube] Converted ${url} -> ${finalUrl}`)
+      return finalUrl
+    }
+  }
+
+  console.log(`[YouTube] Returning original/unprocessed: ${url}`)
+  return url
+}
+
 export default function CookPage() {
+  // ... (keeping lines 75-194 same) ...
   const searchParams = useSearchParams()
   const router = useRouter()
   const recipeId = searchParams.get("recipe")
   const [recipe, setRecipe] = useState<any>(null)
   const [currentStep, setCurrentStep] = useState(0)
-  const [isPlaying, setIsPlaying] = useState(false)
+  const [isPlaying, setIsPlaying] = useState(true)
   const [timers, setTimers] = useState<
     Array<{ id: number; name: string; duration: number; remaining: number; isRunning: boolean }>
   >([])
@@ -59,7 +142,15 @@ export default function CookPage() {
   const { addToHistory, toggleFavorite, isFavorite } = useUserState()
   const hasSpokenRef = useRef<number | null>(null)
 
+  // New safety guard to prevent stale commands
+  const [isReady, setIsReady] = useState(false)
+
   // Load recipe based on query param
+  useEffect(() => {
+    // Enable command processing after 1s
+    const t = setTimeout(() => setIsReady(true), 1000)
+    return () => clearTimeout(t)
+  }, [])
   useEffect(() => {
     if (!recipeId) return
 
@@ -72,7 +163,6 @@ export default function CookPage() {
         }
 
         const data = await res.json()
-        console.log("Loaded recipe:", data)
         setRecipe(data)
         if (data && data.id) {
           addToHistory(data.id)
@@ -85,8 +175,8 @@ export default function CookPage() {
     }
 
     loadRecipe()
+    loadRecipe()
   }, [recipeId])
-
 
   // Use real voice hook
   const {
@@ -101,7 +191,27 @@ export default function CookPage() {
     stopSpeaking,
     setLanguage,
     isSupported: voiceSupported,
+    clearTranscript,
+    currentVoice,
+    availableVoices,
+    setVoicePreference,
   } = useVoice()
+
+  // Clear any stale state on mount
+  useEffect(() => {
+    // Stop any previous speech immediately
+    stopSpeaking()
+    // Clear transcript
+    clearTranscript()
+
+    // Also ensure we reset the spoken ref
+    hasSpokenRef.current = null
+
+    // Cleanup on unmount
+    return () => {
+      stopSpeaking()
+    }
+  }, [stopSpeaking, clearTranscript])
 
   const steps = recipe?.steps ?? []
   const step = steps[currentStep]
@@ -117,7 +227,11 @@ export default function CookPage() {
             const newRemaining = timer.remaining - 1
             // Alert when timer completes
             if (newRemaining === 0) {
-              speak(language === "hi-IN" ? `${timer.name} पूरा हो गया!` : `${timer.name} is complete!`)
+              const isReminder = !timer.name.startsWith("Timer ")
+              const message = language === "hi-IN"
+                ? (isReminder ? `"${timer.name}" ka samay ho gaya hai!` : `${timer.name} pura ho gaya!`)
+                : (isReminder ? `Reminder for "${timer.name}" is up!` : `${timer.name} is complete!`)
+              speak(message)
             }
             return { ...timer, remaining: newRemaining }
           }
@@ -158,12 +272,12 @@ export default function CookPage() {
     if (!step) return
     stopSpeaking() // Clean slate for repeat
 
-    const text =
-      language === "hi-IN"
-        ? (step.instructionHindi || step.instruction)
-        : step.instruction
+    const { text, isFallback } = getStepInstruction(step, language)
 
-    if (text) speak(text)
+    if (text) {
+      // Use English voice logic if falling back
+      speak(text, isFallback ? "en-IN" : undefined)
+    }
 
   }, [speak, step, language, stopSpeaking])
 
@@ -177,19 +291,21 @@ export default function CookPage() {
     // Check if we've already spoken this step
     if (hasSpokenRef.current === currentStep) return
 
-    const text =
-      language === "hi-IN"
-        ? (step.instructionHindi || step.instruction)
-        : step.instruction
+    const { text, isFallback } = getStepInstruction(step, language)
 
     if (text) {
-      speak(text)
+      // Use English voice for fallback check
+      speak(text, isFallback ? "en-IN" : undefined)
       hasSpokenRef.current = currentStep
     }
 
   }, [currentStep, isPlaying, isSpeaking, language, step, speak])
 
-  // Removed redundant useEffect reseting hasSpokenRef
+  // Reset spoken state when language changes so it repeats in new language
+  useEffect(() => {
+    hasSpokenRef.current = null
+    // If we are currently playing, this will automatically trigger the main useEffect to speak again in the new language
+  }, [language])
 
   // Auto move to next step after speech ends
   useEffect(() => {
@@ -212,81 +328,19 @@ export default function CookPage() {
 
   }, [isSpeaking, isPlaying, currentStep, stepsLength])
 
-  // Process voice commands
-  useEffect(() => {
-    if (transcript) {
-      const command = parseVoiceCommand(transcript)
-      if (command) {
-        switch (command.action) {
-          case "NEXT_STEP":
-            nextStep()
-            break
-          case "PREV_STEP":
-            prevStep()
-            break
-          case "REPEAT":
-            repeatStep()
-            break
-          case "SET_TIMER":
-            addTimer(command.params.minutes as number)
-            break
-          case "ADD_WHISTLES":
-            for (let i = 0; i < (command.params.count as number); i++) {
-              addWhistle()
-            }
-            break
-          case "GO_TO_STEP":
-            goToStep(command.params.step as number)
-            break
-          case "STOP":
-            setIsPlaying(false)
-            stopSpeaking()
-            break
-          case "PLAY":
-            setIsPlaying(true)
-            break
-          case "SEARCH_RECIPE":
-            router.push(`/recipes?search=${encodeURIComponent(command.params.query as string)}`)
-            break
-          case "SEARCH_BY_INGREDIENTS":
-            router.push(`/recipes?ingredients=${encodeURIComponent(command.params.ingredients as string)}`)
-            break
-          case "SAVE_RECIPE":
-            if (recipe) {
-              toggleFavorite(recipe.id)
-              speak(language === "hi-IN"
-                ? (isFavorite(recipe.id) ? "रेसिपी हटा दी गई" : "रेसिपी सेव कर ली गई")
-                : (isFavorite(recipe.id) ? "Recipe removed from favorites" : "Recipe saved to favorites"))
-            }
-            break
-          case "SHARE_RECIPE":
-            if (navigator.share) {
-              navigator.share({
-                title: recipe.name,
-                text: `Check out this recipe for ${recipe.name} on TalkToTaste!`,
-                url: window.location.href,
-              }).catch(console.error);
-            } else {
-              navigator.clipboard.writeText(window.location.href);
-              speak(language === "hi-IN" ? "लिंक कॉपी हो गया" : "Link copied to clipboard")
-            }
-            break
-        }
-      }
-    }
-  }, [transcript, nextStep, prevStep, repeatStep, goToStep, stopSpeaking, router, toggleFavorite, isFavorite, language, recipe, speak])
-
   // Timer functions
-  const addTimer = (minutes: number) => {
+  const addTimer = (minutes: number, name?: string) => {
     const newTimer = {
       id: Date.now(),
-      name: `Timer ${timers.length + 1}`,
+      name: name || `Timer ${timers.length + 1}`,
       duration: minutes * 60,
       remaining: minutes * 60,
       isRunning: true,
     }
     setTimers((prev) => [...prev, newTimer])
-    speak(language === "hi-IN" ? `${minutes} मिनट का टाइमर सेट हो गया` : `Timer set for ${minutes} minutes`)
+    speak(language === "hi-IN"
+      ? `${minutes} मिनट का ${name ? 'रिमाइंडर' : 'टाइमर'} सेट हो गया`
+      : `${name ? 'Reminder' : 'Timer'} set for ${minutes} minutes`)
     setShowTimerModal(false)
   }
 
@@ -316,6 +370,98 @@ export default function CookPage() {
       )
     }
   }
+
+  // Process voice commands
+  const lastCommandTimeRef = useRef<number>(0)
+
+  useEffect(() => {
+    if (!isReady) return // BLOCK COMMANDS UNTIL READY
+
+    if (transcript) {
+      // Debounce: Ignore commands if processing (or processed recently)
+      const now = Date.now()
+      if (now - lastCommandTimeRef.current < 1500) {
+        return
+      }
+
+      const match = processVoiceCommand(transcript)
+      if (match.confidence > 0.6) {
+        let commandHandled = false;
+
+        // Log match for debugging
+        console.log("Processing Voice Command:", match.intent, transcript)
+
+        switch (match.intent) {
+          case "STEP_NEXT":
+            nextStep()
+            commandHandled = true;
+            break
+          case "STEP_PREV":
+            prevStep()
+            commandHandled = true;
+            break
+          case "STEP_REPEAT":
+            repeatStep()
+            commandHandled = true;
+            break
+          case "TIMER_SET":
+            const timerMatch = transcript.match(/\d+/)
+            const duration = timerMatch ? parseInt(timerMatch[0]) : 5
+            addTimer(duration)
+            commandHandled = true;
+            break
+          case "WHISTLE_ADD":
+            const whistleMatch = transcript.match(/(\d+)\s*(?:whistle|seeti|ct)/i)
+            const count = whistleMatch ? parseInt(whistleMatch[1]) : 1
+            for (let i = 0; i < count; i++) {
+              addWhistle()
+            }
+            commandHandled = true;
+            break
+          case "COOK_START":
+            setIsPlaying(true)
+            commandHandled = true;
+            break
+          case "GO_TO_STEP":
+            // Support both "step 5" and "step number 5"
+            const stepMatch = transcript.match(/step\s*(?:number\s*)?(\d+)/i) ||
+              transcript.match(/स्टेप\s*(\d+)/i) ||
+              transcript.match(/चरण\s*(\d+)/i)
+            if (stepMatch) {
+              goToStep(parseInt(stepMatch[1]) - 1) // 1-based to 0-based
+            }
+            commandHandled = true;
+            break
+          case "STOP":
+            setIsPlaying(false)
+            stopSpeaking()
+            commandHandled = true;
+            break
+          case "PLAY":
+            setIsPlaying(true)
+            commandHandled = true;
+            break
+          case "UNKNOWN":
+            if (transcript.match(/stop|ruko|pause|रुको/i)) {
+              setIsPlaying(false)
+              stopSpeaking()
+              commandHandled = true
+            } else if (transcript.match(/play|continue|shuru|chalu|शुरू/i)) {
+              setIsPlaying(true)
+              commandHandled = true
+            }
+            break
+        }
+
+        if (commandHandled) {
+          lastCommandTimeRef.current = now
+          clearTranscript()
+        }
+      }
+    }
+  }, [transcript, nextStep, prevStep, repeatStep, goToStep, stopSpeaking, setIsPlaying, language, recipe, clearTranscript, isReady])
+
+
 
   // Format time
   const formatTime = (seconds: number) => {
@@ -462,21 +608,21 @@ export default function CookPage() {
                 initial={{ opacity: 0, x: 50 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -50 }}
-                className="bg-card rounded-3xl border border-border p-8 shadow-lg"
+                className="bg-card rounded-3xl border border-border p-5 sm:p-6 md:p-8 shadow-lg"
               >
                 {/* Step header */}
-                <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center justify-between mb-4 sm:mb-6">
                   <div className="flex items-center gap-3">
                     <motion.div
                       animate={{ scale: isPlaying ? [1, 1.1, 1] : 1 }}
                       transition={{ repeat: isPlaying ? Number.POSITIVE_INFINITY : 0, duration: 1.5 }}
-                      className="w-14 h-14 rounded-2xl bg-primary flex items-center justify-center"
+                      className="w-10 h-10 sm:w-14 sm:h-14 rounded-2xl bg-primary flex items-center justify-center shrink-0"
                     >
-                      <span className="text-2xl font-bold text-primary-foreground">{step.step}</span>
+                      <span className="text-lg sm:text-2xl font-bold text-primary-foreground">{step.step}</span>
                     </motion.div>
                     <div>
-                      <p className="text-sm text-muted-foreground">Step {step.step}</p>
-                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <p className="text-xs sm:text-sm text-muted-foreground">{language === "hi-IN" ? "चरण" : "Step"} {step.step}</p>
+                      <div className="flex items-center gap-1 sm:gap-2 text-[10px] sm:text-xs text-muted-foreground">
                         <Clock className="w-3 h-3" />
                         <span>{step.duration}</span>
                       </div>
@@ -489,17 +635,24 @@ export default function CookPage() {
                       const mins = Number.parseInt(step.duration) || 5
                       addTimer(mins)
                     }}
-                    className="rounded-full gap-2"
+                    className="rounded-full gap-1 sm:gap-2 text-xs h-8 px-3"
                   >
-                    <Timer className="w-4 h-4" />
-                    {language === "hi-IN" ? "टाइमर सेट करें" : "Set Timer"}
+                    <Timer className="w-3 h-3 sm:w-4 sm:h-4" />
+                    {language === "hi-IN" ? "टाइमर" : "Timer"}
                   </Button>
                 </div>
 
                 {/* Instruction */}
-                <p className="text-xl leading-relaxed text-foreground mb-6">
+                <p className="text-lg sm:text-xl leading-relaxed text-foreground mb-4 sm:mb-6">
                   {language === "hi-IN" ? step.instructionHindi : step.instruction}
                 </p>
+
+                {/* Debug/Fallback Warning */}
+                {language === "hi-IN" && (!step.instructionHindi || step.instructionHindi.length < 5) && (
+                  <p className="text-xs text-amber-500 mb-4 italic">
+                    (Hindi translation missing for this step. Playing in English.)
+                  </p>
+                )}
 
                 {/* Tips */}
                 {(step.tips || step.tipsHindi) && (
@@ -569,8 +722,8 @@ export default function CookPage() {
                   onClick={() => {
                     setIsPlaying(!isPlaying)
                     if (!isPlaying) {
-                      const text = language === "hi-IN" ? step.instructionHindi : step.instruction
-                      speak(text)
+                      const { text, isFallback } = getStepInstruction(step, language)
+                      if (text) speak(text, isFallback ? "en-IN" : undefined)
                     } else {
                       stopSpeaking()
                     }
@@ -657,6 +810,53 @@ export default function CookPage() {
                     </motion.div>
                   )}
                 </AnimatePresence>
+
+                {/* Manual Voice Selector (Settings) */}
+                <div className="mt-6 border-t border-border pt-4">
+                  <p className="text-xs text-muted-foreground mb-2">Voice Settings</p>
+                  <select
+                    className="w-full text-xs p-2 rounded-lg bg-background border border-border"
+                    value={currentVoice?.voiceURI || ""}
+                    onChange={(e) => {
+                      const uri = e.target.value
+                      if (uri) {
+                        // We need to cast or ignore type check for the setVoicePreference which we know exists now
+                        // @ts-ignore
+                        setVoicePreference(uri)
+                        // Also trigger a test speak
+                        // speak("Voice changed", "en-IN")
+                      }
+                    }}
+                  >
+                    <option value="">Auto-Detect Voice</option>
+                    {/* Filter voices to show relevant ones + any fallback */}
+                    {availableVoices
+                      .filter(v => v.lang.includes(language === "hi-IN" ? "hi" : "en"))
+                      .map(v => (
+                        <option key={v.voiceURI} value={v.voiceURI}>
+                          {v.name} ({v.lang})
+                        </option>
+                      ))}
+                    {/* Show others in a separate group if needed, or just all useful ones */}
+                    <optgroup label="All Voices">
+                      {availableVoices
+                        .filter(v => !v.lang.includes(language === "hi-IN" ? "hi" : "en"))
+                        .map(v => (
+                          <option key={v.voiceURI} value={v.voiceURI}>
+                            {v.name} ({v.lang})
+                          </option>
+                        ))}
+                    </optgroup>
+                  </select>
+                </div>
+
+              </div>
+
+              {/* Debug: Active Voice */}
+              <div className="text-center mt-4">
+                <p className="text-[10px] text-muted-foreground bg-secondary/30 rounded-full px-3 py-1 inline-block">
+                  🎙️ Active Voice: {currentVoice ? `${currentVoice.name} (${currentVoice.lang})` : "Browser Default"}
+                </p>
               </div>
             </div>
 
@@ -976,11 +1176,12 @@ export default function CookPage() {
                 <X className="w-6 h-6" />
               </Button>
               <iframe
-                src={recipe.youtubeUrl}
+                src={getYoutubeEmbedUrl(recipe.youtubeUrl)}
                 title="Recipe Video"
                 className="w-full h-full"
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                 allowFullScreen
+                referrerPolicy="no-referrer-when-downgrade"
               />
             </motion.div>
           </motion.div>

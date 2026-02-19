@@ -63,6 +63,41 @@ export function parseVoiceCommand(transcript: string): {
     return { action: "SET_TIMER", params: { minutes: Number.parseInt(timerMatch[1]) } }
   }
 
+  // Reminder commands (Bilingual)
+  // English: "Remind me to flip pancake in 5 minutes"
+  const reminderMatchEn = text.match(/remind me to (.+) (?:in|after) (\d+)\s*(?:minute|min|mins)/i)
+  if (reminderMatchEn) {
+    return {
+      action: "SET_REMINDER",
+      params: {
+        label: reminderMatchEn[1].trim(),
+        minutes: Number.parseInt(reminderMatchEn[2])
+      }
+    }
+  }
+
+  // Hindi: "Mujhe yaad dilana gas band karna 5 minute baad"
+  // Hindi: "5 minute baad gas band karna yaad dilana"
+  const reminderMatchHi =
+    text.match(/mujhe yaad dilana (.+) (\d+)\s*(?:minute|min|mins|मिनट)\s*baad/i) ||
+    text.match(/(\d+)\s*(?:minute|min|mins|मिनट)\s*baad (.+) yaad dilana/i) ||
+    text.match(/(.+) ka reminder set (?:karo|karna) (\d+)\s*(?:minute|min|mins|मिनट)\s*baad/i)
+
+  if (reminderMatchHi) {
+    // For the second pattern (time first), the groups are inverted
+    const isTimeFirst = !Number.isNaN(Number.parseInt(reminderMatchHi[1]))
+    const minutes = isTimeFirst ? Number.parseInt(reminderMatchHi[1]) : Number.parseInt(reminderMatchHi[2])
+    const label = isTimeFirst ? reminderMatchHi[2] : reminderMatchHi[1]
+
+    return {
+      action: "SET_REMINDER",
+      params: {
+        label: label.trim(),
+        minutes: minutes
+      }
+    }
+  }
+
   // Whistle commands
   const whistleMatch = text.match(/(\d+)\s*(?:whistle|seti|सीटी)/i)
   if (whistleMatch) {
