@@ -1,6 +1,5 @@
-﻿export const dynamic = "force-dynamic";
+export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server"
-export const dynamic = 'force-dynamic'
 import { recipes as staticRecipes } from "@/lib/recipes-data"
 import connectDB from "@/lib/mongodb"
 import Recipe from "@/lib/models/Recipe"

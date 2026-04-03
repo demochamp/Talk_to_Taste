@@ -590,7 +590,7 @@ export default function CookPage() {
               </Button>
             </Link>
             <div className="min-w-0 flex-1 ml-2">
-              <h1 className="font-bold text-slate-800 truncate text-sm sm:text-base leading-tight">
+              <h1 className="font-bold text-foreground truncate text-sm sm:text-base leading-tight">
                 {language === "hi-IN" ? recipe.nameHindi : recipe.name}
               </h1>
               <p className="text-[10px] sm:text-xs text-muted-foreground font-medium">
@@ -736,7 +736,7 @@ export default function CookPage() {
                           {language === "hi-IN" ? "सुन रहा हूँ" : "Listening"}
                         </p>
                         {transcript && (
-                          <p className="text-base sm:text-lg font-bold text-slate-800 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                          <p className="text-base sm:text-lg font-bold text-foreground animate-in fade-in slide-in-from-bottom-2 duration-300">
                             "{transcript}"
                           </p>
                         )}
@@ -752,10 +752,10 @@ export default function CookPage() {
                 initial={{ opacity: 0, x: 50 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -50 }}
-                className="bg-white rounded-[1.5rem] sm:rounded-[2rem] border border-orange-100/50 p-4 sm:p-6 md:p-10 shadow-xl shadow-orange-900/5 relative overflow-hidden"
+                className="bg-card rounded-[1.5rem] sm:rounded-[2rem] border border-border p-4 sm:p-6 md:p-10 shadow-xl shadow-orange-900/5 dark:shadow-none relative overflow-hidden"
               >
                 {/* Decorative background for the step card */}
-                <div className="absolute top-0 right-0 w-32 h-32 bg-orange-50 rounded-full blur-3xl -mr-16 -mt-16 opacity-50" />
+                <div className="absolute top-0 right-0 w-32 h-32 bg-orange-500/10 dark:bg-orange-500/5 rounded-full blur-3xl -mr-16 -mt-16 opacity-50 dark:opacity-20" />
                 {/* Step header */}
                 <div className="flex items-center justify-between mb-4 sm:mb-6">
                   <div className="flex items-center gap-3">

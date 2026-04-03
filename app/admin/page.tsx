@@ -81,22 +81,22 @@ export default function AdminPage() {
 
     if (!isLoaded || !user || user.role !== "admin") return null
 
-    const filteredUsers = users.filter(u => 
-        (u.name || "").toLowerCase().includes(searchTerm.toLowerCase()) || 
+    const filteredUsers = users.filter(u =>
+        (u.name || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
         (u.email || "").toLowerCase().includes(searchTerm.toLowerCase())
     )
 
-    const filteredRecipes = recipes.filter(r => 
-        (r.name || "").toLowerCase().includes(searchTerm.toLowerCase()) || 
+    const filteredRecipes = recipes.filter(r =>
+        (r.name || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
         (r.cuisine || "").toLowerCase().includes(searchTerm.toLowerCase())
     )
 
     return (
         <div className="min-h-screen bg-[#FFF9F5]">
             <Navigation />
-            
+
             <div className="container mx-auto px-6 pt-32 pb-12 text-center md:text-left">
-                <motion.div 
+                <motion.div
                     initial={{ opacity: 0, y: -20 }}
                     animate={{ opacity: 1, y: 0 }}
                     className="mb-8"
@@ -104,18 +104,18 @@ export default function AdminPage() {
                     <h1 className="text-3xl md:text-4xl font-serif text-[#F27438] font-bold mb-6">
                         Admin Dashboard
                     </h1>
-                    
+
                     <div className="flex justify-center md:justify-start mb-12">
                         <Tabs value={activeTab} onValueChange={setActiveTab} className="inline-block">
                             <TabsList className="bg-white/80 p-1 rounded-full border border-orange-100 shadow-sm flex items-center h-auto">
-                                <TabsTrigger 
-                                    value="users" 
+                                <TabsTrigger
+                                    value="users"
                                     className="data-[state=active]:bg-[#FEF0E6] data-[state=active]:text-[#F27438] px-6 py-2.5 rounded-full transition-all flex items-center gap-2 font-semibold text-slate-500 text-sm"
                                 >
                                     <Users className="w-4 h-4" /> User Management
                                 </TabsTrigger>
-                                <TabsTrigger 
-                                    value="manage" 
+                                <TabsTrigger
+                                    value="manage"
                                     className="data-[state=active]:bg-[#FEF0E6] data-[state=active]:text-[#F27438] px-6 py-2.5 rounded-full transition-all flex items-center gap-2 font-semibold text-slate-500 text-sm"
                                 >
                                     <ChefHat className="w-4 h-4" /> Manage Recipes
@@ -128,7 +128,7 @@ export default function AdminPage() {
                 <div className="max-w-6xl mx-auto md:mx-0">
                     <AnimatePresence mode="wait">
                         {activeTab === "users" ? (
-                            <motion.div 
+                            <motion.div
                                 key="users-tab"
                                 initial={{ opacity: 0 }}
                                 animate={{ opacity: 1 }}
@@ -141,7 +141,7 @@ export default function AdminPage() {
                                         Total: {users.length}
                                     </div>
                                 </div>
-                                
+
                                 <div className="overflow-x-auto -mx-2 sm:mx-0 pb-4">
                                     <table className="w-full text-left min-w-[700px]">
                                         <thead>
@@ -168,18 +168,17 @@ export default function AdminPage() {
                                                     </td>
                                                     <td className="py-4 px-4 text-slate-500 font-medium text-sm">{u.email}</td>
                                                     <td className="py-4 px-4">
-                                                        <span className={`px-3 py-0.5 rounded-full text-[10px] font-black uppercase tracking-tighter shadow-sm ${
-                                                            u.role === 'admin' ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-600'
-                                                        }`}>
+                                                        <span className={`px-3 py-0.5 rounded-full text-[10px] font-black uppercase tracking-tighter shadow-sm ${u.role === 'admin' ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-600'
+                                                            }`}>
                                                             {u.role || 'user'}
                                                         </span>
                                                     </td>
                                                     <td className="py-4 px-4 text-right">
                                                         {u.role !== 'admin' && (
-                                                            <Button 
-                                                                variant="ghost" 
-                                                                size="icon" 
-                                                                onClick={() => handleDeleteUser(u._id)} 
+                                                            <Button
+                                                                variant="ghost"
+                                                                size="icon"
+                                                                onClick={() => handleDeleteUser(u._id)}
                                                                 className="text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-full transition-all"
                                                             >
                                                                 <Trash className="w-5 h-5" />
@@ -195,7 +194,7 @@ export default function AdminPage() {
                                 </div>
                             </motion.div>
                         ) : (
-                            <motion.div 
+                            <motion.div
                                 key="recipes-tab"
                                 initial={{ opacity: 0 }}
                                 animate={{ opacity: 1 }}
