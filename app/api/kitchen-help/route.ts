@@ -1,3 +1,4 @@
+﻿export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server"
 
 const SYSTEM_PROMPT = `You are a "High-End Executive Chef" and the Kitchen SOS Assistant for Talk to Taste. 
@@ -76,7 +77,7 @@ export async function POST(req: Request) {
                         const data = await fetchResponse.json();
 
                         if (!fetchResponse.ok) {
-                            console.error(`[Kitchen SOS] ❌ API ERROR (${fetchResponse.status}):`, data);
+                            console.error(`[Kitchen SOS] âŒ API ERROR (${fetchResponse.status}):`, data);
                             if (fetchResponse.status === 429) continue; // Try next key
                         }
 
@@ -84,13 +85,13 @@ export async function POST(req: Request) {
                             const candidate = data.candidates[0];
                             geminiResponseText = candidate.content?.parts?.[0]?.text;
                             if (geminiResponseText) {
-                                console.log(`[Kitchen SOS] ✅ Success with Account ${i + 1} using ${modelName}`);
+                                console.log(`[Kitchen SOS] âœ… Success with Account ${i + 1} using ${modelName}`);
                                 break outerTierLoop; 
                             }
                         }
 
                     } catch (err: any) {
-                        console.error(`[Kitchen SOS] ❌ Critical failure on Account ${i + 1} with ${modelName}:`, err.message);
+                        console.error(`[Kitchen SOS] âŒ Critical failure on Account ${i + 1} with ${modelName}:`, err.message);
                     }
                 }
             }
@@ -104,10 +105,10 @@ export async function POST(req: Request) {
         const isHindi = language === "hi-IN";
         const fallbackAnswer = currentRecipe 
             ? (isHindi 
-                ? `माफ़ कीजिये, ${currentRecipe} के लिए अभी एक्सपर्ट टिप्स नहीं मिल पा रहे हैं। कृपया कुछ देर में फिर से पूछें।` 
+                ? `à¤®à¤¾à¤«à¤¼ à¤•à¥€à¤œà¤¿à¤¯à¥‡, ${currentRecipe} à¤•à¥‡ à¤²à¤¿à¤ à¤…à¤­à¥€ à¤à¤•à¥à¤¸à¤ªà¤°à¥à¤Ÿ à¤Ÿà¤¿à¤ªà¥à¤¸ à¤¨à¤¹à¥€à¤‚ à¤®à¤¿à¤² à¤ªà¤¾ à¤°à¤¹à¥‡ à¤¹à¥ˆà¤‚à¥¤ à¤•à¥ƒà¤ªà¤¯à¤¾ à¤•à¥à¤› à¤¦à¥‡à¤° à¤®à¥‡à¤‚ à¤«à¤¿à¤° à¤¸à¥‡ à¤ªà¥‚à¤›à¥‡à¤‚à¥¤` 
                 : `Forgive me, I cannot find the expert tips for your ${currentRecipe} right now. Please try again in a moment.`)
             : (isHindi
-                ? `मैं अभी आपकी मदद करने के लिए तैयार हूँ, लेकिन कृपया मुझे बताएं कि आप कौन सी रेसिपी बना रहे हैं? इससे मैं आपको बेहतर सलाह दे पाऊँगा।`
+                ? `à¤®à¥ˆà¤‚ à¤…à¤­à¥€ à¤†à¤ªà¤•à¥€ à¤®à¤¦à¤¦ à¤•à¤°à¤¨à¥‡ à¤•à¥‡ à¤²à¤¿à¤ à¤¤à¥ˆà¤¯à¤¾à¤° à¤¹à¥‚à¤, à¤²à¥‡à¤•à¤¿à¤¨ à¤•à¥ƒà¤ªà¤¯à¤¾ à¤®à¥à¤à¥‡ à¤¬à¤¤à¤¾à¤à¤‚ à¤•à¤¿ à¤†à¤ª à¤•à¥Œà¤¨ à¤¸à¥€ à¤°à¥‡à¤¸à¤¿à¤ªà¥€ à¤¬à¤¨à¤¾ à¤°à¤¹à¥‡ à¤¹à¥ˆà¤‚? à¤‡à¤¸à¤¸à¥‡ à¤®à¥ˆà¤‚ à¤†à¤ªà¤•à¥‹ à¤¬à¥‡à¤¹à¤¤à¤° à¤¸à¤²à¤¾à¤¹ à¤¦à¥‡ à¤ªà¤¾à¤Šà¤à¤—à¤¾à¥¤`
                 : `I am ready to help, but please tell me which recipe are you making? This will help me give you the best advice.`);
 
         return NextResponse.json({ 

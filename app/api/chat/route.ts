@@ -1,3 +1,4 @@
+﻿export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server"
 
 // The system prompt injecting the core knowledge identity for the Chat Assistant
@@ -28,35 +29,35 @@ Your primary purpose is to be the ultimate guide for users who ask:
    You *MUST* inform users they can use these exact commands in either Pure English or Pure Hindi script:
    
   **A. General Navigation**:
-   - "Go to Home" / "मुख्य पृष्ठ"
-   - "Go to Recipes" / "रेसिपी दिखाओ"
-   - "Open it" / "ओपन"
-   - "Go to Profile" / "प्रोफाइल"
-   - "Go to Admin" / "एडमिन पेज"
-   - "Go to Features" / "विशेषताएं"
-   - "How it works" / "यह कैसे काम करता है"
+   - "Go to Home" / "à¤®à¥à¤–à¥à¤¯ à¤ªà¥ƒà¤·à¥à¤ "
+   - "Go to Recipes" / "à¤°à¥‡à¤¸à¤¿à¤ªà¥€ à¤¦à¤¿à¤–à¤¾à¤“"
+   - "Open it" / "à¤“à¤ªà¤¨"
+   - "Go to Profile" / "à¤ªà¥à¤°à¥‹à¤«à¤¾à¤‡à¤²"
+   - "Go to Admin" / "à¤à¤¡à¤®à¤¿à¤¨ à¤ªà¥‡à¤œ"
+   - "Go to Features" / "à¤µà¤¿à¤¶à¥‡à¤·à¤¤à¤¾à¤à¤‚"
+   - "How it works" / "à¤¯à¤¹ à¤•à¥ˆà¤¸à¥‡ à¤•à¤¾à¤® à¤•à¤°à¤¤à¤¾ à¤¹à¥ˆ"
    
    **B. Device & App Settings**:
-   - "Switch to Dark Mode" / "डार्क मोड लगाओ"
-   - "Switch to Light Mode" / "लाइट मोड लगाओ"
-   - "Speak in Hindi" / "हिंदी में बोलो"
-   - "Speak in English" / "अंग्रेजी में बोलो"
+   - "Switch to Dark Mode" / "à¤¡à¤¾à¤°à¥à¤• à¤®à¥‹à¤¡ à¤²à¤—à¤¾à¤“"
+   - "Switch to Light Mode" / "à¤²à¤¾à¤‡à¤Ÿ à¤®à¥‹à¤¡ à¤²à¤—à¤¾à¤“"
+   - "Speak in Hindi" / "à¤¹à¤¿à¤‚à¤¦à¥€ à¤®à¥‡à¤‚ à¤¬à¥‹à¤²à¥‹"
+   - "Speak in English" / "à¤…à¤‚à¤—à¥à¤°à¥‡à¤œà¥€ à¤®à¥‡à¤‚ à¤¬à¥‹à¤²à¥‹"
    
    **C. Searching & Finding Food**:
-   - "Find [Dish] recipe" / "[Dish] की रेसिपी ढूंढो"
-   - "Recipes with Rice / Egg / Gobi" / "चावल / अंडा / गोभी वाली रेसिपी"
-   - "Filter with [Ingredient]" / "[Ingredient] की रेसिपी"
+   - "Find [Dish] recipe" / "[Dish] à¤•à¥€ à¤°à¥‡à¤¸à¤¿à¤ªà¥€ à¤¢à¥‚à¤‚à¤¢à¥‹"
+   - "Recipes with Rice / Egg / Gobi" / "à¤šà¤¾à¤µà¤² / à¤…à¤‚à¤¡à¤¾ / à¤—à¥‹à¤­à¥€ à¤µà¤¾à¤²à¥€ à¤°à¥‡à¤¸à¤¿à¤ªà¥€"
+   - "Filter with [Ingredient]" / "[Ingredient] à¤•à¥€ à¤°à¥‡à¤¸à¤¿à¤ªà¥€"
    
    **D. Cooking Control (Only on Cook Page)**:
-   - "Start cooking" / "पकाना शुरू करो"
-   - "Next step" / "अगला स्टेप"
-   - "Previous step" / "पिछला स्टेप"
-   - "Repeat step" / "वापस"
-   - "Set timer for [X] minutes" / "[X] मिनट का टाइमर"
-   - "Add [X] whistles" / "[X] सीटी हो गई"
-   - "Go to Step 5" / "स्टेप 5 पर जाओ"
-   - "Stop" / "रुको"
-   - "Play" / "चलाओ"
+   - "Start cooking" / "à¤ªà¤•à¤¾à¤¨à¤¾ à¤¶à¥à¤°à¥‚ à¤•à¤°à¥‹"
+   - "Next step" / "à¤…à¤—à¤²à¤¾ à¤¸à¥à¤Ÿà¥‡à¤ª"
+   - "Previous step" / "à¤ªà¤¿à¤›à¤²à¤¾ à¤¸à¥à¤Ÿà¥‡à¤ª"
+   - "Repeat step" / "à¤µà¤¾à¤ªà¤¸"
+   - "Set timer for [X] minutes" / "[X] à¤®à¤¿à¤¨à¤Ÿ à¤•à¤¾ à¤Ÿà¤¾à¤‡à¤®à¤°"
+   - "Add [X] whistles" / "[X] à¤¸à¥€à¤Ÿà¥€ à¤¹à¥‹ à¤—à¤ˆ"
+   - "Go to Step 5" / "à¤¸à¥à¤Ÿà¥‡à¤ª 5 à¤ªà¤° à¤œà¤¾à¤“"
+   - "Stop" / "à¤°à¥à¤•à¥‹"
+   - "Play" / "à¤šà¤²à¤¾à¤“"
 
 ### How to Respond:
 - Be incredibly helpful, concise, and structured. Use short paragraphs.
@@ -153,21 +154,21 @@ export async function POST(req: NextRequest) {
                             if (geminiResponseText) {
                                 successfulModel = modelName;
                                 successfulKeyIndex = i + 1;
-                                console.log(`[Chat API] ✅ Success with Account ${successfulKeyIndex} using ${modelName}`);
+                                console.log(`[Chat API] âœ… Success with Account ${successfulKeyIndex} using ${modelName}`);
                                 break outerTierLoop; // COMPLETE SUCCESS! Exit all loops
                             }
                         }
                         
                         // Handle failures
                         if (fetchResponse.status === 429) {
-                            console.warn(`[Chat API] ⚠️ QUOTA EXCEEDED for Account ${i + 1} (${modelName}). Trying next key...`);
+                            console.warn(`[Chat API] âš ï¸ QUOTA EXCEEDED for Account ${i + 1} (${modelName}). Trying next key...`);
                         } else {
-                            console.warn(`[Chat API] ⚠️ Account ${i + 1} (${modelName}) returned status ${fetchResponse.status}.`);
+                            console.warn(`[Chat API] âš ï¸ Account ${i + 1} (${modelName}) returned status ${fetchResponse.status}.`);
                             if (data.error) console.warn("Error Detail:", data.error.message);
                         }
 
                     } catch (err: any) {
-                        console.error(`[Chat API] ❌ Critical failure on Account ${i + 1} with ${modelName}:`, err.message);
+                        console.error(`[Chat API] âŒ Critical failure on Account ${i + 1} with ${modelName}:`, err.message);
                         // Continue to next key or model
                     }
                 }
@@ -185,7 +186,7 @@ export async function POST(req: NextRequest) {
         // --- 2. FALLBACK TO GROQ (Secondary) ---
         if (process.env.GROQ_API_KEY) {
             try {
-                console.log("🚀 [Chat API] ALL Gemini models exhausted. Switching to Groq Final Fallback...");
+                console.log("ðŸš€ [Chat API] ALL Gemini models exhausted. Switching to Groq Final Fallback...");
                 const groqUrl = "https://api.groq.com/openai/v1/chat/completions";
                 
                 // Map history for OpenAI/Groq format

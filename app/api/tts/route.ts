@@ -1,3 +1,4 @@
+﻿export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server"
 
 // The specific "Waterfall" list of models to try
@@ -135,7 +136,7 @@ export async function POST(req: NextRequest) {
                                 mimeType = 'audio/wav';
                             }
 
-                            console.log(`[TTS] ✅ Success: ${modelName} | Acc: ${i + 1}`);
+                            console.log(`[TTS] âœ… Success: ${modelName} | Acc: ${i + 1}`);
                             return new NextResponse(audioBuffer, {
                                 status: 200,
                                 headers: {
@@ -146,7 +147,7 @@ export async function POST(req: NextRequest) {
                         }
                     } catch (err: any) {
                         const isTimeout = err.name === 'AbortError';
-                        console.warn(`[TTS] ⚠️ Fail: ${modelName} | Acc ${i + 1} | ${isTimeout ? 'TIMEOUT' : err.message}`);
+                        console.warn(`[TTS] âš ï¸ Fail: ${modelName} | Acc ${i + 1} | ${isTimeout ? 'TIMEOUT' : err.message}`);
                         errorLog.push(`${modelName}[${i}]: ${err.message}`);
                         continue; // Try next key/model immediately
                     }

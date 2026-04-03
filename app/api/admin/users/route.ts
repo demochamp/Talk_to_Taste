@@ -1,3 +1,4 @@
+﻿export const dynamic = "force-dynamic";
 import { auth } from "@/auth"
 import clientPromise from "@/lib/db"
 import { NextResponse } from "next/server"

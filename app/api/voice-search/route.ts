@@ -1,3 +1,4 @@
+﻿export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server"
 import Recipe from "@/lib/models/Recipe"
 import connectDB from "@/lib/mongodb"
