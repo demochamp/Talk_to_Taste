@@ -34,12 +34,17 @@ export function VoiceSearch() {
             const command = processVoiceCommand(transcript)
 
             if (command && command.confidence > 0.6) {
-                if (command.intent === "SEARCH_RECIPE") {
-                    router.push(`/recipes?search=${encodeURIComponent(command.params?.value as string)}`)
+                // If it's an explicit open command with a specific recipe found
+                if (command.intent === "OPEN_RECIPE" && command.params?.value) {
+                    router.push(`/cook?recipe=${command.params.value}`)
                     return
                 }
-                if (command.intent === "FILTER_INGREDIENTS") {
-                    router.push(`/recipes?ingredients=${encodeURIComponent(command.params?.value as string)}`)
+
+                // If it's a search intent or an open command without a specific recipe identified yet
+                if (command.intent === "SEARCH_RECIPE" || command.intent === "OPEN_RECIPE") {
+                    // Extract name or use the full transcript if matched by name in processor
+                    const query = (command.params?.value as string) || transcript
+                    router.push(`/recipes?search=${encodeURIComponent(query)}`)
                     return
                 }
             }

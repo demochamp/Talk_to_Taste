@@ -27,30 +27,31 @@ export function LoginForm({ isSubmitting: externalIsSubmitting, setIsSubmitting:
 
     const handleSocialLogin = async (provider: 'google' | 'github') => {
         setIsSubmitting(true);
-        // signIn will redirect by default, so we don't need to manually handle much unless we want to stay on page
-        // For modal, we might want redirect: false? But usually social login requires redirect.
-        // We'll let it redirect to the provider.
-        await signIn(provider, { callbackUrl: '/profile' });
+        setError(null);
+        try {
+            await signIn(provider, { callbackUrl: '/profile' });
+        } catch (err) {
+            setError("Social login failed. Please try again.");
+            setIsSubmitting(false);
+        }
     };
-
-    // Note: Email/Password login is NOT implemented in NextAuth config yet, only Social. 
-    // We will keep the UI but make it strictly clear or disable it, 
-    // OR we can leave it as "coming soon" or just wire it to nothing for now to urge social login as requested.
-    // The user specifically asked for Google and GitHub.
-    // The previous code had a fake email login.
 
     return (
         <div className={`w-full mx-auto ${isModal ? 'p-6' : 'max-w-md bg-white rounded-2xl shadow-2xl p-8 md:p-10 border border-orange-100'}`}>
             {/* Header */}
             <div className="text-center mb-8 animate-fade-in-up">
-                <h1 className={`${isModal ? 'text-2xl' : 'text-4xl'} font-bold text-gray-900 mb-2 animate-color-shift`}>Welcome Back</h1>
-                <p className="text-gray-600 text-sm animate-blur-in" style={{ animationDelay: '0.1s' }}>to TalktoTaste</p>
+                <h1 className={`${isModal ? 'text-2xl' : 'text-4xl'} font-bold text-gray-900 mb-2 animate-color-shift`}>
+                    {mode === 'login' ? 'Welcome Back' : 'Join TalktoTaste'}
+                </h1>
+                <p className="text-gray-600 text-sm animate-blur-in" style={{ animationDelay: '0.1s' }}>
+                    {mode === 'login' ? 'Continue your cooking journey' : 'Start your voice-guided cooking'}
+                </p>
                 <div className="h-1 w-16 bg-gradient-to-r from-orange-500 to-orange-400 mx-auto mt-4 rounded-full animate-shimmer"></div>
             </div>
 
             <div className="space-y-4">
                 {/* Social Login - PRIORITY */}
-                <div className="grid grid-cols-2 gap-3 animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
                     <button
                         onClick={() => handleSocialLogin('google')}
                         disabled={isSubmitting}
@@ -89,18 +90,31 @@ export function LoginForm({ isSubmitting: externalIsSubmitting, setIsSubmitting:
                     setError(null);
 
                     if (mode === 'signup') {
-                        const res = await registerUser(formData);
-                        if (res?.error) {
-                            setError(res.error);
+                        try {
+                            const res = await registerUser(formData);
+                            if (res?.error) {
+                                setError(res.error);
+                                setIsSubmitting(false);
+                            } else {
+                                // Auto-login after successful signup
+                                const loginRes = await signIn('credentials', {
+                                    email: formData.get('email'),
+                                    password: formData.get('password'),
+                                    redirect: false,
+                                });
+
+                                if (loginRes?.error) {
+                                    setError("Account created, but auto-login failed. Please sign in manually.");
+                                    setMode('login');
+                                    setIsSubmitting(false);
+                                } else {
+                                    router.push('/profile');
+                                    if (onSuccess) onSuccess();
+                                }
+                            }
+                        } catch (err) {
+                            setError("Something went wrong during signup.");
                             setIsSubmitting(false);
-                        } else {
-                            // On success, switch to login or auto-login
-                            // For simplicity, just auto-login
-                            await signIn('credentials', {
-                                email: formData.get('email'),
-                                password: formData.get('password'),
-                                callbackUrl: '/profile'
-                            });
                         }
                     } else {
                         try {
@@ -110,14 +124,15 @@ export function LoginForm({ isSubmitting: externalIsSubmitting, setIsSubmitting:
                                 redirect: false,
                             });
                             if (res?.error) {
-                                setError("Invalid email or password");
+                                setError("Invalid email or password. Please check your credentials.");
                                 setIsSubmitting(false);
                             } else {
                                 router.push('/profile');
+                                if (onSuccess) onSuccess();
                             }
                         } catch (e) {
-                            // NextAuth redirects throw errors, so we catch successful redirects here sometimes
                             router.push('/profile');
+                            if (onSuccess) onSuccess();
                         }
                     }
                 }} className="space-y-4 animate-fade-in-up" style={{ animationDelay: '0.4s' }}>
@@ -174,7 +189,10 @@ export function LoginForm({ isSubmitting: externalIsSubmitting, setIsSubmitting:
                     <div className="text-center mt-4">
                         <button
                             type="button"
-                            onClick={() => setMode(mode === 'login' ? 'signup' : 'login')}
+                            onClick={() => {
+                                setMode(mode === 'login' ? 'signup' : 'login');
+                                setError(null);
+                            }}
                             className="text-sm text-orange-600 hover:text-orange-700 font-medium"
                         >
                             {mode === 'login' ? "Don't have an account? Sign up" : "Already have an account? Sign in"}

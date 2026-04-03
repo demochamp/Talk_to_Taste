@@ -42,6 +42,7 @@ import { VoiceProvider } from "@/components/voice-provider"
 import { LanguageSelectorModal } from "@/components/language-selector-modal"
 import { LoginModal } from "@/components/auth/login-modal"
 import { ScrollGate } from "@/components/auth/scroll-gate"
+import { GlobalVoiceControl } from "@/components/global-voice-control"
 
 // ... imports remain the same ...
 
@@ -60,6 +61,7 @@ export default function RootLayout({
                 <LanguageSelectorModal />
                 <LoginModal />
                 <ScrollGate />
+                <GlobalVoiceControl />
                 {children}
               </VoiceProvider>
             </UserProvider>

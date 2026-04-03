@@ -29,7 +29,7 @@ import { useTheme } from "next-themes"
 import { recipes } from "@/lib/recipes-data"
 import Link from "next/link"
 import { useUserState } from "@/hooks/use-user-state"
-import { translations } from "@/lib/translations"
+import { useTranslation, type TranslationKey } from "@/lib/i18n"
 import { useVoice } from "@/hooks/use-voice"
 
 export default function ProfilePage() {
@@ -38,10 +38,10 @@ export default function ProfilePage() {
   const [isEditing, setIsEditing] = useState(false)
 
   const { user, updateName, updateSettings } = useUserState()
-  const { language } = useVoice()
+  const { language, setLanguage } = useVoice()
+  const { t } = useTranslation()
   const [userName, setUserName] = useState(user.name)
-
-  const t = translations[language]
+  const isHindi = language === "hi-IN"
 
   // Sync local name state when user data loads
   useEffect(() => {
@@ -67,10 +67,10 @@ export default function ProfilePage() {
   const streak = 0 // Streak requires daily tracking, setting to 0 for now
 
   const tabs = [
-    { id: "overview", label: t["profile.tab.overview"], icon: User },
-    { id: "favorites", label: t["profile.tab.favorites"], icon: Heart },
-    { id: "history", label: t["profile.tab.history"], icon: Clock },
-    { id: "settings", label: t["profile.tab.settings"], icon: Settings },
+    { id: "overview", label: t("profile.tab.overview"), icon: User },
+    { id: "favorites", label: t("profile.tab.favorites"), icon: Heart },
+    { id: "history", label: t("profile.tab.history"), icon: Clock },
+    { id: "settings", label: t("profile.tab.settings"), icon: Settings },
   ]
 
   return (
@@ -106,7 +106,7 @@ export default function ProfilePage() {
                       onChange={(e) => setUserName(e.target.value)}
                       className="text-2xl font-bold max-w-[250px]"
                     />
-                    <Button size="sm" onClick={handleSaveName}>{t["profile.save"]}</Button>
+                    <Button size="sm" onClick={handleSaveName}>{t("profile.save")}</Button>
                   </div>
                 ) : (
                   <h1 className="text-3xl font-bold text-foreground">{user.name}</h1>
@@ -118,7 +118,7 @@ export default function ProfilePage() {
                 )}
               </div>
               <p className="text-muted-foreground mb-4 flex items-center gap-2 justify-center md:justify-start">
-                {t["profile.masterChef"]}
+                {t("profile.masterChef")}
                 {user.role === 'admin' && (
                   <span className="bg-red-100 text-red-600 text-xs px-2 py-0.5 rounded-full font-bold border border-red-200">
                     ADMIN
@@ -128,7 +128,7 @@ export default function ProfilePage() {
               <div className="flex items-center gap-4 justify-center md:justify-start text-sm text-muted-foreground">
                 <span className="flex items-center gap-1">
                   <ChefHat className="w-4 h-4 text-primary" />
-                  {recipesCooked} {t["profile.recipesCooked"]}
+                  {recipesCooked} {t("profile.recipesCooked")}
                 </span>
                 <span className="flex items-center gap-1">
                   <Clock className="w-4 h-4 text-primary" />
@@ -145,7 +145,7 @@ export default function ProfilePage() {
               >
                 <Heart className="w-6 h-6 text-primary mx-auto mb-2" />
                 <p className="text-2xl font-bold text-foreground">{user.favorites.length}</p>
-                <p className="text-xs text-muted-foreground">{t["profile.favorites"]}</p>
+                <p className="text-xs text-muted-foreground">{t("profile.favorites")}</p>
               </motion.div>
               <motion.div
                 whileHover={{ scale: 1.05 }}
@@ -155,7 +155,7 @@ export default function ProfilePage() {
                 <p className="text-2xl font-bold text-foreground">
                   {recipesCooked}
                 </p>
-                <p className="text-xs text-muted-foreground">{t["profile.cooked"]}</p>
+                <p className="text-xs text-muted-foreground">{t("profile.cooked")}</p>
               </motion.div>
             </div>
           </motion.div>
@@ -198,17 +198,17 @@ export default function ProfilePage() {
                   <motion.div whileHover={{ y: -5 }} className="bg-card rounded-3xl border border-border p-6">
                     <ChefHat className="w-8 h-8 text-primary mb-4" />
                     <p className="text-3xl font-bold text-foreground mb-1">{recipesCooked}</p>
-                    <p className="text-muted-foreground">{t["profile.recipesCooked"]}</p>
+                    <p className="text-muted-foreground">{t("profile.recipesCooked")}</p>
                   </motion.div>
                   <motion.div whileHover={{ y: -5 }} className="bg-card rounded-3xl border border-border p-6">
                     <Heart className="w-8 h-8 text-primary mb-4" />
                     <p className="text-3xl font-bold text-foreground mb-1">{user.favorites.length}</p>
-                    <p className="text-muted-foreground">{t["profile.favorites"]}</p>
+                    <p className="text-muted-foreground">{t("profile.favorites")}</p>
                   </motion.div>
                   <motion.div whileHover={{ y: -5 }} className="bg-card rounded-3xl border border-border p-6">
                     <TrendingUp className="w-8 h-8 text-primary mb-4" />
-                    <p className="text-3xl font-bold text-foreground mb-1">{streak} {t["profile.days"]}</p>
-                    <p className="text-muted-foreground">{t["profile.streak"]}</p>
+                    <p className="text-3xl font-bold text-foreground mb-1">{streak} {t("profile.days")}</p>
+                    <p className="text-muted-foreground">{t("profile.streak")}</p>
                   </motion.div>
                 </div>
 
@@ -216,7 +216,7 @@ export default function ProfilePage() {
                 <div>
                   <h2 className="text-xl font-semibold mb-6 flex items-center gap-2">
                     <Clock className="w-5 h-5 text-primary" />
-                    {t["profile.recentlyCooked"]}
+                    {t("profile.recentlyCooked")}
                   </h2>
                   {recentRecipes.length > 0 ? (
                     <div className="grid md:grid-cols-3 lg:grid-cols-5 gap-4">
@@ -234,14 +234,14 @@ export default function ProfilePage() {
                               />
                             </div>
                             <div className="p-3">
-                              <p className="font-medium text-sm truncate">{recipe.name}</p>
+                              <p className="font-medium text-sm truncate">{isHindi ? recipe.nameHindi : recipe.name}</p>
                             </div>
                           </motion.div>
                         </Link>
                       ))}
                     </div>
                   ) : (
-                    <p className="text-muted-foreground">{t["profile.noHistory"]}</p>
+                    <p className="text-muted-foreground">{t("profile.noHistory")}</p>
                   )}
                 </div>
               </motion.div>
@@ -278,8 +278,8 @@ export default function ProfilePage() {
                             </button>
                           </div>
                           <div className="p-4">
-                            <h3 className="font-semibold mb-1">{recipe.name}</h3>
-                            <p className="text-xs text-muted-foreground">{recipe.nameHindi}</p>
+                            <h3 className="font-semibold mb-1">{isHindi ? recipe.nameHindi : recipe.name}</h3>
+                            <p className="text-xs text-muted-foreground">{isHindi ? recipe.name : recipe.nameHindi}</p>
                           </div>
                         </motion.div>
                       </Link>
@@ -289,10 +289,10 @@ export default function ProfilePage() {
                 {favoriteRecipes.length === 0 && (
                   <div className="text-center py-20">
                     <Heart className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-                    <h3 className="text-xl font-semibold mb-2">{t["profile.noFavorites"]}</h3>
-                    <p className="text-muted-foreground mb-6">{t["profile.startSaving"]}</p>
+                    <h3 className="text-xl font-semibold mb-2">{t("profile.noFavorites")}</h3>
+                    <p className="text-muted-foreground mb-6">{t("profile.startSaving")}</p>
                     <Link href="/recipes">
-                      <Button className="rounded-full">{t["profile.browseRecipes"]}</Button>
+                      <Button className="rounded-full">{t("profile.browseRecipes")}</Button>
                     </Link>
                   </div>
                 )}
@@ -322,12 +322,12 @@ export default function ProfilePage() {
                             className="w-20 h-20 rounded-xl object-cover"
                           />
                           <div className="flex-1">
-                            <h3 className="font-semibold">{recipe.name}</h3>
-                            <p className="text-sm text-muted-foreground">{recipe.cuisine}</p>
+                            <h3 className="font-semibold">{isHindi ? recipe.nameHindi : recipe.name}</h3>
+                            <p className="text-sm text-muted-foreground">{t(`cuisine.${recipe.cuisine}` as TranslationKey)}</p>
                             <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
                               <span className="flex items-center gap-1">
                                 <Clock className="w-3 h-3" />
-                                {recipe.time}
+                                {recipe.time} {t("recipe.time")}
                               </span>
                               <span className="flex items-center gap-1">
                                 <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
@@ -336,14 +336,14 @@ export default function ProfilePage() {
                             </div>
                           </div>
                           <Button variant="outline" size="sm" className="rounded-full bg-transparent">
-                            {t["profile.cookAgain"]}
+                            {t("profile.cookAgain")}
                           </Button>
                         </div>
                       </Link>
                     </motion.div>
                   ))}
                   {recentRecipes.length === 0 && (
-                    <p className="text-center text-muted-foreground py-10">{t["profile.noHistory"]}</p>
+                    <p className="text-center text-muted-foreground py-10">{t("profile.noHistory")}</p>
                   )}
                 </div>
               </motion.div>
@@ -361,12 +361,12 @@ export default function ProfilePage() {
                 <div className="bg-card rounded-3xl border border-border p-6">
                   <h3 className="font-semibold mb-6 flex items-center gap-2">
                     <Sun className="w-5 h-5 text-primary" />
-                    {t["profile.section.appearance"]}
+                    {t("profile.section.appearance")}
                   </h3>
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="font-medium">{t["profile.darkMode"]}</p>
-                      <p className="text-sm text-muted-foreground">{t["profile.desc.darkMode"]}</p>
+                      <p className="font-medium">{t("profile.darkMode")}</p>
+                      <p className="text-sm text-muted-foreground">{t("profile.desc.darkMode")}</p>
                     </div>
                     <div className="flex items-center gap-2">
                       <Sun className="w-4 h-4 text-muted-foreground" />
@@ -383,26 +383,26 @@ export default function ProfilePage() {
                 <div className="bg-card rounded-3xl border border-border p-6">
                   <h3 className="font-semibold mb-6 flex items-center gap-2">
                     <Globe className="w-5 h-5 text-primary" />
-                    {t["profile.section.language"]}
+                    {t("profile.section.language")}
                   </h3>
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="font-medium">{t["profile.language"]}</p>
-                      <p className="text-sm text-muted-foreground">{t["profile.desc.language"]}</p>
+                      <p className="font-medium">{t("profile.language")}</p>
+                      <p className="text-sm text-muted-foreground">{t("profile.desc.language")}</p>
                     </div>
                     <div className="flex gap-2">
                       <Button
-                        variant={user.settings.language === "en-IN" ? "default" : "outline"}
+                        variant={language === "en-IN" ? "default" : "outline"}
                         size="sm"
-                        onClick={() => updateSettings({ language: "en-IN" })}
+                        onClick={() => setLanguage("en-IN")}
                         className="rounded-full"
                       >
                         English
                       </Button>
                       <Button
-                        variant={user.settings.language === "hi-IN" ? "default" : "outline"}
+                        variant={language === "hi-IN" ? "default" : "outline"}
                         size="sm"
-                        onClick={() => updateSettings({ language: "hi-IN" })}
+                        onClick={() => setLanguage("hi-IN")}
                         className="rounded-full"
                       >
                         हिंदी
@@ -415,13 +415,13 @@ export default function ProfilePage() {
                 <div className="bg-card rounded-3xl border border-border p-6">
                   <h3 className="font-semibold mb-6 flex items-center gap-2">
                     <Volume2 className="w-5 h-5 text-primary" />
-                    {t["profile.section.voice"]}
+                    {t("profile.section.voice")}
                   </h3>
                   <div className="space-y-4">
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="font-medium">{t["profile.voiceNarration"]}</p>
-                        <p className="text-sm text-muted-foreground">{t["profile.desc.voice"]}</p>
+                        <p className="font-medium">{t("profile.voiceNarration")}</p>
+                        <p className="text-sm text-muted-foreground">{t("profile.desc.voice")}</p>
                       </div>
                       <Switch checked={user.settings.voiceEnabled} onCheckedChange={(c) => updateSettings({ voiceEnabled: c })} />
                     </div>
@@ -432,12 +432,12 @@ export default function ProfilePage() {
                 <div className="bg-card rounded-3xl border border-border p-6">
                   <h3 className="font-semibold mb-6 flex items-center gap-2">
                     <Bell className="w-5 h-5 text-primary" />
-                    {t["profile.section.notifications"]}
+                    {t("profile.section.notifications")}
                   </h3>
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="font-medium">{t["profile.timerAlerts"]}</p>
-                      <p className="text-sm text-muted-foreground">{t["profile.desc.notifications"]}</p>
+                      <p className="font-medium">{t("profile.timerAlerts")}</p>
+                      <p className="text-sm text-muted-foreground">{t("profile.desc.notifications")}</p>
                     </div>
                     <Switch checked={user.settings.notifications} onCheckedChange={(c) => updateSettings({ notifications: c })} />
                   </div>
@@ -454,7 +454,7 @@ export default function ProfilePage() {
                   }}
                 >
                   <LogOut className="w-4 h-4" />
-                  {t["profile.reset"]}
+                  {t("profile.reset")}
                 </Button>
               </motion.div>
             )}

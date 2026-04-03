@@ -55,24 +55,20 @@ export function HeroSection() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3 }}
-              className="text-3xl sm:text-4xl md:text-6xl lg:text-7xl font-bold leading-tight mb-6 max-w-[90vw] mx-auto lg:mx-0 break-words"
+              className="text-2xl sm:text-4xl md:text-6xl lg:text-7xl font-bold leading-tight mb-4 sm:mb-6 max-w-[95vw] mx-auto lg:mx-0 break-words"
             >
               <span className="text-foreground">{t('hero.title')}</span>
             </motion.h1>
-
-
 
             {/* Subheadline */}
             <motion.p
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.4 }}
-              className="text-base sm:text-lg md:text-xl text-muted-foreground max-w-xl mx-auto lg:mx-0 mb-8"
+              className="text-sm sm:text-lg md:text-xl text-muted-foreground max-w-xl mx-auto lg:mx-0 mb-6 sm:mb-8"
             >
               {t('hero.subtitle')}
             </motion.p>
-
-
 
             {/* Voice Search Bar */}
             <motion.div
@@ -114,13 +110,13 @@ export function HeroSection() {
               className="flex flex-wrap gap-8 justify-center lg:justify-start mt-12"
             >
               {[
-                { value: "90+", label: "Indian Recipes" },
-                { value: "2", label: "Languages" },
-                { value: "24/7", label: "Voice Support" },
+                { value: "90+", label: t('hero.stats_recipes') },
+                { value: "2", label: t('hero.stats_languages') },
+                { value: "24/7", label: t('hero.stats_support') },
               ].map((stat, index) => (
-                <div key={index} className="text-center">
-                  <div className="text-3xl font-bold text-primary">{stat.value}</div>
-                  <div className="text-sm text-muted-foreground">{stat.label}</div>
+                <div key={index} className="text-center group transition-transform hover:scale-105">
+                  <div className="text-3xl font-bold text-primary drop-shadow-sm">{stat.value}</div>
+                  <div className="text-xs sm:text-sm text-muted-foreground font-medium">{stat.label}</div>
                 </div>
               ))}
             </motion.div>
@@ -143,45 +139,51 @@ export function HeroSection() {
               />
 
               {/* Central device mockup */}
-              <motion.div
-                animate={{ y: [0, -10, 0] }}
-                transition={{ duration: 4, repeat: Number.POSITIVE_INFINITY, ease: "easeInOut" }}
-                className="relative z-10 glass-card rounded-3xl p-6 shadow-2xl"
-              >
-                {/* Device header */}
-                <div className="flex items-center justify-between mb-6">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center">
-                      <span className="text-xl">🍲</span>
-                    </div>
-                    <div>
-                      <div className="font-semibold text-foreground">Paneer Butter Masala</div>
-                      <div className="text-xs text-muted-foreground">Step 3 of 8</div>
-                    </div>
-                  </div>
-                  <div className="text-xs text-primary font-medium">Active</div>
-                </div>
-
-                {/* Voice wave visualization */}
-                <VoiceWaveAnimation isActive={true} />
-
-                {/* Current instruction */}
-                <div className="mt-6 p-4 rounded-2xl bg-secondary/50">
-                  <p className="text-sm text-foreground leading-relaxed">
-                    {'"Heat oil in a pan and add cumin seeds. Wait for them to splutter..."'}
-                  </p>
-                </div>
-
-                {/* Voice command hint */}
+              <div className="flex flex-col gap-6 w-full h-full">
                 <motion.div
-                  animate={{ opacity: [0.5, 1, 0.5] }}
-                  transition={{ duration: 2, repeat: Number.POSITIVE_INFINITY }}
-                  className="mt-4 flex items-center justify-center gap-2 text-xs text-muted-foreground"
+                  animate={{ y: [0, -10, 0] }}
+                  transition={{ duration: 4, repeat: Number.POSITIVE_INFINITY, ease: "easeInOut" }}
+                  className="relative z-10 glass-card rounded-3xl p-6 shadow-2xl flex-shrink-0"
                 >
-                  <Mic className="w-3 h-3" />
-                  <span>{'Say "Next step" to continue'}</span>
+                  {/* Device header */}
+                  <div className="flex items-center justify-between mb-6">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center">
+                        <span className="text-xl">🍲</span>
+                      </div>
+                      <div>
+                        <div className="font-semibold text-foreground">{t('hero.mockup_title')}</div>
+                        <div className="text-xs text-muted-foreground">{t('hero.step_info')}</div>
+                      </div>
+                    </div>
+                    <div className="text-xs text-primary font-medium">Active</div>
+                  </div>
+
+                  {/* Voice wave visualization */}
+                  <VoiceWaveAnimation isActive={true} />
+
+                  {/* Current instruction */}
+                  <div className="mt-6 p-4 rounded-2xl bg-secondary/50">
+                    <p className="text-sm text-foreground leading-relaxed">
+                      "{t('hero.instruction')}"
+                    </p>
+                  </div>
+
+                  {/* Voice command hint */}
+                  <motion.div
+                    animate={{ opacity: [0.5, 1, 0.5] }}
+                    transition={{ duration: 2, repeat: Number.POSITIVE_INFINITY }}
+                    className="mt-4 flex items-center justify-center gap-2 text-xs text-muted-foreground"
+                  >
+                    <Mic className="w-3 h-3" />
+                    <span>{t('hero.voice_hint')}</span>
+                  </motion.div>
                 </motion.div>
-              </motion.div>
+                
+                <div className="relative z-10 w-full">
+                    {/* Announcement Banner Removed */}
+                </div>
+              </div>
 
               {/* Floating elements */}
               <motion.div

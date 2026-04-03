@@ -32,6 +32,7 @@ interface UserContextType {
     isLoginModalOpen: boolean
     openLoginModal: () => void
     closeLoginModal: () => void
+    promoteToAdmin: () => void
 }
 
 export const UserContext = createContext<UserContextType | null>(null)
@@ -139,6 +140,11 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     const openLoginModal = useCallback(() => setIsLoginModalOpen(true), [])
     const closeLoginModal = useCallback(() => setIsLoginModalOpen(false), [])
 
+    const promoteToAdmin = useCallback(() => {
+        setUser(prev => ({ ...prev, role: "admin", isLoggedIn: true }))
+        console.log("User promoted to Admin for testing")
+    }, [])
+
     const isFavorite = useCallback((id: number) => user.favorites.includes(id), [user.favorites])
 
     const value = {
@@ -154,7 +160,8 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
         isFavorite,
         isLoginModalOpen,
         openLoginModal,
-        closeLoginModal
+        closeLoginModal,
+        promoteToAdmin
     }
 
     return (

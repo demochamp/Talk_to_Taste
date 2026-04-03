@@ -1,0 +1,127 @@
+﻿
+> talktotaste@0.1.0 build
+> next build
+
+node.exe : [baseline-brows
+er-mapping] The data in 
+this module is over two 
+months old.  To ensure 
+accurate Baseline data, 
+please update: `npm i base
+line-browser-mapping@lates
+t -D`
+At line:1 char:1
++ & "C:\Program 
+Files\nodejs/node.exe" 
+"C:\Program 
+Files\nodejs/node_mo ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo        
+      : NotSpecified: ([  
+  baseline-brows...ping   
+ @latest -D`:String) [    
+], RemoteException
+    + FullyQualifiedError 
+   Id : NativeCommandErr  
+  or
+ 
+   Γû▓ Next.js 16.0.10 (Turbopack)
+   - Environments: .env.local
+
+ ΓÜá The "middleware" 
+file convention is 
+deprecated. Please use 
+"proxy" instead. Learn 
+more: https://nextjs.org/d
+ocs/messages/middleware-to
+-proxy
+   Creating an optimized production build ...
+[baseline-browser-mapping]
+ The data in this module 
+is over two months old.  
+To ensure accurate 
+Baseline data, please 
+update: `npm i baseline-br
+owser-mapping@latest -D`
+ Γ£ô Compiled successfully in 15.0s
+   Skipping validation of types
+   Collecting page data using 3 workers ...
+[baseline-browser-mapping]
+ The data in this module 
+is over two months old.  
+To ensure accurate 
+Baseline data, please 
+update: `npm i baseline-br
+owser-mapping@latest -D`
+[baseline-browser-mapping]
+ The data in this module 
+is over two months old.  
+To ensure accurate 
+Baseline data, please 
+update: `npm i baseline-br
+owser-mapping@latest -D`
+[baseline-browser-mapping]
+ The data in this module 
+is over two months old.  
+To ensure accurate 
+Baseline data, please 
+update: `npm i baseline-br
+owser-mapping@latest -D`
+Auth Config Loaded
+GOOGLE_CLIENT_ID: Set
+GITHUB_ID: Set
+GITHUB_ID Value (First 4 chars): Ov23
+Initializing NextAuth with secret: Present
+Auth Config Loaded
+GOOGLE_CLIENT_ID: Set
+GITHUB_ID: Set
+GITHUB_ID Value (First 4 chars): Ov23
+Initializing NextAuth with secret: Present
+   Generating static pages using 3 workers (0/17) ...
+[baseline-browser-mapping]
+ The data in this module 
+is over two months old.  
+To ensure accurate 
+Baseline data, please 
+update: `npm i baseline-br
+owser-mapping@latest -D`
+Auth Config Loaded
+GOOGLE_CLIENT_ID: Set
+GITHUB_ID: Set
+GITHUB_ID Value (First 4 chars): Ov23
+Initializing NextAuth with secret: Present
+   Generating static pages using 3 workers (4/17) 
+   Generating static pages using 3 workers (8/17) 
+   Generating static pages using 3 workers (12/17) 
+ Γ£ô Generating static pages using 3 workers (17/17) in 2.4s
+   Finalizing page optimization ...
+
+Route (app)
+Γöî Γùï /
+Γö£ Γùï /_not-found
+Γö£ Γùï /admin
+Γö£ ╞Æ /api/admin/users
+Γö£ ╞Æ /api/auth/[...nextauth]
+Γö£ ╞Æ /api/chat
+Γö£ ╞Æ /api/kitchen-help
+Γö£ ╞Æ /api/recipes
+Γö£ ╞Æ /api/recipes/[id]
+Γö£ ╞Æ /api/seed
+Γö£ ╞Æ /api/tts
+Γö£ ╞Æ /api/video-search
+Γö£ ╞Æ /api/voice-search
+Γö£ ╞Æ /api/youtube
+Γö£ Γùï /cook
+Γö£ Γùï /login
+Γö£ Γùï /profile
+Γö£ Γùï /recipes
+Γöö ╞Æ /recipes/[id]
+
+
+╞Æ Proxy (Middleware)
+
+Γùï  (Static)   prerendered as static content
+╞Æ  (Dynamic)  server-rendered on demand
+

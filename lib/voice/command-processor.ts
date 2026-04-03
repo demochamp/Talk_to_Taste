@@ -45,73 +45,46 @@ export interface CommandMatch {
 const COMMAND_PATTERNS: Record<VoiceIntent, RegExp[]> = {
     // ... existing patterns ...
     NAV_HOME: [
+        // English
         /go to home/i,
-        /visit home/i,
-        /switch to home/i,
-        /search homepage/,
-        /search home/,
-        /open home/i,
-        /show home/i,
-        /home page/i,
-        /homepage/i,
+        /go home/i,
         /home/i,
-        /ghar/i,
-        /ghar jao/i, // Hinglish
-        /ghar le chalo/i, // Hinglish
-        /home le chalo/i, // Hinglish
-        /home page dikhao/i, // Hinglish
-        /होम पेज/i,
+        /homepage/i,
+        // Hindi
+        /होम/i,
         /मुख्य पृष्ठ/i,
         /घर ले चलो/i,
         /होम पेज दिखाओ/i,
-        /होम पेज पर जाओ/i
+        /होम पेज/i,
+        /घर/i
     ],
     OPEN_RECIPE: [
-        // ... existing patterns ...
+        // English
         /open it/i,
         /open/i,
-        /kholo/i, // Hinglish
-        /ise kholo/i, // Hinglish
-        /kholke do/i, // Hinglish
-        /kholke dho/i, // Hinglish (common typo)
-        /open karke dho/i, // Hinglish (common typo)
-        /start karke dho/i, // Hinglish (common typo)
-        /start karke do/i, // Hinglish
-        /open karke do/i, // Hinglish
-        /open and give/i,
-        /chalu karo/i, // Hinglish
-        /first wala/i, // Hinglish
-        /phela wala/i, // Hinglish
-        /khol do/i, // Hinglish
-        /खोल दो/i,
-        /इसे खोलो/i,
+        /start/i,
+        /cook/i,
+        // Hindi
         /ओपन करो/i,
-        /खोल के दो/i,
-        /स्टार्ट करके दो/i,
-        /पहला वाला/i
+        /ओपन/i,
+        /खोलो/i,
+        /चलाओ/i,
+        /शुरू करो/i,
+        /इसे खोलो/i,
+        /पहला वाला/i,
+        /बनाओ/i
     ],
     FILTER_INGREDIENTS: [
         /recipes with (.+)/i,
-        /(.+) wale recipes/i,
-        /(.+) ki recipe/i,
-        /(.+) se bana/i,
-        /(.+) ingredients/i,
         /show me (.+) recipes/i,
         /(.+) dishes/i,
-        /(.+) ka khana/i,
-        /(.+) ki sabji/i,
+        /(.+) ingredients/i,
         /(.+) की रेसिपी/i,
         /(.+) वाले/i,
         /(.+) से बना/i
     ],
     FILTER_CATEGORY: [
         /show (breakfast|snack|curry|dessert|sweet|rice|bread)/i,
-        /(breakfast|snack|curry|dessert|sweet|rice|bread) dikhao/i,
-        /(nasta|naashta) dikhao/i,
-        /meetha dikhao/i,
-        /sabji dikhao/i,
-        /roti dikhao/i,
-        /chawal dikhao/i,
         /नाश्ता दिखाओ/i,
         /मिठाई दिखाओ/i,
         /रोटी दिखाओ/i,
@@ -119,25 +92,13 @@ const COMMAND_PATTERNS: Record<VoiceIntent, RegExp[]> = {
         /सब्जी दिखाओ/i
     ],
     FILTER_DIFFICULTY: [
-        // ... existing patterns ...
         /show (easy|medium|hard) recipes/i,
-        /(easy|medium|hard) recipes dikhao/i,
-        /asan khana/i,
-        /mushkil khana/i,
-        /jaldi banne wala/i,
         /आसान खाना/i,
         /मुश्किल खाना/i,
         /जल्दी बनने वाला/i
     ],
     FILTER_CUISINE: [
-        // ... existing patterns ...
         /show (north indian|south indian|chinese|italian|punjabi|gujarati|bengali|maharashtrian|rajasthani) recipes/i,
-        /(north indian|south indian|chinese|italian|punjabi|gujarati|bengali|maharashtrian|rajasthani) khana/i,
-        /(north indian|south indian|chinese|italian|punjabi|gujarati|bengali|maharashtrian|rajasthani) recipes dikhao/i,
-        /punjabi food/i,
-        /south indian food/i,
-        /bengali food/i,
-        /gujarati food/i,
         /पंजाबी खाना/i,
         /साउथ इंडियन/i,
         /गुजराती खाना/i,
@@ -147,54 +108,30 @@ const COMMAND_PATTERNS: Record<VoiceIntent, RegExp[]> = {
         /नॉर्थ इंडियन खाना/i
     ],
     NAV_RECIPES: [
-        /go to recipes/i,
-        /visit recipes/i,
-        /switch to recipes/i,
-        /open recipes/i,
-        /show recipes/i,
-        /find recipes/i,
-        /find recipe/i,
-        /search recipes/i,
-        /search recipe/i,
+        // English
         /recipes/i,
         /recipe/i,
-        /cooking section/i,
-        /cook something/i,
-        /recipes dikhao/i, // Hinglish
-        /recipes kholo/i, // Hinglish
-        /kya banau/i, // Hinglish
-        /khana banana hai/i, // Hinglish
-        /vyanjan/i, // Hinglish
-        /vyanjan dikhao/i, // Hinglish
-        /व्यंजन/i,
+        /find recipes/i,
+        /show recipes/i,
+        // Hindi
         /रेसिपी/i,
+        /व्यंजन/i,
         /खाना/i,
         /रेसिपी दिखाओ/i,
-        /खाना बनाना है/i,
-        /व्यंजन दिखाओ/i,
-        /रेसिपी सेक्शन/i,
-        /कुछ पकाना है/i
+        /ओपन/i,
+        /ओपन करो/i,
+        /व्यंजन दिखाओ/i
     ],
     NAV_PROFILE: [
-        /go to profile/i,
-        /visit profile/i,
-        /switch to profile/i,
-        /show profile/i,
-        /my profile/i,
-        /search profile/i,
+        // English
         /profile/i,
-        /open profile/i,
-        /profile page/i,
-        /profile dikhao/i, // Hinglish
-        /profile kholo/i, // Hinglish
-        /meri profile/i, // Hinglish
-        /mera profile/i, // Hinglish
-        /mera profile dikhao/i, // Hinglish
-        /mera प्रोफाइल/i,
+        /my profile/i,
+        // Hindi
         /प्रोफाइल/i,
+        /मेरी प्रोफाइल/i,
+        /मेरा प्रोफाइल/i,
         /प्रोफाइल दिखाओ/i,
-        /प्रोफाइल खोलो/i,
-        /मेरी प्रोफाइल/i
+        /प्रोफाइल खोलो/i
     ],
     NAV_FEATURES: [
         /go to features/i,
@@ -205,10 +142,6 @@ const COMMAND_PATTERNS: Record<VoiceIntent, RegExp[]> = {
         /features page/i,
         /features/i,
         /search features/i,
-        /features dikhao/i, // Hinglish
-        /features batao/i, // Hinglish
-        /kya features hai/i, // Hinglish
-        /feeches/i, // Common mispronunciation handled as Hinglish-ish
         /फीचर्स/i,
         /विशेषताएं/i,
         /फीचर्स दिखाओ/i,
@@ -216,170 +149,165 @@ const COMMAND_PATTERNS: Record<VoiceIntent, RegExp[]> = {
         /इस ऐप में क्या है/i
     ],
     NAV_HOW_IT_WORKS: [
-        /how to work/i,
+        // English
         /how it works/i,
-        /how it's work/i,
-        /how does it work/i,
+        /how to work/i,
         /guide me/i,
-        /kaise kaam karta hai/i, // Hinglish
-        /ye kaise chalta hai/i, // Hinglish
-        /kaise use kare/i, // Hinglish
-        /madad karo/i, // Hinglish
-        /kaise karte hain/i, // Hinglish
+        // Hindi
         /कैसे काम करता है/i,
-        /कैसे यूज़ करें/i,
+        /कैसे इस्तेमाल करें/i,
         /गाइड करो/i,
         /मदद करो/i,
-        /यह कैसे काम करता है/i,
-        /इस्तेमाल कैसे करें/i
+        /यह कैसे काम करता है/i
     ],
     COOK_START: [
+        // English
         /start cooking/i,
-        /let's cook/i,
-        /begin cooking/i,
         /start recipe/i,
-        /cooking start/i,
-        /shuru karo/i, // Hinglish
-        /chalu karo/i, // Hinglish
-        /banana shuru karo/i, // Hinglish
-        /pakana shuru karo/i, // Hinglish
-        /cook karna hai/i, // Hinglish
-        /स्टार्ट/i, // Transliterated English
-        /स्टार्ट कुकिंग/i, // Transliterated English
-        /शुरू करो/i,
+        /begin cooking/i,
+        /let's cook/i,
+        // Hindi
         /पकाना शुरू करो/i,
         /बनाना शुरू करो/i,
-        /चलो बनाते हैं/i,
-        /कुकिंग शुरू करें/i,
+        /चालू करो/i,
+        /शुरू करो/i,
+        /बनाना है/i,
         /रेसिपी चालू करो/i
     ],
     STEP_NEXT: [
+        // English
         /next step/i,
-        /next instruction/i,
         /go next/i,
         /next/i,
-        /agla step/i, // Hinglish
-        /agla/i, // Hinglish
-        /aage badho/i, // Hinglish
-        /aage chalo/i, // Hinglish
-        /next batao/i, // Hinglish
-        /iske baad kya/i, // Hinglish
-        /नेक्स्ट/i, // Transliterated English
-        /नेक्स्ट स्टेप/i, // Transliterated English
+        // Hindi
+        /अगला/i,
         /अगला स्टेप/i,
         /अगला चरण/i,
-        /अगला/i,
+        /अगले चरण/i,
+        /अगले/i,
         /आगे बढ़ो/i,
         /आगे/i,
-        /अगला बताओ/i,
-        /आगे चलो/i
+        /अगला बताओ/i
     ],
     STEP_PREV: [
+        // English
         /previous step/i,
         /go back/i,
-        /last step/i,
         /previous/i,
         /back/i,
-        /pichla step/i, // Hinglish
-        /pichla/i, // Hinglish
-        /peeche jao/i, // Hinglish
-        /wapas jao/i, // Hinglish
-        /wapas/i, // Hinglish
-        /back jao/i, // Hinglish
-        /प्रीवियस/i, // Transliterated English
-        /बैक/i, // Transliterated English
+        // Hindi
+        /पिछला/i,
         /पिछला स्टेप/i,
         /पिछला चरण/i,
-        /पिछला/i,
-        /पीछे/i,
+        /पिछले/i,
         /पीछे जाओ/i,
-        /वापस जाओ/i,
-        /वापस चलो/i
+        /पीछे/i,
+        /वापस जाओ/i
     ],
     STEP_REPEAT: [
+        // English
+        /repeat step/i,
         /repeat/i,
         /say again/i,
-        /what/i, // "what did you say"
-        /fir se bolo/i, // Hinglish
-        /phir se bolo/i, // Hinglish
-        /dobara bolo/i, // Hinglish
-        /wapas bolo/i, // Hinglish
-        /sunayi nahi diya/i, // Hinglish
-        /kya kaha/i, // Hinglish
-        /repeat karo/i, // Hinglish
-        /रिपीट/i, // Transliterated English
-        /फिर से/i,
-        /फिर से बोलो/i,
-        /दोबारा बोलो/i,
-        /दोहराओ/i,
-        /क्या कहा/i,
-        /सुनाई नहीं दिया/i,
+        // Hindi
+        /वापस/i,
         /वापस बोलो/i,
-        /रिपीट करो/i
+        /दुहराओ/i,
+        /दोहराओ/i,
+        /फिर से बताओ/i,
+        /दोबारा बोलो/i,
+        /फिर से/i
     ],
     TIMER_SET: [
         /timer/i,
         /set timer/i,
         /alarm/i,
-        /timer laga do/i, // Hinglish
-        /timer set karo/i, // Hinglish
-        /alarm lagao/i, // Hinglish
-        /ghadi/i, // Hinglish
-        /kitna time/i, // Hinglish
-        /titles/i, // Common misheard 'timers'
         /टाइमर/i,
         /टाइमर सेट करो/i,
-        /अलार्म/i, // Transliterated English
+        /अलार्म/i,
         /घड़ी/i,
         /कितना समय हुआ/i,
         /अलार्म लगाओ/i
     ],
     WHISTLE_ADD: [
-        /whistle/i,
-        /seeti/i, // Hinglish
-        /city/i, // Common misheard
-        /ct/i, // Common misheard
-        /whistle baj gayi/i, // Hinglish
-        /seeti baj gayi/i, // Hinglish
-        /ek owr seeti/i, // Hinglish
-        /विसल/i, // Transliterated English
-        /सीटी/i,
-        /सीटी बज गई/i,
-        /एक और सीटी/i,
-        /विसल/i
+        /["']?(\d+)\s*whistles?["']?/i,
+        /["']?(one|two|three|four|five|six|seven|eight|nine|ten)\s*whistles?["']?/i,
+        /["']?(\d+)\s*(?:सीटी|सिटी)["']?/i,
+        /["']?(एक|दो|तीन|चार|पांच|पाँच|छह|सात|आठ|नौ|दस)\s*(?:सीटी|सिटी)["']?/i,
+        /["']?(?:सीटी|सिटी) बज गई["']?/i,
+        /["']?एक और (?:सीटी|सिटी)["']?/i
     ],
     GO_TO_STEP: [
         /step (?:number )?(\d+)/i,
-        /step (\d+) pe (?:jao|chalo)/i, // Hinglish
         /step (\d+) पर (?:जाओ|चलो)/i,
-        /चरण (\d+) पर (?:जाओ|चलो)/i
+        /चरण (\d+) पर (?:जाओ|चलो)/i,
+        /(\d+)(?:st|nd|rd|th)?\s*(?:step|स्टेप|चरण)/i,
+        /(\d+)(?:st|nd|rd|th)/i, // Matches 1st, 2nd, 3rd, 4th
+        /first step/i,
+        /second step/i,
+        /third step/i,
+        /fourth step/i,
+        /fifth step/i,
+        /sixth step/i,
+        /seventh step/i,
+        /eighth step/i,
+        /ninth step/i,
+        /tenth step/i,
+        /फ़र्स्ट स्टेप/i,
+        /सेकंड स्टेप/i,
+        /थर्ड स्टेप/i,
+        /फोर्थ स्टेप/i,
+        /फिफ्थ स्टेप/i,
+        /सिक्स्थ स्टेप/i,
+        /सेवंथ स्टेप/i,
+        /एथ स्टेप/i,
+        /नाइन्थ स्टेप/i,
+        /टेंथ स्टेप/i,
+        /पहला स्टेप/i,
+        /दूसरा स्टेप/i,
+        /तीसरा स्टेप/i,
+        /चौथा स्टेप/i,
+        /पांचवा स्टेप/i,
+        /पांचवां स्टेप/i,
+        /छठा स्टेप/i,
+        /सातवां स्टेप/i,
+        /सातवा स्टेप/i,
+        /आठवां स्टेप/i,
+        /आठवा स्टेप/i,
+        /नौवां स्टेप/i,
+        /नौवा स्टेप/i,
+        /दसवां स्टेप/i,
+        /दसवा स्टेप/i,
+        /पहला चरण/i,
+        /दूसरा चरण/i,
+        /तीसरा चरण/i,
+        /चौथा चरण/i,
+        /पांचवा चरण/i,
+        /पांचवां चरण/i,
+        /छठा चरण/i,
+        /सातवां चरण/i,
+        /सातवा चरण/i,
+        /आठवां चरण/i,
+        /आठवा चरण/i,
+        /नौवां चरण/i,
+        /नौवा चरण/i,
+        /दसवां चरण/i,
+        /दसवा चरण/i
     ],
     SEARCH_RECIPE: [
         /search/i,
         /find/i,
         /recipe/i,
-        /dhundo/i, // Hinglish
-        /khojo/i, // Hinglish
-        /search karo/i, // Hinglish
-        /banao/i, // Hinglish "pasta banao"
-        /kaise banta hai/i, // Hinglish
-        /banana sikhao/i, // Hinglish
         /ढूंढो/i,
         /खोजो/i,
         /सर्च करो/i,
         /कोई रेसिपी ढूंढो/i,
-        /बनाओ/i // "pasta banao"
+        /बनाओ/i
     ],
     SEARCH_BY_INGREDIENTS: [
         /ingredients/i,
         /fridge/i,
         /available/i,
-        /kya bana sakta hu/i, // Hinglish
-        /kya bana sakti hu/i, // Hinglish
-        /kya banau/i, // Hinglish
-        /fridge me kya hai/i, // Hinglish
-        /samaana/i, // Hinglish
-        /samagri/i, // Hinglish
         /सामग्री/i,
         /फ्रिज में क्या है/i,
         /क्या बना सकता हूं/i,
@@ -391,10 +319,6 @@ const COMMAND_PATTERNS: Record<VoiceIntent, RegExp[]> = {
         /save/i,
         /favorite/i,
         /like/i,
-        /save karo/i, // Hinglish
-        /pasand aaya/i, // Hinglish
-        /like karo/i, // Hinglish
-        /fav/i, // Hinglish
         /सेव करो/i,
         /पसंदीदा/i,
         /लाइक करो/i,
@@ -403,54 +327,34 @@ const COMMAND_PATTERNS: Record<VoiceIntent, RegExp[]> = {
     SHARE_RECIPE: [
         /share/i,
         /send/i,
-        /share karo/i, // Hinglish
-        /bhejo/i, // Hinglish
-        /send karo/i, // Hinglish
-        /kisi ko bhejo/i, // Hinglish
-        /message karo/i, // Hinglish
         /शेयर करो/i,
         /भेजो/i,
         /भेज दो/i,
         /किसी को भेजो/i
     ],
     STOP: [
+        // English
+        /stop listening/i,
         /stop/i,
-        /pause/i,
-        /ruko/i, // Hinglish
-        /bas/i, // Hinglish
-        /bas karo/i, // Hinglish
-        /chup/i, // Hinglish
-        /shant/i, // Hinglish
-        /wait/i, // Hinglish
-        /thhama/i, // Hinglish
-        /ruk jao/i, // Hinglish
-        /स्टॉप/i, // Transliterated English
-        /पॉज़/i, // Transliterated English
+        /shut up/i,
+        /quiet/i,
+        // Hindi
         /रुको/i,
-        /बस/i,
-        /चुप रहो/i,
+        /बंद करो/i,
+        /बस करो/i,
+        /चुप/i,
         /शांत रहो/i,
-        /रुक जाओ/i,
-        /स्टॉप/i
+        /रुक जाओ/i
     ],
     PLAY: [
+        // English
         /play/i,
+        /continue/i,
         /resume/i,
-        /start/i,
-        /chalo/i, // Hinglish
-        /chalu/i, // Hinglish
-        /chalu karo/i, // Hinglish
-        /play karo/i, // Hinglish
-        /resume karo/i, // Hinglish
-        /aage badho/i, // Hinglish
-        /प्ले/i, // Transliterated English
-        /रिज्यूम/i, // Transliterated English
-        /स्टार्ट/i, // Transliterated English
+        // Hindi
         /चलाओ/i,
-        /शुरू/i,
-        /चालू करो/i,
-        /प्ले करो/i,
-        /रिज्यूम करो/i
+        /सुनना है/i,
+        /शुरू करो/i
     ],
     // New Intents
     NAV_ADMIN: [
@@ -461,9 +365,6 @@ const COMMAND_PATTERNS: Record<VoiceIntent, RegExp[]> = {
         /show admin/i,
         /admin dashboard/i,
         /admin page/i,
-        /admin dikhao/i, // Hinglish
-        /admin panel/i, // Hinglish
-        /admin page kholo/i, // Hinglish
         /एडमिन/i,
         /एडमिन पेज/i,
         /एडमिन पैनल/i
@@ -472,11 +373,7 @@ const COMMAND_PATTERNS: Record<VoiceIntent, RegExp[]> = {
         /login/i,
         /sign in/i,
         /log in/i,
-        /login karo/i, // Hinglish
-        /sign in karo/i, // Hinglish
-        /andar jao/i, // Hinglish
-        /account kholo/i, // Hinglish
-        /लॉगिन/i, // Transliterated English - already present but grouping
+        /लॉगिन/i,
         /लॉग इन/i,
         /साइन इन/i
     ],
@@ -484,12 +381,7 @@ const COMMAND_PATTERNS: Record<VoiceIntent, RegExp[]> = {
         /logout/i,
         /sign out/i,
         /log out/i,
-        /logout karo/i, // Hinglish
-        /sign out karo/i, // Hinglish
-        /bahar niklo/i, // Hinglish
-        /exit/i, // Hinglish
-        /band karo/i, // Hinglish
-        /लॉगआउट/i, // Transliterated English
+        /लॉगआउट/i,
         /लॉग आउट/i,
         /साइन आउट/i,
         /बाहर निकलो/i
@@ -497,14 +389,7 @@ const COMMAND_PATTERNS: Record<VoiceIntent, RegExp[]> = {
     THEME_DARK: [
         /dark mode/i,
         /switch to dark/i,
-        /go to dark/i,
-        /open dark/i,
-        /show dark/i,
-        /dark mode lagao/i, // Hinglish
-        /dark theme/i, // Hinglish
-        /andhera mode/i, // Hinglish
-        /black theme/i, // Hinglish
-        /kaala theme/i, // Hinglish
+        /black theme/i,
         /डार्क मोड/i,
         /डार्क मोड में जाओ/i,
         /काला थीम/i,
@@ -514,29 +399,17 @@ const COMMAND_PATTERNS: Record<VoiceIntent, RegExp[]> = {
         /light mode/i,
         /go to light mode/i,
         /switch to light/i,
-        /go to light/i,
-        /open light/i,
-        /show light/i,
-        /light mode lagao/i, // Hinglish
-        /light theme/i, // Hinglish
-        /white theme/i, // Hinglish
-        /safed theme/i, // Hinglish
-        /ujala mode/i, // Hinglish
+        /white theme/i,
         /लाइट मोड/i,
         /लाइट मोड में जाओ/i,
         /सफेद थीम/i,
         /उजाला मोड/i
     ],
     SET_LANGUAGE_HI: [
-        /hindi mein bolo/i, // Common
         /speak in hindi/i,
         /switch to hindi/i,
         /hindi language/i,
-        /hindi me baat karo/i, // Hinglish
-        /mujhe hindi chahiye/i, // Hinglish
-        /hindi me batao/i, // Hinglish
         /hindi/i,
-        /hindi please/i, // Hinglish
         /हिंदी में बोलो/i,
         /हिंदी में बात करो/i,
         /हिंदी भाषा/i,
@@ -544,12 +417,9 @@ const COMMAND_PATTERNS: Record<VoiceIntent, RegExp[]> = {
         /हिंदी/i
     ],
     SET_LANGUAGE_EN: [
-        /english mein bolo/i, // Hinglish
         /speak in english/i,
         /switch to english/i,
         /english language/i,
-        /english me baat karo/i, // Hinglish
-        /english please/i, // Hinglish
         /english/i,
         /अंग्रेजी में बोलो/i,
         /इंग्लिश में बोलो/i,
@@ -557,35 +427,13 @@ const COMMAND_PATTERNS: Record<VoiceIntent, RegExp[]> = {
         /इंग्लिश/i
     ],
     SHOW_COMMANDS: [
-        /commands batao/i, // Common Hinglish
-        /commands dikhao/i, // Hinglish
-        /commands/i, // Common
+        /commands/i,
         /help/i,
-        /help me/i,
-        /help show commands/i, // Requested
-        /show help/i, // Requested
-        /help commands/i, // Requested
         /what should i say/i,
         /what can i say/i,
         /list commands/i,
-        /commands for english/i, // Requested
-        /give me the commands/i, // Requested
-        /show me the commands/i, // Requested
-        /search english commands/i, // Requested
-        /hindi commands/i, // Requested
-        /commands bataiye/i, // Requested (corrected spelling)
-        /commands dikhaye/i, // Requested (corrected spelling)
-        /commands pe le jao/i, // Requested
-        /madad karo/i, // Hinglish
-        /kya bolu/i, // Hinglish
-        /kya karna hai/i, // Hinglish
-        /options/i, // Hinglish
         /कमांड्स दिखाओ/i,
-        /कमांड्स बताओ/i, // Requested Pure Hindi
-        /कमांड्स बताइए/i, // Requested Pure Hindi
-        /कमांड्स दिखाएं/i, // Requested Pure Hindi
-        /कमांड्स पर ले जाओ/i, // Requested Pure Hindi
-        /हिंदी कमांड्स/i, // Requested Pure Hindi
+        /कमांड्स बताओ/i,
         /क्या बोलूं/i,
         /मदद करो/i,
         /हेल्प/i,
@@ -625,7 +473,6 @@ export function processVoiceCommand(text: string): CommandMatch {
         if (
             checkMatch(recipe.name) ||
             checkMatch(recipe.nameHindi) ||
-            checkMatch(recipe.nameHinglish) ||
             recipe.synonyms?.some((s: string) => checkMatch(s))
         ) {
             // If explicit "open" command or just the name
@@ -675,19 +522,19 @@ export function processVoiceCommand(text: string): CommandMatch {
 
                 if (intent === "FILTER_CATEGORY") {
                     const captured = match[1] || match[0]
-                    // Map Hindi/Hinglish terms to English internal values
-                    if (captured.match(/nasta|naashta|नाश्ता/i)) params.category = "Breakfast"
-                    else if (captured.match(/meetha|mithai|मिठाई/i)) params.category = "Dessert"
-                    else if (captured.match(/sabji|सब्जी/i)) params.category = "Curries"
-                    else if (captured.match(/roti|रोटी/i)) params.category = "Bread"
-                    else if (captured.match(/chawal|चावल/i)) params.category = "Rice Dishes"
+                    // Map Hindi Script terms home to English internal values
+                    if (captured.match(/नाश्ता/i)) params.category = "Breakfast"
+                    else if (captured.match(/मिठाई/i)) params.category = "Dessert"
+                    else if (captured.match(/सब्जी/i)) params.category = "Curries"
+                    else if (captured.match(/रोटी/i)) params.category = "Bread"
+                    else if (captured.match(/चावल/i)) params.category = "Rice Dishes"
                     else params.category = captured.charAt(0).toUpperCase() + captured.slice(1)
                 }
 
                 if (intent === "FILTER_DIFFICULTY") {
                     const captured = match[1] || match[0]
-                    if (captured.match(/asan|jaldi|आसान|जल्दी/i)) params.difficulty = "Easy"
-                    else if (captured.match(/mushkil|hard|मुश्किल/i)) params.difficulty = "Hard"
+                    if (captured.match(/easy|आसान|जल्दी/i)) params.difficulty = "Easy"
+                    else if (captured.match(/hard|मुश्किल/i)) params.difficulty = "Hard"
                     else params.difficulty = "Medium"
                 }
 
@@ -712,11 +559,41 @@ export function processVoiceCommand(text: string): CommandMatch {
                 }
 
                 if (intent === "GO_TO_STEP") {
-                    params.value = match[1]
+                    if (match[1]) {
+                        params.value = match[1]
+                    } else {
+                        const str = match[0].toLowerCase()
+                        if (str.match(/first|पहला|फ़र्स्ट/i)) params.value = "1"
+                        else if (str.match(/second|दूसरा|सेकंड/i)) params.value = "2"
+                        else if (str.match(/third|तीसरा|थर्ड/i)) params.value = "3"
+                        else if (str.match(/fourth|चौथा|फोर्थ/i)) params.value = "4"
+                        else if (str.match(/fifth|पांचवां|पांचवा|फिफ्थ/i)) params.value = "5"
+                        else if (str.match(/sixth|छठा|सिक्स्थ/i)) params.value = "6"
+                        else if (str.match(/seventh|सातवां|सातवा|सेवंथ/i)) params.value = "7"
+                        else if (str.match(/eighth|आठवां|आठवा|एथ/i)) params.value = "8"
+                        else if (str.match(/ninth|नौवां|नौवा|नाइन्थ/i)) params.value = "9"
+                        else if (str.match(/tenth|दसवां|दसवा|टेंथ/i)) params.value = "10"
+                    }
                 }
 
                 if (intent === "WHISTLE_ADD") {
-                    params.value = match[1]
+                    if (match[1]) {
+                        const val = match[1].toLowerCase()
+                        if (val.match(/\d+/)) {
+                            params.value = val
+                        } else {
+                            // Map Words to Digits
+                            const wordMap: Record<string, string> = {
+                                "one": "1", "two": "2", "three": "3", "four": "4", "five": "5",
+                                "six": "6", "seven": "7", "eight": "8", "nine": "9", "ten": "10",
+                                "एक": "1", "दो": "2", "तीन": "3", "चार": "4", "पांच": "5", "पाँच": "5",
+                                "छह": "6", "सात": "7", "आठ": "8", "नौ": "9", "दस": "10"
+                            }
+                            params.value = wordMap[val] || "1"
+                        }
+                    } else {
+                        params.value = "1"
+                    }
                 }
 
                 if (intent === "TIMER_SET") {

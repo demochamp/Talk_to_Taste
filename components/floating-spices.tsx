@@ -26,10 +26,10 @@ export function FloatingSpices() {
       {spices.map((spice) => (
         <motion.div
           key={spice.id}
-          initial={{ y: "100vh", x: `${spice.x}vw`, opacity: 0 }}
+          initial={{ y: "110vh", opacity: 0 }}
           animate={{
             y: "-10vh",
-            opacity: [0, 0.6, 0.6, 0],
+            opacity: [0, 0.4, 0.4, 0],
             rotate: [0, 360],
           }}
           transition={{
@@ -38,7 +38,7 @@ export function FloatingSpices() {
             repeat: Number.POSITIVE_INFINITY,
             ease: "linear",
           }}
-          className="absolute text-4xl"
+          className="absolute text-2xl sm:text-4xl"
           style={{ left: `${spice.x}%` }}
         >
           {spice.emoji}

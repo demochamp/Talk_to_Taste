@@ -6,12 +6,11 @@ import { HowItWorks } from "@/components/how-it-works"
 import { Footer } from "@/components/footer"
 import { FloatingSpices } from "@/components/floating-spices"
 import { Navigation } from "@/components/navigation"
-import { GlobalVoiceControl } from "@/components/global-voice-control"
+
 
 export default function Home() {
   return (
     <main className="relative min-h-screen">
-      <GlobalVoiceControl />
       <FloatingSpices />
       <Navigation />
       <HeroSection />

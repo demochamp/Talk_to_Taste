@@ -1,247 +1,125 @@
-import { VoiceIntent } from "@/lib/voice/command-processor"
 import { NextResponse } from "next/server"
 
-export async function POST(req: Request) {
-  const { problem } = await req.json()
+const SYSTEM_PROMPT = `You are a "High-End Executive Chef" and the Kitchen SOS Assistant for Talk to Taste. 
+Your goal is to provide expert culinary fixes for cooking mistakes (salt, spice, burnt, texture) and ingredient substitutes.
 
-  return NextResponse.json({
-    answer: `Quick fix for "${problem}": Add a little water, balance spices, and simmer slowly.`,
-  })
-}
-export const COMMAND_PATTERNS: Record<VoiceIntent, RegExp[]> = {
-  NAV_HOME: [
-    /go to home/i,
-    /visit home/i,
-    /switch to home/i,
-    /search homepage/,
-    /search home/,
-    /open home/i,
-    /show home/i,
-    /ghar jao/i,
-    /home page/i,
-    /homepage/i,
-    /home kholo/i,
-    /घर जाओ/i,
-    /होम पेज/i,
-    /मुख्य पृष्ठ/i,
-    /home/i,
-    /home page dikhao/i,
-    /home page pe jao/i,
-    /home page kholo/i
-  ],
-  NAV_RECIPES: [
-    /go to recipes/i,
-    /visit recipes/i,
-    /switch to recipes/i,
-    /open recipes/i,
-    /show recipes/i,
-    /find recipes/i,
-    /find recipe/i,
-    /search recipes/i,
-    /search recipe/i,
-    /recipes/i,
-    /recipe/i,
-    /vyanjan/i,
-    /recipe pe jao/i,
-    /recipes pe jao/i,
-    /recipe dikhao/i,
-    /find recipe/i,
-    /cook something/i,
-    /recipes dikhao/i,
-    /vyanjan dikhao/i,
-    /khana dikhao/i,
-    /kya banao/i,
-    /रेसिपी दिखाओ/i,
-    /खाना है/i,
-    /क्या बनाऊं/i
-  ],
-  NAV_PROFILE: [
-    /go to profile/i,
-    /visit profile/i,
-    /switch to profile/i,
-    /show profile/i,
-    /my profile/i,
-    /search profile/i,
-    /profile/i,
-    /open profile/i,
-    /profile page/i,
-    /profile dikhao/i,
-    /profile kholo/i,
-    /meri profile/i,
-    /प्रोफाइल दिखाओ/i,
-    /मेरी प्रोफाइल/i
-  ],
-  NAV_FEATURES: [
-    /go to features/i,
-    /visit features/i,
-    /switch to features/i,
-    /show features/i,
-    /open features/i,
-    /features page/i,
-    /features batao/i,
-    /features dikhao/i,
-    /is app me kya hai/i,
-    /visheshata/i,
-    /फीचर्स दिखाओ/i,
-    /विशेषता/i,
-    /features/i,
-    /search features/i
-  ],
-  NAV_HOW_IT_WORKS: [
-    /how to work/i,
-    /how it works/i,
-    /how it's work/i,
-    /how does it work/i,
-    /kaise kaam karta hai/i,
-    /guide me/i,
-    /madad karo/i,
-    /kaise use kare/i,
-    /कैसे काम करता है/i,
-    /मदद करो/i,
-    /गाइड करो/i,
-    /यह कैसे काम करता है/i
-  ],
-  COOK_START: [
-    /start cooking/i,
-    /let's cook/i,
-    /begin cooking/i,
-    /start recipe/i,
-    /shuru karo/i,
-    /pakana shuru karo/i,
-    /banana shuru karo/i,
-    /chalo banate hai/i,
-    /शुरू करो/i,
-    /पकाना शुरू करो/i,
-    /चलो बनाते हैं/i,
-    /cooking shuru kare/i
-  ],
-  STEP_NEXT: [
-    /next step/i,
-    /next instruction/i,
-    /go next/i,
-    /dusra step/i,
-    /agla step/i,
-    /aage badho/i,
-    /next/i,
-    /agla/i,
-    /aage/i,
-    /अगला स्टेप/i,
-    /आगे बढ़ो/i,
-    /अगला/i
-  ],
-  STEP_PREV: [
-    /previous step/i,
-    /go back/i,
-    /last step/i,
-    /pichla step/i,
-    /peeche jao/i,
-    /previous/i,
-    /back/i,
-    /piche/i,
-    /peeche/i,
-    /wapas/i
-  ],
-  STEP_REPEAT: [
-    /repeat/i,
-    /phir se/i,
-    /dobara/i,
-    /fir se/i,
-    /wapas bolo/i,
-    /what/i, // "what did you say"
-    /sunayi nahi diya/i
-  ],
-  TIMER_SET: [
-    /timer/i,
-    /ghadi/i,
-    /alarm/i
-  ],
-  WHISTLE_ADD: [
-    /whistle/i,
-    /seeti/i,
-    /ct/i,
-    /city/i,
-    /citi/i,
-    /whistle baj gayi/i,
-    /seeti baj gayi/i,
-    /सीटी/i,
-    /सीटी बज गई/i
-  ],
-  GO_TO_STEP: [
-    /step (?:number )?(\d+)/i,
-    /step (\d+) pe (?:jao|le chalo)/i
-  ],
-  SEARCH_RECIPE: [
-    /search/i,
-    /dhundo/i,
-    /find/i,
-    /bana/i, // "pasta bana", "paneer bana"
-    /recipe/i
-  ],
-  SEARCH_BY_INGREDIENTS: [
-    /ingredients/i,
-    /fridge/i,
-    /kya bana sakta hu/i,
-    /available/i
-  ],
-  SAVE_RECIPE: [
-    /save/i,
-    /favorite/i,
-    /like/i,
-    /pasand/i
-  ],
-  SHARE_RECIPE: [
-    /share/i,
-    /bhejo/i,
-    /send/i
-  ],
-  STOP: [
-    /stop/i,
-    /ruko/i,
-    /pause/i,
-    /chup/i,
-    /shant/i,
-    /bas/i
-  ],
-  PLAY: [
-    /play/i,
-    /resume/i,
-    /start/i,
-    /chalu/i,
-    /shuru/i
-  ],
-  // New Intents
-  NAV_ADMIN: [
-    /go to admin/i,
-    /visit admin/i,
-    /switch to admin/i,
-    /open admin/i,
-    /show admin/i,
-    /admin dashboard/i,
-    /admin page/i
-  ],
-  LOGIN: [
-    /login/i,
-    /sign in/i,
-    /log in/i
-  ],
-  LOGOUT: [
-    /logout/i,
-    /sign out/i,
-    /log out/i
-  ],
-  THEME_DARK: [
-    /dark mode/i,
-    /switch to dark/i,
-    /go to dark/i,
-    /open dark/i,
-    /show dark/i
-  ],
-  THEME_LIGHT: [
-    /light mode/i,
-    /switch to light/i,
-    /go to light/i,
-    /open light/i,
-    /show light/i
-  ],
-  UNKNOWN: []
+CULINARY RULES:
+1. Dish Specificity: You MUST respect the dish's identity. If a user is making a dry "Aloo Gobi," don't suggest adding water or gravy. If it's a "Butter Paneer," suggests cream/curd. If it's "Dal," suggest lemon or a potato.
+2. Professional Tone: Be concise, authoritative, and helpful. Use culinary science (e.g., "Acid balances salt," "Dairy cuts spice").
+3. Clarification: If the 'currentRecipe' is unknown and the fix depends on the dish type, ask: "Which recipe are you currently making? I can give you a better fix if I know the dish!"
+4. Conciseness: Keep responses under 3 short sentences.
+5. Language: Answer in the same language the user uses for their problem (Hindi or English).
+6. No Nonsense: Never ask irrelevant questions like "what kind of burnt taste you want." Fix the problem.`
+
+export async function POST(req: Request) {
+    try {
+        const { problem, language = "en-IN", currentRecipe } = await req.json()
+
+        if (!problem) {
+            return NextResponse.json({ error: "Problem is required" }, { status: 400 })
+        }
+
+        // --- PREPARE CONTEXT ---
+        const contextText = currentRecipe 
+            ? `USER'S CURRENT RECIPE: ${currentRecipe}\nPROBLEM: ${problem}`
+            : `PROBLEM: ${problem}`;
+
+        // --- 0. PREPARE API KEYS ---
+        const keys = [
+            process.env.GOOGLE_API_KEY_1,
+            process.env.GOOGLE_API_KEY_2,
+            process.env.GOOGLE_API_KEY_3,
+            process.env.GOOGLE_API_KEY // Legacy fallback
+        ].filter(Boolean) as string[];
+
+        const apiKeys = Array.from(new Set(keys));
+        
+        if (apiKeys.length === 0) {
+            console.error("Missing Google API Keys (GOOGLE_API_KEY_1, etc.)")
+            return NextResponse.json(
+                { error: "API Keys not configured" },
+                { status: 500 }
+            )
+        }
+
+        const payload = {
+            systemInstruction: {
+                parts: [{ text: SYSTEM_PROMPT }]
+            },
+            contents: [{ parts: [{ text: contextText }] }]
+        };
+
+        // --- 1. ATTEMPT GEMINI WATERFALL (Primary) ---
+        const TIERS = [
+            { name: "Next-Gen Flash 3.1 (Preview)", models: ["gemini-3.1-flash-lite-preview", "gemini-3.1-flash-live-preview"] },
+            { name: "Pro (High Quality)", models: ["gemini-1.5-pro"] },
+            { name: "Flash 2.0 (Fast)", models: ["gemini-2.0-flash"] },
+            { name: "Flash 1.5 (Standard)", models: ["gemini-1.5-flash"] }
+        ];
+
+        let geminiResponseText = null;
+
+        outerTierLoop: for (const tier of TIERS) {
+            for (const modelName of tier.models) {
+                for (let i = 0; i < apiKeys.length; i++) {
+                    const currentKey = apiKeys[i];
+                    try {
+                        console.log(`[Kitchen SOS] Tier: ${tier.name} | Model: ${modelName} | Account: ${i + 1}`);
+                        const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${currentKey}`;
+
+                        const fetchResponse = await fetch(url, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(payload)
+                        });
+
+                        const data = await fetchResponse.json();
+
+                        if (!fetchResponse.ok) {
+                            console.error(`[Kitchen SOS] ❌ API ERROR (${fetchResponse.status}):`, data);
+                            if (fetchResponse.status === 429) continue; // Try next key
+                        }
+
+                        if (data.candidates && data.candidates.length > 0) {
+                            const candidate = data.candidates[0];
+                            geminiResponseText = candidate.content?.parts?.[0]?.text;
+                            if (geminiResponseText) {
+                                console.log(`[Kitchen SOS] ✅ Success with Account ${i + 1} using ${modelName}`);
+                                break outerTierLoop; 
+                            }
+                        }
+
+                    } catch (err: any) {
+                        console.error(`[Kitchen SOS] ❌ Critical failure on Account ${i + 1} with ${modelName}:`, err.message);
+                    }
+                }
+            }
+        }
+
+        if (geminiResponseText) {
+            return NextResponse.json({ answer: geminiResponseText });
+        }
+
+        // --- 2. FINAL FALLBACK: CUSTOM MESSAGE ---
+        const isHindi = language === "hi-IN";
+        const fallbackAnswer = currentRecipe 
+            ? (isHindi 
+                ? `माफ़ कीजिये, ${currentRecipe} के लिए अभी एक्सपर्ट टिप्स नहीं मिल पा रहे हैं। कृपया कुछ देर में फिर से पूछें।` 
+                : `Forgive me, I cannot find the expert tips for your ${currentRecipe} right now. Please try again in a moment.`)
+            : (isHindi
+                ? `मैं अभी आपकी मदद करने के लिए तैयार हूँ, लेकिन कृपया मुझे बताएं कि आप कौन सी रेसिपी बना रहे हैं? इससे मैं आपको बेहतर सलाह दे पाऊँगा।`
+                : `I am ready to help, but please tell me which recipe are you making? This will help me give you the best advice.`);
+
+        return NextResponse.json({ 
+            answer: fallbackAnswer,
+            error: "All AI providers exhausted"
+        });
+
+    } catch (error: any) {
+        console.error("Internal Kitchen SOS error:", error);
+        return NextResponse.json(
+            { error: "Generation failed", details: error.message },
+            { status: 500 }
+        );
+    }
 }

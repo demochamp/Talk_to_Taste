@@ -1,0 +1,2 @@
+mongodb+srv://jamesbulb804_db_user:VuJBnEoAq6P3Lv6S@talktotaste.2phs7gi.mongodb.net/?appName=talktotaste
+mongodb+srv://jamesbulb804_db_user:<db_password>@talktotaste.2phs7gi.mongodb.net/?appName=talktotaste

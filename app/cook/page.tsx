@@ -1,5 +1,5 @@
 "use client"
-import { useState, useEffect, useCallback, useRef } from "react"
+import { useState, useEffect, useCallback, useRef, useMemo } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import {
   Mic,
@@ -23,13 +23,21 @@ import {
   Plus,
   Minus,
   Globe,
+  ChevronDown,
   ChefHat,
   Sparkles,
   AlertCircle,
   Share2,
   Youtube,
+  MoreVertical,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import { Progress } from "@/components/ui/progress"
 import { VoiceWaveAnimation } from "@/components/voice-wave-animation"
 import { useVoice } from "@/hooks/use-voice"
@@ -38,6 +46,7 @@ import { useUserState } from "@/hooks/use-user-state"
 
 import Link from "next/link"
 import { useSearchParams, useRouter } from "next/navigation"
+import { useTranslation, type TranslationKey } from "@/lib/i18n"
 
 // Helper to safely get instruction text, avoiding duration strings
 function getStepInstruction(step: any, language: string) {
@@ -101,7 +110,7 @@ function getYoutubeEmbedUrl(url: string) {
   const vParam = url.split("v=")[1]
   if (vParam) {
     const id = vParam.split("&")[0]
-    const finalUrl = `https://www.youtube.com/embed/${id}`
+    const finalUrl = `https://www.youtube.com/embed/${id}?autoplay=1&rel=0`
     console.log(`[YouTube] Converted ${url} -> ${finalUrl}`)
     return finalUrl
   }
@@ -110,7 +119,7 @@ function getYoutubeEmbedUrl(url: string) {
   if (url.includes("youtu.be/")) {
     const id = url.split("youtu.be/")[1]?.split("?")[0]
     if (id) {
-      const finalUrl = `https://www.youtube.com/embed/${id}`
+      const finalUrl = `https://www.youtube.com/embed/${id}?autoplay=1&rel=0`
       console.log(`[YouTube] Converted ${url} -> ${finalUrl}`)
       return finalUrl
     }
@@ -121,7 +130,7 @@ function getYoutubeEmbedUrl(url: string) {
 }
 
 export default function CookPage() {
-  // ... (keeping lines 75-194 same) ...
+  const { t } = useTranslation()
   const searchParams = useSearchParams()
   const router = useRouter()
   const recipeId = searchParams.get("recipe")
@@ -136,14 +145,45 @@ export default function CookPage() {
   const [showIngredients, setShowIngredients] = useState(false)
   const [showTimerModal, setShowTimerModal] = useState(false)
   const [newTimerMinutes, setNewTimerMinutes] = useState(5)
+
+  // Use real voice hook
+  const {
+    isListening,
+    isSpeaking,
+    transcript,
+    error: voiceError,
+    language,
+    startListening,
+    stopListening,
+    speak,
+    stopSpeaking,
+    setLanguage,
+    isSupported: voiceSupported,
+    clearTranscript,
+    currentVoice,
+    availableVoices,
+    setVoicePreference,
+  } = useVoice()
+
   const [showVoiceCommands, setShowVoiceCommands] = useState(false)
-  const [showTools, setShowTools] = useState(false)
   const [showVideo, setShowVideo] = useState(false)
+  const isHindi = language === "hi-IN"
+  const [activeVideoUrl, setActiveVideoUrl] = useState<string | null>(null)
+  const [searchVideos, setSearchVideos] = useState<any[]>([])
+  const [isSearchingVideos, setIsSearchingVideos] = useState(false)
   const { addToHistory, toggleFavorite, isFavorite } = useUserState()
+  const hasTriggeredSpeechRef = useRef<number | null>(null)
   const hasSpokenRef = useRef<number | null>(null)
 
   // New safety guard to prevent stale commands
   const [isReady, setIsReady] = useState(false)
+
+  // Reset tracking refs when step changes manually or automatically
+  useEffect(() => {
+    hasTriggeredSpeechRef.current = null
+    hasSpokenRef.current = null
+    // stopSpeaking() // Optional: stop any lingering speech? nextStep already does this.
+  }, [currentStep])
 
   // Load recipe based on query param
   useEffect(() => {
@@ -175,27 +215,38 @@ export default function CookPage() {
     }
 
     loadRecipe()
-    loadRecipe()
   }, [recipeId])
 
-  // Use real voice hook
-  const {
-    isListening,
-    isSpeaking,
-    transcript,
-    error: voiceError,
-    language,
-    startListening,
-    stopListening,
-    speak,
-    stopSpeaking,
-    setLanguage,
-    isSupported: voiceSupported,
-    clearTranscript,
-    currentVoice,
-    availableVoices,
-    setVoicePreference,
-  } = useVoice()
+  // Reset search videos when global recipe changes
+  useEffect(() => {
+    setSearchVideos([])
+    if (recipe) {
+      setActiveVideoUrl(recipe.youtubeUrl || null)
+    }
+  }, [recipeId, recipe])
+
+  // Fetch real-time YouTube videos for the current dish
+  useEffect(() => {
+    if (!showVideo || !recipe) return
+    if (searchVideos.length > 0) return 
+
+    const fetchVideos = async () => {
+      setIsSearchingVideos(true)
+      try {
+        const query = language === "hi-IN" ? `${recipe.nameHindi} recipe` : `${recipe.name} recipe`
+        const res = await fetch(`/api/video-search?q=${encodeURIComponent(query)}`)
+        if (res.ok) {
+          const data = await res.json()
+          setSearchVideos(data.videos || [])
+        }
+      } catch (err) {
+        console.error("Failed to fetch videos:", err)
+      } finally {
+        setIsSearchingVideos(false)
+      }
+    }
+    fetchVideos()
+  }, [showVideo, recipe, language])
 
   // Clear any stale state on mount
   useEffect(() => {
@@ -219,25 +270,36 @@ export default function CookPage() {
   const progress = stepsLength ? ((currentStep + 1) / stepsLength) * 100 : 0
 
   // Timer logic
+  const timersRef = useRef(timers)
+  useEffect(() => {
+    timersRef.current = timers
+  }, [timers])
+
   useEffect(() => {
     const interval = setInterval(() => {
-      setTimers((prev) =>
-        prev.map((timer) => {
-          if (timer.isRunning && timer.remaining > 0) {
-            const newRemaining = timer.remaining - 1
+      let needsUpdate = false
+
+      const nextTimers = timersRef.current.map((timer) => {
+        if (timer.isRunning && timer.remaining > 0) {
+          needsUpdate = true
+          const newRemaining = timer.remaining - 1
+          
             // Alert when timer completes
             if (newRemaining === 0) {
               const isReminder = !timer.name.startsWith("Timer ")
               const message = language === "hi-IN"
-                ? (isReminder ? `"${timer.name}" ka samay ho gaya hai!` : `${timer.name} pura ho gaya!`)
+                ? (isReminder ? `"${timer.name}" का समय हो गया है!` : `${timer.name} पूरा हो गया!`)
                 : (isReminder ? `Reminder for "${timer.name}" is up!` : `${timer.name} is complete!`)
               speak(message)
             }
-            return { ...timer, remaining: newRemaining }
-          }
-          return timer
-        }),
-      )
+          return { ...timer, remaining: newRemaining }
+        }
+        return timer
+      })
+
+      if (needsUpdate) {
+        setTimers(nextTimers)
+      }
     }, 1000)
     return () => clearInterval(interval)
   }, [speak, language])
@@ -282,24 +344,32 @@ export default function CookPage() {
   }, [speak, step, language, stopSpeaking])
 
 
-  // Speak current step when playing or step changes
+  // Track when speech actually starts
   useEffect(() => {
-    if (!step) return
-    if (!isPlaying) return
-    if (isSpeaking) return
+    if (isSpeaking) {
+      hasSpokenRef.current = currentStep
+    }
+  }, [isSpeaking, currentStep])
 
-    // Check if we've already spoken this step
-    if (hasSpokenRef.current === currentStep) return
+  // Speak current step when step changes
+  useEffect(() => {
+    if (!step || isSpeaking) return
+
+    // Don't auto-speak if paused, UNLESS we just navigated to a new step manually
+    // Actually, normally we want to speak every step we land on.
+    
+    // Safety: Check if we've already triggered speech for this step
+    if (hasTriggeredSpeechRef.current === currentStep) return
 
     const { text, isFallback } = getStepInstruction(step, language)
 
     if (text) {
-      // Use English voice for fallback check
+      hasTriggeredSpeechRef.current = currentStep
+      console.log(`[CookPage] Triggering speech for step ${currentStep + 1}`)
       speak(text, isFallback ? "en-IN" : undefined)
-      hasSpokenRef.current = currentStep
     }
 
-  }, [currentStep, isPlaying, isSpeaking, language, step, speak])
+  }, [currentStep, isSpeaking, language, step, speak])
 
   // Reset spoken state when language changes so it repeats in new language
   useEffect(() => {
@@ -388,8 +458,18 @@ export default function CookPage() {
       if (match.confidence > 0.6) {
         let commandHandled = false;
 
+        // Extract language modifier independently to respect combined commands like 'repeat in hindi'
+        let activeLang = language
+        if (transcript.match(/hindi|हिंदी/i)) {
+          if (language !== "hi-IN") setLanguage("hi-IN")
+          activeLang = "hi-IN"
+        } else if (transcript.match(/english|इंग्लिश/i)) {
+          if (language !== "en-IN") setLanguage("en-IN")
+          activeLang = "en-IN"
+        }
+
         // Log match for debugging
-        console.log("Processing Voice Command:", match.intent, transcript)
+        console.log("Processing Voice Command:", match.intent, transcript, "Active Lang:", activeLang)
 
         switch (match.intent) {
           case "STEP_NEXT":
@@ -401,7 +481,20 @@ export default function CookPage() {
             commandHandled = true;
             break
           case "STEP_REPEAT":
-            repeatStep()
+            stopSpeaking()
+            if (step) {
+              const { text, isFallback } = getStepInstruction(step, activeLang)
+              if (text) speak(text, isFallback ? "en-IN" : activeLang)
+            }
+            commandHandled = true;
+            break
+          case "SET_LANGUAGE_HI":
+          case "SET_LANGUAGE_EN":
+            stopSpeaking()
+            if (step) {
+              const { text, isFallback } = getStepInstruction(step, activeLang)
+              if (text) speak(text, isFallback ? "en-IN" : activeLang)
+            }
             commandHandled = true;
             break
           case "TIMER_SET":
@@ -423,12 +516,8 @@ export default function CookPage() {
             commandHandled = true;
             break
           case "GO_TO_STEP":
-            // Support both "step 5" and "step number 5"
-            const stepMatch = transcript.match(/step\s*(?:number\s*)?(\d+)/i) ||
-              transcript.match(/स्टेप\s*(\d+)/i) ||
-              transcript.match(/चरण\s*(\d+)/i)
-            if (stepMatch) {
-              goToStep(parseInt(stepMatch[1]) - 1) // 1-based to 0-based
+            if (match.params?.value) {
+              goToStep(parseInt(match.params.value as string))
             }
             commandHandled = true;
             break
@@ -475,7 +564,7 @@ export default function CookPage() {
     if (isListening) {
       stopListening()
     } else {
-      startListening()
+      startListening({ continuous: true, mode: "COOK" })
     }
   }
 
@@ -487,7 +576,7 @@ export default function CookPage() {
   }
 
   if (!recipe || !step) {
-    return <div className="p-10">Loading recipe...</div>
+    return <div className="p-10">{t("nav.home") === "Home" ? "Loading recipe..." : "रेसिपी लोड हो रही है..."}</div>
   }
   return (
     <main className="min-h-screen bg-background">
@@ -500,52 +589,56 @@ export default function CookPage() {
                 <Home className="w-5 h-5" />
               </Button>
             </Link>
-            <div>
-              <h1 className="font-semibold text-foreground">{language === "hi-IN" ? recipe.nameHindi : recipe.name}</h1>
-              <p className="text-xs text-muted-foreground">
-                Step {currentStep + 1} of {stepsLength}
+            <div className="min-w-0 flex-1 ml-2">
+              <h1 className="font-bold text-slate-800 truncate text-sm sm:text-base leading-tight">
+                {language === "hi-IN" ? recipe.nameHindi : recipe.name}
+              </h1>
+              <p className="text-[10px] sm:text-xs text-muted-foreground font-medium">
+                {t("cook.step")} {currentStep + 1} / {stepsLength}
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="rounded-full"
-              onClick={() => {
-                if (navigator.share) {
-                  navigator.share({
-                    title: recipe.name,
-                    text: `Check out this recipe for ${recipe.name} on TalkToTaste!`,
-                    url: window.location.href,
-                  }).catch(console.error);
-                } else {
-                  navigator.clipboard.writeText(window.location.href);
-                  alert("Link copied to clipboard!");
-                }
-              }}
-            >
-              <Share2 className="w-5 h-5" />
-            </Button>
-            {recipe.youtubeUrl && (
+          <div className="flex items-center gap-1 sm:gap-2">
+            {/* Desktop Actions */}
+            <div className="hidden md:flex items-center gap-2">
               <Button
-                variant={showVideo ? "default" : "ghost"}
+                variant="ghost"
                 size="icon"
                 className="rounded-full"
-                onClick={() => setShowVideo(!showVideo)}
+                onClick={() => {
+                  if (navigator.share) {
+                    navigator.share({
+                      title: recipe.name,
+                      text: `Check out this recipe for ${recipe.name} on TalkToTaste!`,
+                      url: window.location.href,
+                    }).catch(console.error);
+                  } else {
+                    navigator.clipboard.writeText(window.location.href);
+                    alert(language === "hi-IN" ? "लिंक कॉपी हो गया!" : "Link copied to clipboard!");
+                  }
+                }}
               >
-                <Youtube className="w-5 h-5" />
+                <Share2 className="w-5 h-5" />
               </Button>
-            )}
-            <Button variant="ghost" size="icon" className="rounded-full" onClick={toggleLanguage} aria-label="Toggle Language">
-              <Globe className="w-5 h-5" />
-            </Button>
-            <Button variant="ghost" size="icon" className="rounded-full" onClick={() => setShowIngredients(true)}>
-              <List className="w-5 h-5" />
-            </Button>
-            <Button variant="ghost" size="icon" className="rounded-full lg:hidden" onClick={() => setShowTools(true)}>
-              <ChefHat className="w-5 h-5" />
-            </Button>
+              {recipe.youtubeUrl && (
+                <Button
+                  variant={showVideo ? "default" : "ghost"}
+                  size="icon"
+                  className="rounded-full"
+                  onClick={() => setShowVideo(!showVideo)}
+                >
+                  <Youtube className="w-5 h-5" />
+                </Button>
+              )}
+              <Button variant="ghost" size="icon" className="rounded-full" onClick={toggleLanguage}>
+                <Globe className="w-5 h-5" />
+              </Button>
+              <Button variant="ghost" size="icon" className="rounded-full" onClick={() => setShowIngredients(true)}>
+                <List className="w-5 h-5" />
+              </Button>
+            </div>
+
+            {/* Common Controls (Visible on all) */}
             <Button
               variant="ghost"
               size="icon"
@@ -554,8 +647,56 @@ export default function CookPage() {
                 if (isSpeaking) stopSpeaking()
               }}
             >
-              {isSpeaking ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
+              {isSpeaking ? <VolumeX className="w-5 h-5 text-primary" /> : <Volume2 className="w-5 h-5" />}
             </Button>
+
+            {/* Mobile "More" Menu */}
+            <div className="md:hidden">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" className="rounded-full">
+                    <MoreVertical className="w-5 h-5" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56 rounded-2xl p-2">
+                  {recipe.youtubeUrl && (
+                    <DropdownMenuItem onClick={() => setShowVideo(!showVideo)} className="rounded-xl gap-3 py-3">
+                      <Youtube className="w-4 h-4 text-red-500" />
+                      <span>{showVideo ? t("cook.video_hide") : t("cook.video_show")}</span>
+                    </DropdownMenuItem>
+                  )}
+                  <DropdownMenuItem onClick={toggleLanguage} className="rounded-xl gap-3 py-3">
+                    <Globe className="w-4 h-4 text-blue-500" />
+                    <span>{language === "hi-IN" ? "English" : "हिंदी"}</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setShowIngredients(true)} className="rounded-xl gap-3 py-3">
+                    <List className="w-4 h-4 text-green-500" />
+                    <span>{t("cook.ingredients")}</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => {
+                      if (navigator.share) {
+                        navigator.share({
+                          title: recipe.name,
+                          text: `Check out this recipe for ${recipe.name} on TalkToTaste!`,
+                          url: window.location.href,
+                        }).catch(console.error);
+                      } else if (navigator.clipboard && navigator.clipboard.writeText) {
+                        navigator.clipboard.writeText(window.location.href);
+                        alert(language === "hi-IN" ? "लिंक कॉपी हो गया!" : "Link copied to clipboard!");
+                      } else {
+                        // Fallback for insecure contexts (like mobile IP)
+                        prompt(language === "hi-IN" ? "लिंक यहाँ से कॉपी करें:" : "Copy link from here:", window.location.href);
+                      }
+                    }}
+                    className="rounded-xl gap-3 py-3"
+                  >
+                    <Share2 className="w-4 h-4 text-purple-500" />
+                    <span>{t("cook.share")}</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
           </div>
         </div>
         {/* Progress bar */}
@@ -563,11 +704,10 @@ export default function CookPage() {
       </header>
 
       {/* Main content */}
-      <div className="pt-20 pb-40">
-        <div className="container mx-auto px-4 py-8">
-          <div className="grid lg:grid-cols-3 gap-8">
-            {/* Main cooking area */}
-            <div className="lg:col-span-2 space-y-6">
+      <div className="container mx-auto px-2 sm:px-4 pt-20 sm:pt-24 pb-20 sm:pb-24 max-w-4xl min-h-screen">
+        <div className="grid lg:grid-cols-3 gap-8 py-4 sm:py-8">
+          {/* Main cooking area */}
+            <div className="max-w-2xl mx-auto space-y-4 sm:space-y-8">
               {/* Voice status banner */}
               {voiceError && (
                 <motion.div
@@ -584,18 +724,22 @@ export default function CookPage() {
               <AnimatePresence>
                 {isListening && (
                   <motion.div
-                    initial={{ opacity: 0, scale: 0.9 }}
+                    initial={{ opacity: 0, scale: 0.95 }}
                     animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.9 }}
-                    className="p-6 rounded-3xl bg-primary/10 border-2 border-primary/30"
+                    exit={{ opacity: 0, scale: 0.95 }}
+                    className="p-4 sm:p-6 rounded-2xl sm:rounded-3xl bg-primary/5 border border-primary/20"
                   >
-                    <div className="flex items-center justify-center gap-4">
-                      <VoiceWaveAnimation isActive={true} />
-                      <div className="text-center">
-                        <p className="text-sm text-muted-foreground mb-1">
-                          {language === "hi-IN" ? "सुन रहा हूं..." : "Listening..."}
+                    <div className="flex flex-col sm:flex-row items-center justify-center gap-4 text-center sm:text-left">
+                      <VoiceWaveAnimation isActive={true} className="scale-75 sm:scale-100" />
+                      <div className="flex-1">
+                        <p className="text-[10px] sm:text-xs font-bold text-primary/60 uppercase tracking-widest mb-1">
+                          {language === "hi-IN" ? "सुन रहा हूँ" : "Listening"}
                         </p>
-                        {transcript && <p className="text-lg font-medium text-primary">"{transcript}"</p>}
+                        {transcript && (
+                          <p className="text-base sm:text-lg font-bold text-slate-800 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                            "{transcript}"
+                          </p>
+                        )}
                       </div>
                     </div>
                   </motion.div>
@@ -608,8 +752,10 @@ export default function CookPage() {
                 initial={{ opacity: 0, x: 50 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -50 }}
-                className="bg-card rounded-3xl border border-border p-5 sm:p-6 md:p-8 shadow-lg"
+                className="bg-white rounded-[1.5rem] sm:rounded-[2rem] border border-orange-100/50 p-4 sm:p-6 md:p-10 shadow-xl shadow-orange-900/5 relative overflow-hidden"
               >
+                {/* Decorative background for the step card */}
+                <div className="absolute top-0 right-0 w-32 h-32 bg-orange-50 rounded-full blur-3xl -mr-16 -mt-16 opacity-50" />
                 {/* Step header */}
                 <div className="flex items-center justify-between mb-4 sm:mb-6">
                   <div className="flex items-center gap-3">
@@ -621,10 +767,10 @@ export default function CookPage() {
                       <span className="text-lg sm:text-2xl font-bold text-primary-foreground">{step.step}</span>
                     </motion.div>
                     <div>
-                      <p className="text-xs sm:text-sm text-muted-foreground">{language === "hi-IN" ? "चरण" : "Step"} {step.step}</p>
+                      <p className="text-xs sm:text-sm text-muted-foreground">{t("cook.step")} {step.step}</p>
                       <div className="flex items-center gap-1 sm:gap-2 text-[10px] sm:text-xs text-muted-foreground">
                         <Clock className="w-3 h-3" />
-                        <span>{step.duration}</span>
+                        <span>{isHindi ? (step.durationHindi || step.duration) : step.duration}</span>
                       </div>
                     </div>
                   </div>
@@ -638,7 +784,7 @@ export default function CookPage() {
                     className="rounded-full gap-1 sm:gap-2 text-xs h-8 px-3"
                   >
                     <Timer className="w-3 h-3 sm:w-4 sm:h-4" />
-                    {language === "hi-IN" ? "टाइमर" : "Timer"}
+                    {t("cook.timer")}
                   </Button>
                 </div>
 
@@ -650,7 +796,7 @@ export default function CookPage() {
                 {/* Debug/Fallback Warning */}
                 {language === "hi-IN" && (!step.instructionHindi || step.instructionHindi.length < 5) && (
                   <p className="text-xs text-amber-500 mb-4 italic">
-                    (Hindi translation missing for this step. Playing in English.)
+                    (इस स्टेप के लिए हिंदी अनुवाद उपलब्ध नहीं है। अंग्रेजी में सुनाया जा रहा है।)
                   </p>
                 )}
 
@@ -683,11 +829,11 @@ export default function CookPage() {
                         whileHover={{ scale: 1.2 }}
                         whileTap={{ scale: 0.9 }}
                         onClick={() => setCurrentStep(index)}
-                        className={`h-3 rounded-full transition-all ${index === currentStep
-                          ? "bg-primary w-8"
+                        className={`h-2.5 sm:h-3 rounded-full transition-all ${index === currentStep
+                          ? "bg-primary w-6 sm:w-8"
                           : index < currentStep
-                            ? "bg-primary/50 w-3"
-                            : "bg-border w-3"
+                            ? "bg-primary/50 w-2.5 sm:w-3"
+                            : "bg-border w-2.5 sm:w-3"
                           }`}
                       />
                     )
@@ -696,45 +842,47 @@ export default function CookPage() {
               </div>
 
               {/* Control buttons */}
-              <div className="flex items-center justify-center gap-4">
+              <div className="flex items-center justify-center gap-1 sm:gap-4 w-full max-w-[100vw]">
                 <motion.button
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.9 }}
                   onClick={prevStep}
                   disabled={currentStep === 0}
-                  className="w-14 h-14 rounded-full bg-secondary flex items-center justify-center disabled:opacity-50 transition-colors hover:bg-secondary/80"
+                  className="w-11 h-11 sm:w-14 sm:h-14 rounded-full bg-secondary flex items-center justify-center disabled:opacity-50 transition-colors hover:bg-secondary/80 flex-shrink-0"
                 >
-                  <SkipBack className="w-6 h-6 text-foreground" />
+                  <SkipBack className="w-5 h-5 sm:w-6 sm:h-6 text-foreground" />
                 </motion.button>
 
                 <motion.button
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.9 }}
                   onClick={repeatStep}
-                  className="w-14 h-14 rounded-full bg-secondary flex items-center justify-center transition-colors hover:bg-secondary/80"
+                  className="w-11 h-11 sm:w-14 sm:h-14 rounded-full bg-secondary flex items-center justify-center transition-colors hover:bg-secondary/80 flex-shrink-0"
                 >
-                  <RotateCcw className="w-6 h-6 text-foreground" />
+                  <RotateCcw className="w-5 h-5 sm:w-6 sm:h-6 text-foreground" />
                 </motion.button>
 
                 <motion.button
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   onClick={() => {
-                    setIsPlaying(!isPlaying)
-                    if (!isPlaying) {
+                    const nextPlaying = !isPlaying
+                    setIsPlaying(nextPlaying)
+                    if (nextPlaying) {
+                      // Restart speech if it was stopped/not triggered
                       const { text, isFallback } = getStepInstruction(step, language)
                       if (text) speak(text, isFallback ? "en-IN" : undefined)
                     } else {
                       stopSpeaking()
                     }
                   }}
-                  className={`w-20 h-20 rounded-full flex items-center justify-center shadow-xl ${isPlaying ? "bg-accent shadow-accent/30" : "bg-primary shadow-primary/30"
+                  className={`w-16 h-16 sm:w-20 sm:h-20 rounded-full flex items-center justify-center shadow-xl flex-shrink-0 ${isPlaying ? "bg-accent shadow-accent/30" : "bg-primary shadow-primary/30"
                     }`}
                 >
                   {isPlaying ? (
-                    <Pause className="w-8 h-8 text-accent-foreground" />
+                    <Pause className="w-7 h-7 sm:w-8 sm:h-8 text-accent-foreground" />
                   ) : (
-                    <Play className="w-8 h-8 text-primary-foreground ml-1" />
+                    <Play className="w-7 h-7 sm:w-8 sm:h-8 text-primary-foreground ml-1" />
                   )}
                 </motion.button>
 
@@ -743,9 +891,9 @@ export default function CookPage() {
                   whileTap={{ scale: 0.9 }}
                   onClick={nextStep}
                   disabled={currentStep === stepsLength - 1}
-                  className="w-14 h-14 rounded-full bg-secondary flex items-center justify-center disabled:opacity-50 transition-colors hover:bg-secondary/80"
+                  className="w-11 h-11 sm:w-14 sm:h-14 rounded-full bg-secondary flex items-center justify-center disabled:opacity-50 transition-colors hover:bg-secondary/80 flex-shrink-0"
                 >
-                  <SkipForward className="w-6 h-6 text-foreground" />
+                  <SkipForward className="w-5 h-5 sm:w-6 sm:h-6 text-foreground" />
                 </motion.button>
 
                 {/* Voice button */}
@@ -754,7 +902,7 @@ export default function CookPage() {
                   whileTap={{ scale: 0.9 }}
                   onClick={toggleListening}
                   disabled={!voiceSupported}
-                  className={`w-14 h-14 rounded-full flex items-center justify-center transition-all ${isListening
+                  className={`w-11 h-11 sm:w-14 sm:h-14 rounded-full flex items-center justify-center transition-all flex-shrink-0 ${isListening
                     ? "bg-primary animate-pulse-glow"
                     : voiceSupported
                       ? "bg-secondary hover:bg-secondary/80"
@@ -762,9 +910,9 @@ export default function CookPage() {
                     }`}
                 >
                   {isListening ? (
-                    <MicOff className="w-6 h-6 text-primary-foreground" />
+                    <MicOff className="w-5 h-5 sm:w-6 sm:h-6 text-primary-foreground" />
                   ) : (
-                    <Mic className="w-6 h-6 text-foreground" />
+                    <Mic className="w-5 h-5 sm:w-6 sm:h-6 text-foreground" />
                   )}
                 </motion.button>
               </div>
@@ -778,12 +926,8 @@ export default function CookPage() {
                   className="text-muted-foreground"
                 >
                   {showVoiceCommands
-                    ? language === "hi-IN"
-                      ? "वॉइस कमांड्स छुपाएं"
-                      : "Hide voice commands"
-                    : language === "hi-IN"
-                      ? "वॉइस कमांड्स देखें"
-                      : "Show voice commands"}
+                    ? t("nav.home") === "Home" ? "Hide voice commands" : "वॉइस कमांड्स छुपाएं"
+                    : t("nav.home") === "Home" ? "Show voice commands" : "वॉइस कमांड्स देखें"}
                 </Button>
 
                 <AnimatePresence>
@@ -812,50 +956,54 @@ export default function CookPage() {
                 </AnimatePresence>
 
                 {/* Manual Voice Selector (Settings) */}
-                <div className="mt-6 border-t border-border pt-4">
-                  <p className="text-xs text-muted-foreground mb-2">Voice Settings</p>
-                  <select
-                    className="w-full text-xs p-2 rounded-lg bg-background border border-border"
-                    value={currentVoice?.voiceURI || ""}
-                    onChange={(e) => {
-                      const uri = e.target.value
-                      if (uri) {
-                        // We need to cast or ignore type check for the setVoicePreference which we know exists now
-                        // @ts-ignore
-                        setVoicePreference(uri)
-                        // Also trigger a test speak
-                        // speak("Voice changed", "en-IN")
-                      }
-                    }}
-                  >
-                    <option value="">Auto-Detect Voice</option>
-                    {/* Filter voices to show relevant ones + any fallback */}
-                    {availableVoices
-                      .filter(v => v.lang.includes(language === "hi-IN" ? "hi" : "en"))
-                      .map(v => (
-                        <option key={v.voiceURI} value={v.voiceURI}>
-                          {v.name} ({v.lang})
-                        </option>
-                      ))}
-                    {/* Show others in a separate group if needed, or just all useful ones */}
-                    <optgroup label="All Voices">
-                      {availableVoices
-                        .filter(v => !v.lang.includes(language === "hi-IN" ? "hi" : "en"))
-                        .map(v => (
-                          <option key={v.voiceURI} value={v.voiceURI}>
-                            {v.name} ({v.lang})
-                          </option>
-                        ))}
-                    </optgroup>
-                  </select>
+                <div className="mt-4 border-t border-border/50 pt-3">
+                  <details className="group">
+                    <summary className="flex items-center justify-center gap-1 text-[10px] sm:text-xs text-muted-foreground cursor-pointer hover:text-primary transition-colors list-none">
+                      <Globe className="w-3 h-3" />
+                      <span>{language === "hi-IN" ? "आवाज़ सेटिंग्स" : "Voice Settings"}</span>
+                      <ChevronDown className="w-3 h-3 transition-transform group-open:rotate-180" />
+                    </summary>
+                    <div className="mt-2 px-1">
+                      <select
+                        className="w-full text-[10px] sm:text-xs p-2 rounded-xl bg-secondary/50 border-none outline-none focus:ring-1 focus:ring-primary/30"
+                        value={currentVoice?.voiceURI || ""}
+                        onChange={(e) => {
+                          const uri = e.target.value
+                          if (uri) {
+                            // @ts-ignore
+                            setVoicePreference(uri)
+                          }
+                        }}
+                      >
+                        <option value="">{language === "hi-IN" ? "ऑटो-डिटेक्ट आवाज़" : "Auto-Detect Voice"}</option>
+                        {availableVoices
+                          .filter(v => v.lang.includes(language === "hi-IN" ? "hi" : "en"))
+                          .map((v, idx) => (
+                            <option key={`${v.voiceURI}-${idx}`} value={v.voiceURI}>
+                              {v.name} ({v.lang})
+                            </option>
+                          ))}
+                        <optgroup label="All Voices">
+                          {availableVoices
+                            .filter(v => !v.lang.includes(language === "hi-IN" ? "hi" : "en"))
+                            .map((v, idx) => (
+                              <option key={`all-${v.voiceURI}-${idx}`} value={v.voiceURI}>
+                                {v.name} ({v.lang})
+                              </option>
+                            ))}
+                        </optgroup>
+                      </select>
+                    </div>
+                  </details>
                 </div>
 
               </div>
 
-              {/* Debug: Active Voice */}
-              <div className="text-center mt-4">
-                <p className="text-[10px] text-muted-foreground bg-secondary/30 rounded-full px-3 py-1 inline-block">
-                  🎙️ Active Voice: {currentVoice ? `${currentVoice.name} (${currentVoice.lang})` : "Browser Default"}
+              {/* Status: Active Voice */}
+              <div className="text-center mt-3">
+                <p className="text-[9px] text-muted-foreground/60 px-3 py-1 flex items-center justify-center gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+                  {currentVoice ? `${currentVoice.name} (${currentVoice.lang})` : "Browser Default Voice"}
                 </p>
               </div>
             </div>
@@ -867,7 +1015,7 @@ export default function CookPage() {
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="font-semibold text-foreground flex items-center gap-2">
                     <Timer className="w-5 h-5 text-primary" />
-                    {language === "hi-IN" ? "टाइमर" : "Timers"}
+                    {t("cook.timer")}
                   </h3>
                   <Button
                     size="sm"
@@ -881,7 +1029,7 @@ export default function CookPage() {
 
                 {timers.length === 0 ? (
                   <p className="text-sm text-muted-foreground text-center py-4">
-                    {language === "hi-IN" ? "कोई एक्टिव टाइमर नहीं" : "No active timers"}
+                    {language === "hi-IN" ? "कोई सक्रिय टाइमर नहीं" : "No active timers"}
                   </p>
                 ) : (
                   <div className="space-y-3">
@@ -945,7 +1093,7 @@ export default function CookPage() {
                           ? "लक्ष्य पूरा!"
                           : "Target reached!"
                         : language === "hi-IN"
-                          ? `${targetWhistles - whistleCount} और बाकी है`
+                          ? `${targetWhistles - whistleCount} और बाकी हैं`
                           : `${targetWhistles - whistleCount} more to go`}
                     </p>
                   </div>
@@ -1021,12 +1169,14 @@ export default function CookPage() {
                   <div className="p-3 rounded-xl bg-secondary">
                     <Users className="w-4 h-4 mx-auto mb-1 text-primary" />
                     <p className="text-xs text-muted-foreground">
-                      {recipe.servings} {language === "hi-IN" ? "लोग" : "servings"}
+                      {recipe.servings} {t("recipe.people")}
                     </p>
                   </div>
                   <div className="p-3 rounded-xl bg-secondary">
                     <Flame className="w-4 h-4 mx-auto mb-1 text-primary" />
-                    <p className="text-xs text-muted-foreground">{recipe.difficulty}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {t(`difficulty.${recipe.difficulty?.toLowerCase()}` as TranslationKey)}
+                    </p>
                   </div>
                 </div>
               </div>
@@ -1041,9 +1191,8 @@ export default function CookPage() {
             </div>
           </div>
         </div>
-      </div>
 
-      {/* Ingredients modal */}
+      {/* Ingredients Modal */}
       <AnimatePresence>
         {showIngredients && (
           <motion.div
@@ -1061,30 +1210,27 @@ export default function CookPage() {
               onClick={(e) => e.stopPropagation()}
             >
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-xl font-semibold">{language === "hi-IN" ? "सामग्री" : "Ingredients"}</h3>
-                <Button variant="ghost" size="icon" onClick={() => setShowIngredients(false)}>
+                <h3 className="text-xl font-semibold">{t("cook.ingredients")}</h3>
+                <Button variant="ghost" size="icon" onClick={() => setShowIngredients(false)} className="rounded-full">
                   <X className="w-5 h-5" />
                 </Button>
               </div>
               <ul className="space-y-3">
-                {(recipe.ingredients ?? []).map((ing: any, index: number) => {
-                  return (
-                    <motion.li
-                      key={index}
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: index * 0.05 }}
-                      className="flex items-center gap-3 p-3 rounded-xl bg-secondary"
-                    >
-                      <Check className="w-4 h-4 text-primary flex-shrink-0" />
-                      <span className="text-sm">
-                        {language === "hi-IN" ? ing.itemHindi : ing.item} —{" "}
-                        {language === "hi-IN" ? ing.quantityHindi : ing.quantity}
-                      </span>
-                    </motion.li>
-                  )
-                })}
-
+                {(recipe.ingredients ?? []).map((ing: any, index: number) => (
+                  <motion.li
+                    key={index}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: index * 0.05 }}
+                    className="flex items-center gap-3 p-3 rounded-xl bg-secondary"
+                  >
+                    <Check className="w-4 h-4 text-primary flex-shrink-0" />
+                    <span className="text-sm">
+                      {language === "hi-IN" ? ing.itemHindi : ing.item} —{" "}
+                      {language === "hi-IN" ? ing.quantityHindi : ing.quantity}
+                    </span>
+                  </motion.li>
+                ))}
               </ul>
             </motion.div>
           </motion.div>
@@ -1161,28 +1307,112 @@ export default function CookPage() {
             onClick={() => setShowVideo(false)}
           >
             <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-              className="bg-black rounded-3xl overflow-hidden max-w-4xl w-full aspect-video shadow-2xl relative"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 20 }}
+              className="bg-black rounded-3xl overflow-y-auto max-w-4xl w-full flex flex-col max-h-[90vh] shadow-2xl relative scrollbar-thin scrollbar-thumb-zinc-800"
               onClick={(e) => e.stopPropagation()}
             >
-              <Button
-                variant="ghost"
-                size="icon"
-                className="absolute top-4 right-4 text-white z-10 bg-black/20 hover:bg-black/40 rounded-full"
-                onClick={() => setShowVideo(false)}
-              >
-                <X className="w-6 h-6" />
-              </Button>
-              <iframe
-                src={getYoutubeEmbedUrl(recipe.youtubeUrl)}
-                title="Recipe Video"
-                className="w-full h-full"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowFullScreen
-                referrerPolicy="no-referrer-when-downgrade"
-              />
+              <div className="flex items-center justify-between p-4 bg-zinc-900 border-b border-white/5">
+                <div className="flex items-center gap-3">
+                   <div className="w-8 h-8 rounded-full bg-red-600 flex items-center justify-center">
+                      <Youtube className="w-5 h-5 text-white" />
+                   </div>
+                   <div>
+                    <h3 className="text-white text-sm font-medium line-clamp-1">
+                      {language === "hi-IN" ? `अभी देख रहे हैं: ${recipe.nameHindi}` : `Watching: ${recipe.name}`}
+                    </h3>
+                    <p className="text-[10px] text-zinc-400">YouTube Feed • Dish Specific</p>
+                   </div>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="text-white hover:bg-white/10 rounded-full"
+                  onClick={() => setShowVideo(false)}
+                >
+                  <X className="w-6 h-6" />
+                </Button>
+              </div>
+
+              <div className="flex-1 bg-black relative">
+                <iframe
+                  src={getYoutubeEmbedUrl(activeVideoUrl || recipe.youtubeUrl)}
+                  title="Recipe Video"
+                  className="w-full h-full aspect-video"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                  referrerPolicy="no-referrer-when-downgrade"
+                />
+              </div>
+
+              {/* Related Videos Bottom Section (Non-overlapping, Scroll-Protected) */}
+              <div className="p-6 bg-zinc-950 border-t border-white/5 flex-shrink-0 min-h-[300px]">
+                <div className="flex items-center justify-between mb-4 px-1">
+                  <h3 className="text-white text-xs font-semibold flex items-center gap-2">
+                    <Sparkles className="w-4 h-4 text-primary" />
+                    {language === "hi-IN" ? `${recipe.nameHindi} के और वीडियो` : `More ${recipe.name} Videos`}
+                  </h3>
+                  {searchVideos.length > 0 && (
+                     <span className="text-[10px] text-zinc-500">{searchVideos.length} found</span>
+                  )}
+                </div>
+                
+                <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-thin scrollbar-thumb-zinc-800 snap-x">
+                  {isSearchingVideos ? (
+                    [1, 2, 3, 4].map((i) => (
+                      <div key={i} className="flex-shrink-0 w-64 animate-pulse">
+                        <div className="aspect-video bg-zinc-800 rounded-xl mb-2" />
+                        <div className="h-3 bg-zinc-800 rounded w-full mb-1" />
+                        <div className="h-3 bg-zinc-800 rounded w-2/3" />
+                      </div>
+                    ))
+                  ) : searchVideos.length > 0 ? (
+                    searchVideos.map((vid, i) => (
+                      <motion.div
+                        key={vid.id}
+                        initial={{ opacity: 0, x: 20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: i * 0.05 }}
+                        className={`flex-shrink-0 w-64 group cursor-pointer snap-start ${vid.id === (activeVideoUrl?.split("v=")[1] || activeVideoUrl?.split("/").pop()?.split("?")[0]) ? "ring-2 ring-primary bg-primary/5 p-1 rounded-xl" : ""}`}
+                        onClick={() => {
+                          setActiveVideoUrl(`https://www.youtube.com/watch?v=${vid.id}`)
+                        }}
+                      >
+                        <div className="relative aspect-video rounded-lg overflow-hidden mb-2">
+                          <img 
+                            src={vid.thumbnail} 
+                            alt={vid.title} 
+                            className="w-full h-full object-cover transition-transform group-hover:scale-105"
+                          />
+                          <div className="absolute bottom-1 right-1 bg-black/80 px-1 rounded text-[10px] text-white">
+                            {vid.duration}
+                          </div>
+                        </div>
+                        <p className="text-xs text-white/90 font-medium line-clamp-2 leading-snug group-hover:text-primary transition-colors">
+                          {vid.title}
+                        </p>
+                        <p className="text-[10px] text-zinc-500 mt-1 uppercase tracking-wider">
+                          {vid.channel}
+                        </p>
+                      </motion.div>
+                    ))
+                  ) : (
+                    <div className="w-full py-10 flex flex-col items-center justify-center text-zinc-500 border border-dashed border-white/10 rounded-2xl">
+                      <Youtube className="w-8 h-8 mb-2 opacity-20" />
+                      <p className="text-xs">No extra matching videos found...</p>
+                      <Button 
+                        variant="link" 
+                        size="sm" 
+                        className="text-[10px]"
+                        onClick={() => window.open(`https://www.youtube.com/results?search_query=${recipe.name}+recipe`, "_blank")}
+                      >
+                        Try manual YouTube search
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              </div>
             </motion.div>
           </motion.div>
         )}

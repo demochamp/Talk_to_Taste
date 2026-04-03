@@ -14,7 +14,7 @@ declare global {
 
 export type DialogState = "IDLE" | "LISTENING" | "PROCESSING" | "SPEAKING"
 
-export type VoiceMode = "COMMAND" | "SEARCH"
+export type VoiceMode = "COMMAND" | "SEARCH" | "COOK"
 
 export interface VoiceState {
     isListening: boolean
@@ -27,6 +27,7 @@ export interface VoiceState {
     mode: VoiceMode
     currentVoice: SpeechSynthesisVoice | null
     availableVoices: SpeechSynthesisVoice[]
+    isFinal: boolean
 }
 
 interface VoiceContextType extends VoiceState {
@@ -59,10 +60,13 @@ export function VoiceProvider({ children }: { children: React.ReactNode }) {
         isContinuous: false,
         mode: "COMMAND",
         currentVoice: null,
-        availableVoices: []
+        availableVoices: [],
+        isFinal: false
     })
 
     const recognitionRef = useRef<any>(null)
+    const audioRef = useRef<HTMLAudioElement | null>(null)
+    const lastErrorRef = useRef<string | null>(null)
     const [isSupported, setIsSupported] = useState(false)
     const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([])
 
@@ -99,18 +103,20 @@ export function VoiceProvider({ children }: { children: React.ReactNode }) {
 
         recognition.onresult = (event: any) => {
             const current = event.resultIndex
+            const isFinal = event.results[current].isFinal
             const rawTranscript = event.results[current][0].transcript
             // Remove trailing dot (.), Hindi Purna Viram (।), or question marks (?)
             const transcript = rawTranscript.replace(/[.।?]+$/, "").trim()
 
-            setState((prev) => ({ ...prev, transcript }))
+            setState((prev) => ({ ...prev, transcript, isFinal }))
         }
 
         recognition.onerror = (event: any) => {
+            lastErrorRef.current = event.error
             // Don't show error for "no-speech" or "aborted" in continuous mode
             if (event.error === "no-speech" || event.error === "aborted") {
                 if (shouldResumeRef.current) return;
-            } else {
+            } else if (event.error !== "network") {
                 console.error("Speech recognition error", event.error)
             }
 
@@ -123,7 +129,9 @@ export function VoiceProvider({ children }: { children: React.ReactNode }) {
                         ? "Microphone access denied. Please allow microphone access."
                         : event.error === "no-speech"
                             ? null
-                            : `Voice error: ${event.error}`,
+                            : event.error === "network"
+                                ? "Network connection error. Please check your internet."
+                                : `Voice error: ${event.error}`,
             }))
 
             if (event.error === "not-allowed") {
@@ -140,15 +148,21 @@ export function VoiceProvider({ children }: { children: React.ReactNode }) {
 
             // Auto-restart if continuous
             if (shouldResumeRef.current) {
-                // Small delay to prevent tight loops
+                // Use a slightly longer delay if it was a network error
+                const isNetworkError = lastErrorRef.current === "network"
+                const delay = isNetworkError ? 1500 : 100
+                
                 setTimeout(() => {
                     try {
                         if (shouldResumeRef.current) recognition.start()
                     } catch (e) {
                         console.error("Failed to restart recognition", e)
                     }
-                }, 100)
+                }, delay)
             }
+            
+            // Clear last error ref after handling restart
+            lastErrorRef.current = null
         }
 
         recognitionRef.current = recognition
@@ -219,37 +233,53 @@ export function VoiceProvider({ children }: { children: React.ReactNode }) {
         }
     }, [])
 
+    // Load saved lang pref
+    useEffect(() => {
+        if (typeof window !== "undefined") {
+            const saved = localStorage.getItem("talktotaste-lang") as Language
+            if (saved === "hi-IN" || saved === "en-IN") {
+                setState(prev => ({ ...prev, language: saved }))
+            }
+        }
+    }, [])
+
     const setLanguage = useCallback((lang: Language) => {
         setState((prev) => ({ ...prev, language: lang }))
         if (typeof window !== "undefined") {
             localStorage.setItem("talktotaste-lang", lang)
         }
-    }, [state.language, voices, preferredVoiceURI])
+    }, [])
 
-    // --- GEMINI API TTS STRATEGY ---
+    // --- HELPER: SPLIT TEXT INTO SENTENCES ---
+    const splitIntoSentences = (text: string): string[] => {
+        if (!text) return []
+        // Split by periods followed by a space, or exclamation/question marks
+        // This regex handles both English (.) and Hindi (।) punctuation
+        const sentences = text.split(/(?<=[.।!?])\s+/)
+        return sentences.filter(s => s.trim().length > 0)
+    }
+
+    const audioQueueRef = useRef<string[]>([])
+    const isProcessingQueueRef = useRef(false)
+
     const speak = useCallback(async (text: string, forceLang?: string) => {
         if (!text || typeof window === "undefined") return
 
         window.speechSynthesis.cancel()
-
-        // Determine language
         const targetLang = forceLang || state.language
 
         // 1. Browser Fallback Function
-        const playBrowserFallback = () => {
-            console.warn("Falling back to Browser TTS")
+        const playBrowserFallback = (txt: string) => {
+            console.warn("Falling back to Browser TTS for chunk:", txt)
             const voices = window.speechSynthesis.getVoices()
             let selectedVoice: SpeechSynthesisVoice | undefined
 
-            // Priority 1: User Preference
             if (preferredVoiceURI) {
                 selectedVoice = voices.find(v => v.voiceURI === preferredVoiceURI)
             }
-            // Priority 2: Swara
             if (!selectedVoice) {
                 selectedVoice = voices.find(v => v.name.includes("Microsoft Swara"))
             }
-            // Priority 3: Language Match
             if (!selectedVoice) {
                 if (targetLang.startsWith("hi")) {
                     selectedVoice = voices.find(v => v.lang.includes("hi"))
@@ -257,62 +287,89 @@ export function VoiceProvider({ children }: { children: React.ReactNode }) {
                     selectedVoice = voices.find(v => v.lang.startsWith("en"))
                 }
             }
-            // Priority 4: Default
             if (!selectedVoice) selectedVoice = voices[0]
 
-            const utter = new SpeechSynthesisUtterance(text)
+            const utter = new SpeechSynthesisUtterance(txt)
             if (selectedVoice) utter.voice = selectedVoice
             utter.lang = targetLang
-            utter.rate = 0.9
+            // Adjusted for a slightly more deliberate pace for the Viva
+            utter.rate = 1.05
 
             utter.onstart = () => setState(prev => ({ ...prev, isSpeaking: true, dialogState: "SPEAKING" }))
-            utter.onend = () => setState(prev => ({ ...prev, isSpeaking: false, dialogState: prev.isListening ? "LISTENING" : "IDLE" }))
-            utter.onerror = (e) => setState(prev => ({ ...prev, isSpeaking: false }))
+            utter.onend = () => {
+                // If it was a browser fallback, we still need to continue the queue
+                processNextInQueue()
+            }
+            utter.onerror = () => {
+                setState(prev => ({ ...prev, isSpeaking: false }))
+                processNextInQueue()
+            }
 
             window.speechSynthesis.speak(utter)
         }
 
-        // 2. Attempt API Call
-        try {
-            setState(prev => ({ ...prev, isSpeaking: true, dialogState: "SPEAKING" }))
-
-            const response = await fetch("/api/tts", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    text,
-                    language: targetLang,
-                    gender: "female"
-                })
-            })
-
-            if (!response.ok) {
-                const errorDetail = await response.text()
-                throw new Error(`API Error ${response.status}: ${errorDetail}`)
+        // 2. Queue Management
+        const chunks = splitIntoSentences(text)
+        audioQueueRef.current = chunks
+        
+        if (isProcessingQueueRef.current) {
+            // Already playing? Reset to start of NEW text
+            if (audioRef.current) {
+                audioRef.current.pause()
+                audioRef.current.src = ""
             }
-
-            const audioBlob = await response.blob()
-            const audioUrl = URL.createObjectURL(audioBlob)
-            const audio = new Audio(audioUrl)
-
-            audio.onended = () => {
-                setState(prev => ({ ...prev, isSpeaking: false, dialogState: prev.isListening ? "LISTENING" : "IDLE" }))
-                URL.revokeObjectURL(audioUrl)
-            }
-
-            audio.onerror = () => playBrowserFallback()
-
-            await audio.play()
-
-        } catch (err: any) {
-            // Graceful handling for Quota limits
-            if (err.message.includes("429") || err.message.includes("Quota")) {
-                console.warn("Gemini TTS Rate Limit Hit (Free Tier). Switching to standard voice.")
-            } else {
-                console.warn("Gemini TTS Error:", err.message)
-            }
-            playBrowserFallback()
         }
+
+        const processNextInQueue = async () => {
+            if (audioQueueRef.current.length === 0) {
+                isProcessingQueueRef.current = false
+                setState(prev => ({ ...prev, isSpeaking: false, dialogState: prev.isListening ? "LISTENING" : "IDLE" }))
+                return
+            }
+
+            isProcessingQueueRef.current = true
+            const nextText = audioQueueRef.current.shift()!
+
+            try {
+                setState(prev => ({ ...prev, isSpeaking: true, dialogState: "SPEAKING" }))
+
+                const response = await fetch("/api/tts", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        text: nextText,
+                        language: targetLang,
+                        gender: "female"
+                    })
+                })
+
+                if (!response.ok) throw new Error(`API Error ${response.status}`)
+
+                const audioBlob = await response.blob()
+                const audioUrl = URL.createObjectURL(audioBlob)
+                const audio = new Audio(audioUrl)
+                audioRef.current = audio
+
+                audio.onended = () => {
+                    URL.revokeObjectURL(audioUrl)
+                    processNextInQueue()
+                }
+
+                audio.onerror = () => {
+                    playBrowserFallback(nextText)
+                }
+
+                await audio.play()
+
+            } catch (err) {
+                console.warn("Gemini TTS Error, falling back:", err)
+                playBrowserFallback(nextText)
+            }
+        }
+
+        // Start processing the queue
+        processNextInQueue()
+
     }, [state.language, preferredVoiceURI])
 
     const setVoicePreference = useCallback((voiceURI: string) => {
@@ -329,7 +386,14 @@ export function VoiceProvider({ children }: { children: React.ReactNode }) {
     const stopSpeaking = useCallback(() => {
         if (typeof window !== "undefined") {
             window.speechSynthesis.cancel()
-            setState((prev) => ({ ...prev, isSpeaking: false }))
+            audioQueueRef.current = []
+            isProcessingQueueRef.current = false
+            if (audioRef.current) {
+                audioRef.current.pause()
+                audioRef.current.src = ""
+                audioRef.current = null
+            }
+            setState((prev) => ({ ...prev, isSpeaking: false, dialogState: prev.isListening ? "LISTENING" : "IDLE" }))
         }
     }, [])
 

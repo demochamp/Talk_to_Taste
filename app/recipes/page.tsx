@@ -12,9 +12,17 @@ import { useSearchParams } from "next/navigation"
 import { useVoice } from "@/hooks/use-voice"
 import { VoiceWaveAnimation } from "@/components/voice-wave-animation"
 import { useUserState } from "@/hooks/use-user-state"
-import { processVoiceCommand } from "@/lib/voice/command-processor"
 import { useRouter } from "next/navigation"
 import { useTranslation } from "@/lib/i18n"
+import { processVoiceCommand } from "@/lib/voice/command-processor"
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet"
 
 
 export default function RecipesPage() {
@@ -113,7 +121,7 @@ export default function RecipesPage() {
       console.log("Recipes Voice Command:", intent, params, transcript)
 
       // Handle standard search if not a specific command
-      if (intent === "UNKNOWN" || intent === "NAV_RECIPES") {
+      if (intent === "UNKNOWN" || intent === "NAV_RECIPES" || intent === "SEARCH_RECIPE") {
         setSearchQuery(transcript)
         return
       }
@@ -196,10 +204,10 @@ export default function RecipesPage() {
             >
               <ChefHat className="w-10 h-10 text-primary" />
             </motion.div>
-            <h1 className="text-3xl md:text-6xl font-bold mb-6">
+            <h1 className="text-3xl sm:text-4xl md:text-6xl font-bold mb-4 sm:mb-6 leading-tight">
               {t("recipes.explore_title")}
             </h1>
-            <p className="text-lg text-muted-foreground mb-8">
+            <p className="text-base sm:text-lg text-muted-foreground mb-6 sm:mb-8">
               {t("recipes.explore_subtitle")}
             </p>
 
@@ -211,7 +219,7 @@ export default function RecipesPage() {
                 placeholder={t("recipes.search_placeholder")}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-12 pr-12 h-14 rounded-full text-lg border-2 focus:border-primary"
+                className="pl-12 pr-14 sm:pr-12 h-14 rounded-full text-base sm:text-lg border-2 focus:border-primary w-full"
               />
               <Button
                 size="icon"
@@ -227,18 +235,18 @@ export default function RecipesPage() {
       </section>
 
       {/* Filters */}
-      <section className="py-8 border-b border-border sticky top-[72px] bg-background/80 backdrop-blur-lg z-30">
-        <div className="container mx-auto px-6">
-          <div className="flex flex-wrap items-center gap-4">
+      <section className="py-4 sm:py-8 border-b border-border sticky top-[72px] bg-background/80 backdrop-blur-lg z-30">
+        <div className="container mx-auto px-4 sm:px-6">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
             {/* Cuisine filters - horizontal scroll on mobile */}
-            <div className={`flex items-center gap-2 overflow-x-auto pb-2 md:pb-0 scrollbar-hide ${showAllCuisines ? "flex-wrap" : ""}`}>
+            <div className={`flex items-center gap-2 overflow-x-auto pb-4 md:pb-0 scrollbar-hide snap-x snap-mandatory ${showAllCuisines ? "flex-wrap" : ""}`}>
               {cuisines.slice(0, showAllCuisines ? undefined : 8).map((cuisine) => (
                 <Button
                   key={cuisine}
                   variant={selectedCuisine === cuisine ? "default" : "outline"}
                   size="sm"
                   onClick={() => setSelectedCuisine(cuisine)}
-                  className="rounded-full whitespace-nowrap"
+                  className="rounded-full whitespace-nowrap snap-start"
                 >
                   {cuisine === "All" ? t("recipes.filter_all") : t(`cuisine.${cuisine}` as any)}
                 </Button>
@@ -255,82 +263,145 @@ export default function RecipesPage() {
               )}
             </div>
 
-            {/* Category filter dropdown */}
-            <div className="relative">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setIsCategoryOpen(!isCategoryOpen)}
-                className="rounded-full gap-2"
-              >
-                <Filter className="w-4 h-4" />
-                {t("recipes.filter_category")}: {selectedCategory === "All" ? t("recipes.filter_all") : t(`category.${selectedCategory}` as any)}
-                <ChevronDown className="w-4 h-4" />
-              </Button>
+            {/* Desktop Filters (Visible on md+) */}
+            <div className="hidden md:flex items-center gap-4">
+              {/* Category filter dropdown */}
+              <div className="relative">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setIsCategoryOpen(!isCategoryOpen)}
+                  className="rounded-full gap-2"
+                >
+                  <Filter className="w-4 h-4" />
+                  {t("recipes.filter_category")}: {selectedCategory === "All" ? t("recipes.filter_all") : t(`category.${selectedCategory}` as any)}
+                  <ChevronDown className="w-4 h-4" />
+                </Button>
 
-              <AnimatePresence>
-                {isCategoryOpen && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: 10 }}
-                    className="absolute top-full mt-2 left-0 bg-card border border-border rounded-xl shadow-xl p-2 z-50 min-w-[150px]"
-                  >
-                    {categories.map((cat) => (
-                      <button
-                        key={cat}
-                        onClick={() => {
-                          setSelectedCategory(cat)
-                          setIsCategoryOpen(false)
-                        }}
-                        className={`block w-full text-left px-4 py-2 rounded-lg text-sm transition-colors ${selectedCategory === cat ? "bg-primary text-primary-foreground" : "hover:bg-secondary"
-                          }`}
-                      >
-                        {cat === "All" ? t("recipes.filter_all") : t(`category.${cat}` as any)}
-                      </button>
-                    ))}
-                  </motion.div>
-                )}
-              </AnimatePresence>
+                <AnimatePresence>
+                  {isCategoryOpen && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: 10 }}
+                      className="absolute top-full mt-2 left-0 bg-card border border-border rounded-xl shadow-xl p-2 z-50 min-w-[150px]"
+                    >
+                      {categories.map((cat) => (
+                        <button
+                          key={cat}
+                          onClick={() => {
+                            setSelectedCategory(cat)
+                            setIsCategoryOpen(false)
+                          }}
+                          className={`block w-full text-left px-4 py-2 rounded-lg text-sm transition-colors ${selectedCategory === cat ? "bg-primary text-primary-foreground" : "hover:bg-secondary"
+                            }`}
+                        >
+                          {cat === "All" ? t("recipes.filter_all") : t(`category.${cat}` as any)}
+                        </button>
+                      ))}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+
+              {/* Difficulty filter */}
+              <div className="relative">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setIsFilterOpen(!isFilterOpen)}
+                  className="rounded-full gap-2"
+                >
+                  <Flame className="w-4 h-4" />
+                  {t("recipes.filter_difficulty")}: {selectedDifficulty === "All" ? t("recipes.filter_all") : t(`difficulty.${selectedDifficulty}` as any)}
+                  <ChevronDown className="w-4 h-4" />
+                </Button>
+
+                <AnimatePresence>
+                  {isFilterOpen && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: 10 }}
+                      className="absolute top-full mt-2 left-0 bg-card border border-border rounded-xl shadow-xl p-2 z-50"
+                    >
+                      {difficulties.map((diff) => (
+                        <button
+                          key={diff}
+                          onClick={() => {
+                            setSelectedDifficulty(diff)
+                            setIsFilterOpen(false)
+                          }}
+                          className={`block w-full text-left px-4 py-2 rounded-lg text-sm transition-colors ${selectedDifficulty === diff ? "bg-primary text-primary-foreground" : "hover:bg-secondary"
+                            }`}
+                        >
+                          {diff === "All" ? t("recipes.filter_all") : t(`difficulty.${diff}` as any)}
+                        </button>
+                      ))}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
             </div>
 
-            {/* Difficulty filter */}
-            <div className="relative">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setIsFilterOpen(!isFilterOpen)}
-                className="rounded-full gap-2"
-              >
-                <Flame className="w-4 h-4" />
-                {t("recipes.filter_difficulty")}: {selectedDifficulty === "All" ? t("recipes.filter_all") : t(`difficulty.${selectedDifficulty}` as any)}
-                <ChevronDown className="w-4 h-4" />
-              </Button>
-
-              <AnimatePresence>
-                {isFilterOpen && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: 10 }}
-                    className="absolute top-full mt-2 left-0 bg-card border border-border rounded-xl shadow-xl p-2 z-50"
-                  >
-                    {difficulties.map((diff) => (
-                      <button
-                        key={diff}
-                        onClick={() => {
-                          setSelectedDifficulty(diff)
-                          setIsFilterOpen(false)
-                        }}
-                        className={`block w-full text-left px-4 py-2 rounded-lg text-sm transition-colors ${selectedDifficulty === diff ? "bg-primary text-primary-foreground" : "hover:bg-secondary"
-                          }`}
-                      >
-                        {diff === "All" ? t("recipes.filter_all") : t(`difficulty.${diff}` as any)}
-                      </button>
-                    ))}
-                  </motion.div>
-                )}
-              </AnimatePresence>
+            {/* Mobile Filter Sheet (Visible on <md) */}
+            <div className="md:hidden">
+              <Sheet>
+                <SheetTrigger asChild>
+                  <Button variant="outline" size="sm" className="rounded-full gap-2 w-full justify-between px-4">
+                    <div className="flex items-center gap-2">
+                      <Filter className="w-4 h-4" />
+                      <span>{t("recipes.filter_title")}</span>
+                    </div>
+                    {(selectedCategory !== "All" || selectedDifficulty !== "All") && (
+                      <span className="bg-primary text-primary-foreground text-[10px] w-4 h-4 rounded-full flex items-center justify-center">
+                        {[selectedCategory !== "All", selectedDifficulty !== "All"].filter(Boolean).length}
+                      </span>
+                    )}
+                  </Button>
+                </SheetTrigger>
+                <SheetContent side="bottom" className="rounded-t-[2.5rem] h-[60dvh] pt-10">
+                  <SheetHeader className="mb-6">
+                    <SheetTitle>{t("recipes.filter_title")}</SheetTitle>
+                  </SheetHeader>
+                  <div className="space-y-6">
+                    {/* Category Selection */}
+                    <div>
+                      <p className="text-sm font-semibold mb-3">{t("recipes.filter_category")}</p>
+                      <div className="flex flex-wrap gap-2">
+                        {categories.map((cat) => (
+                          <Button
+                            key={cat}
+                            variant={selectedCategory === cat ? "default" : "outline"}
+                            size="sm"
+                            className="rounded-full"
+                            onClick={() => setSelectedCategory(cat)}
+                          >
+                            {cat === "All" ? t("recipes.filter_all") : t(`category.${cat}` as any)}
+                          </Button>
+                        ))}
+                      </div>
+                    </div>
+                    {/* Difficulty Selection */}
+                    <div>
+                      <p className="text-sm font-semibold mb-3">{t("recipes.filter_difficulty")}</p>
+                      <div className="flex flex-wrap gap-2">
+                        {difficulties.map((diff) => (
+                          <Button
+                            key={diff}
+                            variant={selectedDifficulty === diff ? "default" : "outline"}
+                            size="sm"
+                            className="rounded-full"
+                            onClick={() => setSelectedDifficulty(diff)}
+                          >
+                            {diff === "All" ? t("recipes.filter_all") : t(`difficulty.${diff}` as any)}
+                          </Button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </SheetContent>
+              </Sheet>
             </div>
 
             {/* Clear filters */}
@@ -347,15 +418,15 @@ export default function RecipesPage() {
                     setSelectedCategory("All")
                     setSearchQuery("")
                   }}
-                  className="rounded-full gap-1"
+                  className="rounded-full gap-1 ml-auto"
                 >
                   <X className="w-4 h-4" />
                   {t("recipes.clear_filters")}
                 </Button>
               )}
 
-            {/* Results count */}
-            <span className="text-sm text-muted-foreground ml-auto">{filteredRecipes.length} {t("recipes.found")}</span>
+            {/* Results count (hidden on mobile to save space) */}
+            <span className="text-sm text-muted-foreground ml-auto hidden sm:inline">{filteredRecipes.length} {t("recipes.found")}</span>
           </div>
         </div>
       </section>

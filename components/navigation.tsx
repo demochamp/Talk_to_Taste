@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { Menu, X, User, Moon, Sun } from "lucide-react"
+import { Menu, X, User, Moon, Sun, Globe } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useTheme } from "next-themes"
 import Link from "next/link"
@@ -10,7 +10,6 @@ import { AnimatedLogo } from "./animated-logo"
 import { useUserState } from "@/hooks/use-user-state"
 import { useTranslation } from "@/lib/i18n"
 import { useVoice } from "@/hooks/use-voice"
-import { Globe } from "lucide-react"
 
 export function Navigation() {
   const [isScrolled, setIsScrolled] = useState(false)
@@ -68,15 +67,15 @@ export function Navigation() {
       <motion.nav
         initial={{ y: -100 }}
         animate={{ y: 0 }}
-        className={`fixed top-0 left-0 right-0 z-[100] transition-all duration-500 ${isScrolled ? "glass-card py-3" : "bg-transparent py-6"
+        className={`fixed top-0 left-0 right-0 z-[100] transition-all duration-500 ${isScrolled ? "glass-card py-2" : "bg-transparent py-4"
           }`}
       >
-        <div className="container mx-auto px-6 flex items-center justify-between">
+        <div className="container mx-auto px-4 sm:px-6 flex items-center justify-between">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-3 group">
             <AnimatedLogo />
             <div className="flex flex-col">
-              <span className="text-xl font-bold tracking-tight gradient-text">TalktoTaste</span>
+              <span className="text-lg sm:text-xl font-bold tracking-tight gradient-text">TalktoTaste</span>
               <span className="text-[10px] text-muted-foreground uppercase tracking-widest hidden sm:block">Voice Kitchen</span>
             </div>
           </Link>
@@ -167,9 +166,9 @@ export function Navigation() {
               <Button
                 variant="ghost"
                 onClick={() => logout()}
-                className="hidden md:flex items-center gap-2 rounded-full text-orange-600 hover:text-orange-700 hover:bg-orange-50"
+                className="hidden md:flex items-center gap-2 rounded-full text-[#F27438] hover:text-[#F27438]/80 hover:bg-orange-50/50 font-bold text-sm"
               >
-                {t("nav.sign_in")}
+                {language === "hi-IN" ? "साइन आउट" : "Sign Out"}
               </Button>
             ) : (
               <Link href="/login" className="hidden md:block">
@@ -260,9 +259,9 @@ export function Navigation() {
                         logout()
                         setIsMobileMenuOpen(false)
                       }}
-                      className="w-full text-left block text-lg font-medium text-red-500 hover:text-red-600 py-4"
+                      className="w-full text-left block text-lg font-bold text-red-500 hover:text-red-600 py-4"
                     >
-                      {t("nav.sign_in")}
+                      {language === "hi-IN" ? "साइन आउट" : "Sign Out"}
                     </button>
                   ) : (
                     <Link

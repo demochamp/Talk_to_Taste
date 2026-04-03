@@ -2,10 +2,18 @@
 
 import { useState, useEffect, useRef } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { Mic, X, ChevronDown, ChevronUp, HelpCircle, Activity, ChefHat } from "lucide-react"
+import { Mic, X, ChevronDown, ChevronUp, HelpCircle, Activity, ChefHat, Globe, MoreVertical } from "lucide-react"
 import { useVoice } from "@/hooks/use-voice"
+import { useUserState } from "@/hooks/use-user-state"
 import { VoiceWaveAnimation } from "@/components/voice-wave-animation"
 import { usePathname } from "next/navigation"
+
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 
 export function AssistantUI({
     messages = [],
@@ -26,8 +34,11 @@ export function AssistantUI({
         isSupported,
         setLanguage,
         stopSpeaking,
-        mode
+        mode,
+        clearTranscript
     } = useVoice()
+
+    const { user, promoteToAdmin } = useUserState() as any
 
     const [isOpen, setIsOpen] = useState(false)
     const [showHelp, setShowHelp] = useState(false)
@@ -42,15 +53,8 @@ export function AssistantUI({
         }
     }, [messages, transcript, isOpen])
 
-    // Auto-open when listening or speaking
-    useEffect(() => {
-        // IGNORE if in SEARCH mode
-        if (mode === "SEARCH") return
-
-        if (isListening || isSpeaking || transcript) {
-            setIsOpen(true)
-        }
-    }, [isListening, isSpeaking, transcript, mode])
+    // Manual open only - we don't want it popping up automatically anymore
+    // (Removed auto-open useEffect on user request)
 
     const handleSubmit = (e?: React.FormEvent) => {
         e?.preventDefault()
@@ -65,25 +69,25 @@ export function AssistantUI({
 
         if (pathname === "/") {
             return isHindi
-                ? ["रेसिपी पेज", "प्रोफाइल पेज", "डार्क मोड", "कैसे काम करता है"]
+                ? ["रेसिपी दिखाओ", "प्रोफाइल", "डार्क मोड", "मदद करो"]
                 : ["Go to Recipes", "Go to Profile", "Dark Mode", "How it works"]
         }
 
         if (pathname.includes("/recipes")) {
             return isHindi
-                ? ["होम पेज", "प्रोफाइल पेज", "डार्क मोड", "एडमिन डैशबोर्ड"]
-                : ["Go Home", "Go to Profile", "Dark Mode", "Admin Dashboard"]
+                ? ["होम पेज", "प्रोफाइल", "डार्क मोड", "एडमिन पेज"]
+                : ["Go to Home", "Go to Profile", "Dark Mode", "Admin Dashboard"]
         }
 
         if (pathname.includes("/cook")) {
             return isHindi
-                ? ["अगला स्टेप", "दोबारा बोलो", "5 मिनट का टाइमर", "रुको"]
+                ? ["अगला स्टेप", "वापस", "5 मिनट का टाइमर", "रुको"]
                 : ["Next step", "Repeat step", "Set timer for 5 mins", "Stop"]
         }
 
         return isHindi
-            ? ["होम पेज", "रेसिपी पेज", "मदद", "एडमिन डैशबोर्ड"]
-            : ["Go Home", "Go to Recipes", "Help", "Admin Dashboard"]
+            ? ["होम पेज", "रेसिपी दिखाओ", "मदद करो", "एडमिन पेज"]
+            : ["Go to Home", "Go to Recipes", "How it works", "Admin Dashboard"]
     }
 
     const hints = getHints()
@@ -105,7 +109,7 @@ export function AssistantUI({
                 )}
             </AnimatePresence>
 
-            <div id="assistant-ui-root" className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-4 pointer-events-none">
+            <div id="assistant-ui-root" className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-50 flex flex-col items-end gap-4 pointer-events-none max-w-[calc(100vw-2rem)] sm:max-w-none">
                 <div className="pointer-events-auto">
                     <AnimatePresence>
                         {isOpen && (
@@ -113,7 +117,7 @@ export function AssistantUI({
                                 initial={{ opacity: 0, y: 20, scale: 0.95 }}
                                 animate={{ opacity: 1, y: 0, scale: 1 }}
                                 exit={{ opacity: 0, y: 20, scale: 0.95 }}
-                                className="w-80 sm:w-96 bg-card/95 backdrop-blur-md border border-primary/20 shadow-2xl rounded-3xl overflow-hidden flex flex-col h-[500px]"
+                                className="w-[calc(100vw-2rem)] sm:w-96 bg-card/95 backdrop-blur-md border border-primary/20 shadow-2xl rounded-3xl overflow-hidden flex flex-col h-[50dvh] sm:h-[500px]"
                             >
                                 {/* Header */}
                                 <div className="p-4 bg-primary/10 flex items-center justify-between border-b border-primary/10 shrink-0">
@@ -123,15 +127,16 @@ export function AssistantUI({
                                             {dialogState === "LISTENING" ? (language === "hi-IN" ? "सुन रहा हूँ..." : "Listening...") :
                                                 dialogState === "SPEAKING" ? (language === "hi-IN" ? "बोल रहा हूँ..." : "Speaking...") :
                                                     dialogState === "PROCESSING" ? (language === "hi-IN" ? "सोच रहा हूँ..." : "Thinking...") :
-                                                        "TalkToTaste"}
+                                                        (language === "hi-IN" ? "टॉक-टू-टेस्ट" : "TalkToTaste")}
                                         </span>
                                     </div>
                                     <div className="flex items-center gap-2">
                                         <button
                                             onClick={() => setLanguage(language === "en-IN" ? "hi-IN" : "en-IN")}
-                                            className="text-xs font-medium px-2 py-1 rounded-md bg-background/50 hover:bg-background border border-border transition-colors"
+                                            className="text-xs font-bold px-3 py-1 rounded-full bg-primary/10 hover:bg-primary/20 border border-primary/20 transition-all flex items-center gap-1 active:scale-95"
                                         >
-                                            {language === "hi-IN" ? "हिंदी" : "ENG"}
+                                            <Globe className="w-3 h-3" />
+                                            {language === "hi-IN" ? "English" : "हिंदी"}
                                         </button>
                                         <button
                                             onClick={() => {
@@ -167,11 +172,21 @@ export function AssistantUI({
                                             initial={{ opacity: 0, y: 10 }}
                                             animate={{ opacity: 1, y: 0 }}
                                             className={`max-w-[85%] px-4 py-2 rounded-2xl text-sm ${msg.role === "user"
-                                                ? "self-end bg-primary text-primary-foreground rounded-tr-sm"
-                                                : "self-start bg-secondary text-secondary-foreground rounded-tl-sm"
+                                                ? "self-end bg-primary text-primary-foreground rounded-tr-sm shadow-md"
+                                                : "self-start bg-secondary text-secondary-foreground rounded-tl-sm shadow-sm"
                                                 }`}
                                         >
-                                            {msg.content}
+                                            <div className="space-y-2 whitespace-pre-wrap leading-relaxed">
+                                                {msg.content.split('\n').map((line, i) => {
+                                                    if (line.startsWith('###')) {
+                                                        return <h3 key={i} className="font-bold text-base mt-4 mb-2 text-primary">{line.replace('###', '').trim()}</h3>;
+                                                    }
+                                                    if (line.startsWith('**')) {
+                                                        return <p key={i} className="font-bold mt-2">{line.replace(/\*\*/g, '').trim()}</p>;
+                                                    }
+                                                    return <p key={i}>{line}</p>;
+                                                })}
+                                            </div>
                                         </motion.div>
                                     ))}
 
@@ -212,6 +227,7 @@ export function AssistantUI({
                                                     {hint}
                                                 </button>
                                             ))}
+
                                         </motion.div>
                                     )}
 
@@ -221,25 +237,54 @@ export function AssistantUI({
                                                 type="text"
                                                 value={inputText}
                                                 onChange={(e) => setInputText(e.target.value)}
-                                                placeholder={language === "hi-IN" ? "पूछिए..." : "Ask anything..."}
-                                                className="w-full px-4 py-2 rounded-full bg-background border border-input text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 pr-10"
+                                                placeholder={error ? (language === "hi-IN" ? "माइक्रोफ़ोन समस्या" : "Mic Issue") : (language === "hi-IN" ? "पूछिए..." : "Ask anything...")}
+                                                className={`w-full px-4 py-2 rounded-full bg-background border text-sm focus:outline-none focus:ring-2 pr-10 ${error ? "border-red-500 ring-red-100" : "border-input focus:ring-primary/20"}`}
                                             />
                                             <button
                                                 type="button"
                                                 onClick={() => setShowHelp(!showHelp)}
-                                                className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-primary"
+                                                className={`absolute right-2 top-1/2 -translate-y-1/2 transition-colors ${showHelp ? "text-primary" : "text-muted-foreground hover:text-primary"}`}
+                                                title={language === "hi-IN" ? "मदद" : "Help"}
                                             >
                                                 <HelpCircle className="w-4 h-4" />
                                             </button>
                                         </form>
                                         <button
-                                            onClick={isListening ? stopListening : () => startListening({ continuous: true })}
+                                            onClick={() => {
+                                                console.log("Assistant mic clicked. State:", { isListening, isSupported, error });
+                                                if (isListening) {
+                                                    stopListening();
+                                                } else {
+                                                    startListening({ continuous: true });
+                                                }
+                                            }}
                                             className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${isListening ? "bg-red-500 text-white animate-pulse" : "bg-primary text-primary-foreground"
                                                 }`}
                                         >
                                             {isListening ? <VoiceWaveAnimation isActive={true} className="h-4 w-4" /> : <Mic className="w-5 h-5" />}
                                         </button>
                                     </div>
+
+                                    {/* Dev Admin Bridge */}
+                                    {process.env.NODE_ENV === 'development' && user?.role !== 'admin' && (
+                                        <button 
+                                            onClick={() => promoteToAdmin()}
+                                            className="w-full mt-2 text-[10px] text-primary/40 hover:text-primary/100 border border-dashed border-primary/20 rounded py-1 transition-all"
+                                        >
+                                            🚀 Promote Session to Admin (Dev Only)
+                                        </button>
+                                    )}
+
+                                    {error && (
+                                        <div className="space-y-1">
+                                            <p className="text-[10px] text-red-500 text-center font-medium">{error}</p>
+                                            {error.includes("denied") && (
+                                                <p className="text-[9px] text-muted-foreground text-center leading-tight">
+                                                    Tip: Secure connection (HTTPS) is required for Voice. Try using <b>localhost</b> or <b>ngrok</b>.
+                                                </p>
+                                            )}
+                                        </div>
+                                    )}
                                 </div>
                             </motion.div>
                         )}

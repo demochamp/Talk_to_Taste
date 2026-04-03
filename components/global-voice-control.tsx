@@ -4,11 +4,13 @@ import { useEffect, useState, useRef } from "react"
 import { useRouter, usePathname } from "next/navigation"
 import { useVoice } from "@/hooks/use-voice"
 import { processVoiceCommand } from "@/lib/voice/command-processor"
-import { findKnowledgeResponse } from "@/lib/chat/knowledge-base"
 import { AssistantUI } from "@/components/assistant-ui"
+import { recipes as staticRecipes } from "@/lib/recipes-data"
 
 export function GlobalVoiceControl() {
     const router = useRouter()
+    const pathname = usePathname()
+
     const {
         isListening,
         transcript,
@@ -19,29 +21,22 @@ export function GlobalVoiceControl() {
         language,
         setLanguage,
         clearTranscript,
-        mode
+        mode,
+        isFinal
     } = useVoice()
 
-
-    // Local state to track "Conversation Context"
-    // This helps us know if the user is answering a question like "Which recipe?"
     const [contextState, setContextState] = useState<"IDLE" | "WAITING_FOR_RECIPE">("IDLE")
-
-    // Cleanup context on navigation
-    useEffect(() => {
-        setContextState("IDLE")
-    }, [router]) // Reset when route changes? No, we might want to preserve it ACROSS the nav.
-
-    // Actually, we want to SET context *after* nav. 
-    // Let's rely on the TRANSCRIPT processing to handle the flow.
-
-    // Chat History State
     const [messages, setMessages] = useState<Array<{ role: "user" | "assistant", content: string }>>([])
     const lastProcessedRef = useRef("")
+
+    useEffect(() => {
+        setContextState("IDLE")
+    }, [router])
 
     const handleCommand = (text: string, isVoice: boolean = false) => {
         const lowerTranscript = text.toLowerCase()
         const match = processVoiceCommand(text)
+        const isHindi = language === "hi-IN"
 
         let response = ""
         let actionTaken = false
@@ -57,7 +52,6 @@ export function GlobalVoiceControl() {
             if (!match.intent || (match.intent !== "STOP" && match.intent !== "SHOW_COMMANDS")) {
                 const query = lowerTranscript.replace(/recipe/i, "").trim()
                 if (query.length > 1) {
-                    console.log("Context Search:", query)
                     router.push(`/recipes?search=${encodeURIComponent(query)}`)
                     response = language === "hi-IN" ? `theek hai, ${query} dhund raha hu` : `Okay, finding ${query}`
                     setContextState("IDLE")
@@ -66,86 +60,67 @@ export function GlobalVoiceControl() {
             }
         }
 
-        // --- STANDARD COMMANDS ---
+        // --- 3. STANDARD COMMANDS ---
         if (!actionTaken && match.confidence > 0.6 && match.intent !== "UNKNOWN") {
-            console.log("Global Command:", match.intent)
-
             switch (match.intent) {
                 case "NAV_HOME":
                     router.push("/")
-                    setContextState("IDLE")
-                    response = language === "hi-IN" ? "होम पेज" : "Home Page"
+                    response = language === "hi-IN" ? "होम पेज पर जा रहे हैं।" : "Going to the home page."
                     break
 
                 case "NAV_RECIPES":
                     router.push("/recipes")
                     setContextState("WAITING_FOR_RECIPE")
-                    // Delayed ask
-                    setTimeout(() => {
-                        const ask = language === "hi-IN" ? "रेसिपी पेज. आप क्या बनाना चाहते हैं?" : "Recipes. What do you want to cook?"
-                        speak(ask)
-                        setMessages(prev => [...prev, { role: "assistant", content: ask }])
-                    }, 500)
-                    // We don't set response here to avoid double speak, or we set it to initial ack
-                    response = language === "hi-IN" ? "जी" : "Sure"
+                    response = language === "hi-IN" ? "रेसिपी पेज खोल रहे हैं। आप क्या बनाना चाहते हैं?" : "Opening recipes. What do you want to cook?"
                     break
 
                 case "NAV_PROFILE":
                     router.push("/profile")
-                    setContextState("IDLE")
-                    response = language === "hi-IN" ? "प्रोफाइल" : "Profile"
-                    break
-
-                case "NAV_FEATURES":
-                    router.push("/#features")
-                    response = language === "hi-IN" ? "ये रहे फीचर्स" : "Here are the features"
-                    break
-
-                case "NAV_HOW_IT_WORKS":
-                    router.push("/#how-it-works")
-                    response = language === "hi-IN" ? "ऐसे काम करता है" : "Here is how it works"
+                    response = language === "hi-IN" ? "आपकी प्रोफाइल पर जा रहे हैं।" : "Going to your profile."
                     break
 
                 case "NAV_ADMIN":
                     router.push("/admin")
-                    response = language === "hi-IN" ? "एडमिन डैशबोर्ड" : "Admin Dashboard"
+                    response = language === "hi-IN" ? "एडमिन डैशबोर्ड खोल रहे हैं।" : "Opening the admin dashboard."
                     break
 
-                case "STOP":
-                    if (!pathname.includes("/cook")) {
-                        stopListening()
-                        setContextState("IDLE")
-                        response = language === "hi-IN" ? "ठीक है" : "Okay, stopped"
+                case "NAV_FEATURES":
+                    speak(isHindi ? "विशेषताएं दिखा रहे हैं।" : "Showing our features.")
+                    const featEl = document.getElementById("features")
+                    if (featEl) {
+                        featEl.scrollIntoView({ behavior: "smooth" })
+                    } else {
+                        router.push("/#features")
                     }
                     break
 
-                case "PLAY":
-                    // Let CookPage handle it
-                    break
-
-                case "SEARCH_RECIPE":
-                    // Redirect user to manual search
-                    response = language === "hi-IN"
-                        ? "कृपया रेसिपी सर्च करें या सर्च बार के पास वाले माइक का उपयोग करें।"
-                        : "Please search for recipes manually or use the microphone next to the search bar."
+                case "NAV_HOW_IT_WORKS":
+                    speak(isHindi ? "यह कैसे काम करता है, चलिए देखते हैं।" : "Let's see how it works.")
+                    const howEl = document.getElementById("how-it-works")
+                    if (howEl) {
+                        howEl.scrollIntoView({ behavior: "smooth" })
+                    } else {
+                        router.push("/#how-it-works")
+                    }
                     break
 
                 case "THEME_DARK":
-                case "THEME_LIGHT":
-                    response = language === "hi-IN" ? "थीम बदल दी गई है" : "Theme switched"
-                    // Actual theme switch implementation would be here if we had the context
+                    speak(isHindi ? "डार्क मोड चालू कर रहे हैं।" : "Switching to dark mode.")
+                    // Use a manual event or document class update if next-themes is not available globally
+                    document.documentElement.classList.add("dark")
+                    localStorage.setItem("theme", "dark")
                     break
 
-                case "LOGIN":
-                    response = "Login feature coming soon"
+                case "THEME_LIGHT":
+                    speak(isHindi ? "लाइट मोड पर वापस जा रहे हैं।" : "Switching back to light mode.")
+                    document.documentElement.classList.remove("dark")
+                    localStorage.setItem("theme", "light")
                     break
 
                 case "SET_LANGUAGE_HI":
                     setLanguage("hi-IN")
                     response = "नमस्ते! अब मैं हिंदी में बात करूँगा।"
-                    // We need to force speak in Hindi because state update might modify 'speak' generic behavior only on next render
                     speak(response, "hi-IN")
-                    // Prevent default speak at end of function since we spoke explicitly
                     shouldSpeak = false
                     break
 
@@ -156,77 +131,107 @@ export function GlobalVoiceControl() {
                     shouldSpeak = false
                     break
 
+                case "STOP":
+                    if (!pathname.includes("/cook")) {
+                        stopListening()
+                        response = language === "hi-IN" ? "ठीक है" : "Okay, stopped"
+                    }
+                    break
+
+                case "NAV_VOICE_GUIDE":
                 case "SHOW_COMMANDS":
                     router.push("/#voice-demo")
+                    const demoEl = document.getElementById("voice-demo")
+                    if (demoEl) demoEl.scrollIntoView({ behavior: "smooth" })
                     response = language === "hi-IN"
-                        ? "ये रहे सारे वॉयस कमांड्स जो आप इस्तेमाल कर सकते हैं।"
-                        : "Here are all the voice commands you can use."
+                        ? "मैं आपकी कई तरह से मदद कर सकता हूँ। आप मुझे होम, रेसिपी या प्रोफाइल पेज पर जाने के लिए कह सकते हैं।"
+                        : "I can help you in many ways. You can ask me to navigate to Home, Recipes, or Profile."
                     break
 
-                // --- COOKING COMMANDS ---
-                case "COOK_START":
-                    if (!pathname.includes("/cook")) {
-                        response = language === "hi-IN" ? "कृपया पहले कोई रेसिपी चुनें।" : "Please select a recipe first."
+                case "OPEN_RECIPE":
+                    // Smart Open: If on recipes search page, open the first result
+                    if (pathname === "/recipes") {
+                        const searchParams = new URLSearchParams(window.location.search)
+                        const currentSearch = searchParams.get("search")
+                        
+                        if (currentSearch) {
+                            const filtered = staticRecipes.filter(r => 
+                                (r.name && r.name.toLowerCase().includes(currentSearch.toLowerCase())) ||
+                                (r.nameHindi && r.nameHindi.toLowerCase().includes(currentSearch.toLowerCase())) ||
+                                (r.nameHinglish && r.nameHinglish.toLowerCase().includes(currentSearch.toLowerCase()))
+                            )
+                            
+                            if (filtered.length > 0) {
+                                router.push(`/cook?recipe=${filtered[0].id}`)
+                                response = isHindi 
+                                    ? `ठीक है, ${filtered[0].nameHindi} शुरू करते हैं।` 
+                                    : `Okay, starting ${filtered[0].name} recipe.`
+                                break
+                            }
+                        }
                     }
+                    // Fallback to searching if not on results page or recipe name provided
+                    const q = match.params?.value || text
+                    router.push(`/recipes?search=${encodeURIComponent(q.toString())}`)
+                    response = language === "hi-IN" ? `${q} ढूंढ रहे हैं...` : `Searching for ${q}...`
                     break
 
-                case "STEP_NEXT":
-                case "STEP_PREV":
-                case "STEP_REPEAT":
-                    // Handled by CookPage
-                    break
-
-                case "TIMER_SET":
-                    if (!pathname.includes("/cook")) {
-                        response = language === "hi-IN" ? "टाइमर केवल कुकिंग पेज पर काम करता है।" : "Timers only work on the cooking page."
-                    }
-                    break
-
-                case "WHISTLE_ADD":
-                case "GO_TO_STEP":
-                    // Handled by CookPage
+                case "SEARCH_RECIPE":
+                    const query = match.params?.value || text
+                    router.push(`/recipes?search=${encodeURIComponent(query.toString())}`)
+                    response = language === "hi-IN" ? `${query} के बारे में जानकारी ढूंढ रहे हैं...` : `Looking for information about ${query}...`
                     break
             }
             actionTaken = true
         }
 
-        // --- FALLBACK & KNOWLEDGE BASE ---
+        // --- 4. CHAT FALLBACK (Handles user answers and general questions) ---
         if (!actionTaken && match.intent === "UNKNOWN") {
-            if (contextState === "IDLE") {
-                if (lowerTranscript.includes("recipe") || lowerTranscript.includes("khana") || lowerTranscript.includes("bana") || lowerTranscript.includes("vyanjan")) {
-                    // Redirect user to manual search
-                    response = language === "hi-IN"
-                        ? "कृपया रेसिपी सर्च करें या सर्च बार के पास वाले माइक का उपयोग करें।"
-                        : "Please search for recipes manually or use the microphone next to the search bar."
-                    actionTaken = true
+            // Immediately stop listening to prevent mic interference
+            if (isVoice) stopListening()
+
+            // Update history locally so user sees their message
+            const userMsg = { role: "user", content: text } as const;
+            setMessages(prev => [...prev, userMsg])
+
+            fetch("/api/chat", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ message: text, history: [...messages, userMsg] })
+            })
+            .then(async res => {
+                const data = await res.json()
+                const botResponse = data.response || data.answer;
+                if (botResponse) {
+                    setMessages(prev => [...prev, { role: "assistant", content: botResponse }])
+                    speak(botResponse, language === "hi-IN" ? "hi-IN" : "en-IN")
                 } else {
-                    // Check Knowledge Base for FAQs
-                    const kbResponse = findKnowledgeResponse(lowerTranscript, language)
-                    if (kbResponse) {
-                        response = kbResponse
-                        actionTaken = true
-                    } else {
-                        // Fallback but ENSURE response is not empty if we act
-                        response = language === "hi-IN" ? "माफ़ कीजिये, समझ नहीं आया. आप 'Help' बोल सकते हैं." : "Sorry, I didn't catch that. You can say 'Help'."
-                        actionTaken = true // We are taking action by replying
-                    }
+                    throw new Error("No response from AI")
                 }
+            })
+            .catch(err => {
+                console.error("Chat Fallback Error:", err)
+                const fallback = language === "hi-IN" 
+                    ? "माफ़ कीजिये, अभी कुछ तकनीकी समस्या है。" 
+                    : "I'm sorry, I'm having trouble connecting right now."
+                setMessages(prev => [...prev, { role: "assistant", content: fallback }])
+            })
+            
+            if (isVoice) {
+                clearTranscript()
+                lastProcessedRef.current = text
             }
+            return
         }
 
-        // Update History
-        if (actionTaken || response) {
-            // Ensure we never add an empty bubble
-            const finalResponse = response || "..." // Fallback just in case
-
+        // Standard Response Handling
+        if (response) {
             setMessages(prev => [
                 ...prev,
                 { role: "user", content: text },
-                { role: "assistant", content: finalResponse }
+                { role: "assistant", content: response }
             ])
-
-            if (response && shouldSpeak) speak(response)
-
+            if (shouldSpeak) speak(response, language === "hi-IN" ? "hi-IN" : "en-IN")
             if (isVoice) {
                 clearTranscript()
                 lastProcessedRef.current = text
@@ -235,20 +240,22 @@ export function GlobalVoiceControl() {
     }
 
     useEffect(() => {
-        if (!transcript || !isListening) return
-
-        // Ignore if in SEARCH mode (handled by local component)
-        if (mode === "SEARCH") return
-
-        // Ignore if we just processed this exact text
+        if (!transcript || !isListening || mode === "SEARCH" || mode === "COOK") return
         if (transcript === lastProcessedRef.current) return
+        if (transcript.trim().length < 2) return
 
-        handleCommand(transcript, true)
-    }, [transcript, isListening, router, speak, language, stopListening, contextState, clearTranscript, mode])
+        if (isFinal) {
+            handleCommand(transcript, true)
+            return
+        }
 
-    const pathname = usePathname()
+        const timeout = setTimeout(() => {
+            handleCommand(transcript, true)
+        }, 1200)
 
-    // Hide Assistant UI if not supported
+        return () => clearTimeout(timeout)
+    }, [transcript, isListening, router, speak, language, stopListening, contextState, clearTranscript, mode, isFinal])
+
     if (!isSupported) return null
 
     return <AssistantUI messages={messages} onSendMessage={(text) => handleCommand(text, false)} />

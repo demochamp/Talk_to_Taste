@@ -17,8 +17,8 @@ const IngredientSchema = new Schema({
 }, { _id: false })
 
 const RecipeSchema = new Schema({
-  id: Number, // numeric display id
-  name: String,
+  id: { type: Number, unique: true }, // numeric display id
+  name: { type: String, required: true },
   nameHindi: String,
   cuisine: String,
   category: String,
@@ -27,8 +27,8 @@ const RecipeSchema = new Schema({
   cookTime: String,
   servings: Number,
   difficulty: String,
-  rating: Number,
-  image: String,
+  rating: { type: Number, default: 4.5 },
+  image: { type: String, default: "/placeholder.jpg" },
   description: String,
   descriptionHindi: String,
   ingredients: [IngredientSchema],
@@ -36,6 +36,7 @@ const RecipeSchema = new Schema({
   whistleCount: Number,
   youtubeUrl: String,
   tags: [String],
-})
+  isFeatured: { type: Boolean, default: false },
+}, { timestamps: true })
 
 export default mongoose.models.Recipe ?? mongoose.model("Recipe", RecipeSchema)

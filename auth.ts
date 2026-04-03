@@ -22,9 +22,12 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
                 password: { label: "Password", type: "password" }
             },
             async authorize(credentials) {
-                if (!credentials?.email || !credentials?.password) return null;
+                if (!credentials?.email || !credentials?.password) {
+                    console.warn("[Auth] Missing credentials");
+                    return null;
+                }
 
-                const email = credentials.email as string;
+                const email = (credentials.email as string).toLowerCase().trim();
                 const password = credentials.password as string;
 
                 try {
@@ -32,25 +35,35 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
                     const db = client.db();
                     const user = await db.collection("users").findOne({ email });
 
-                    if (!user || !user.password) return null;
+                    if (!user) {
+                        console.warn(`[Auth] User not found: ${email}`);
+                        return null;
+                    }
+
+                    if (!user.password) {
+                        console.warn(`[Auth] User exists but has no password (likely social login): ${email}`);
+                        return null;
+                    }
 
                     const passwordsMatch = await bcrypt.compare(password, user.password);
 
                     if (passwordsMatch) {
+                        console.log(`[Auth] Manual login successful for: ${email}`);
                         // Notify Admin of successful manual login
-                        // Fire and forget (don't await to speed up login)
                         sendAdminNotification(email, 'Manual Login').catch(err => console.error("Admin notification failed:", err));
 
                         return {
                             id: user._id.toString(),
                             name: user.name,
                             email: user.email,
-                            role: user.role,
+                            role: user.role || 'user',
                             image: user.image
                         };
+                    } else {
+                        console.warn(`[Auth] Password mismatch for: ${email}`);
                     }
                 } catch (error) {
-                    console.error("Auth error:", error);
+                    console.error("[Auth] Critical error:", error);
                 }
                 return null;
             }

@@ -5,12 +5,14 @@ import clientPromise from '@/lib/db';
 import { sendAdminNotification } from '@/lib/mail';
 
 export async function registerUser(formData: FormData) {
-    const email = formData.get('email') as string;
+    let email = formData.get('email') as string;
     const password = formData.get('password') as string;
 
     if (!email || !password) {
         return { error: 'Email and password are required' };
     }
+
+    email = email.toLowerCase().trim();
 
     try {
         const client = await clientPromise;
@@ -20,7 +22,10 @@ export async function registerUser(formData: FormData) {
         const existingUser = await db.collection('users').findOne({ email });
 
         if (existingUser) {
-            return { error: 'User already exists with this email' };
+            if (!existingUser.password) {
+                return { error: 'This email is linked to a Google/GitHub account. Please sign in with those instead.' };
+            }
+            return { error: 'An account with this email already exists.' };
         }
 
         // Hash password
@@ -36,12 +41,12 @@ export async function registerUser(formData: FormData) {
             createdAt: new Date(),
         });
 
-        // Notify Admin of new registration
-        await sendAdminNotification(email, 'Manual Registration');
+        // Notify Admin of new registration (Non-blocking)
+        sendAdminNotification(email, 'Manual Registration').catch(console.error);
 
         return { success: true };
     } catch (error) {
         console.error('Registration error:', error);
-        return { error: 'Failed to create account' };
+        return { error: 'Database error. Please try again later.' };
     }
 }
