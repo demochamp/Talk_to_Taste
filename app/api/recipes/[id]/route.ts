@@ -9,20 +9,24 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    await connectDB()
     const { id } = await params
     const numericId = parseInt(id)
 
-    // 1. Check static recipes first (faster)
+    // 1. Check static recipes first (100% reliable & instantaneous)
     const staticRecipe = staticRecipes.find(r => r.id === numericId)
     if (staticRecipe) {
       return NextResponse.json(staticRecipe)
     }
 
-    // 2. Check database
-    const dbRecipe = await Recipe.findOne({ id: numericId })
-    if (dbRecipe) {
-      return NextResponse.json(dbRecipe)
+    // 2. If not found in static, check database
+    try {
+      await connectDB()
+      const dbRecipe = await Recipe.findOne({ id: numericId })
+      if (dbRecipe) {
+        return NextResponse.json(dbRecipe)
+      }
+    } catch (dbErr) {
+      console.warn("DB lookup failed for recipe ID:", id, dbErr)
     }
 
     return NextResponse.json({ error: "Recipe not found" }, { status: 404 })
@@ -31,6 +35,7 @@ export async function GET(
     return NextResponse.json({ error: error.message || "Failed to fetch recipe" }, { status: 500 })
   }
 }
+
 
 export async function DELETE(
   req: Request,

@@ -47,6 +47,8 @@ import { useUserState } from "@/hooks/use-user-state"
 import Link from "next/link"
 import { useSearchParams, useRouter } from "next/navigation"
 import { useTranslation, type TranslationKey } from "@/lib/i18n"
+import { recipes as staticRecipes } from "@/lib/recipes-data"
+
 
 // Helper to safely get instruction text, avoiding duration strings
 function getStepInstruction(step: any, language: string) {
@@ -194,28 +196,33 @@ export default function CookPage() {
   useEffect(() => {
     if (!recipeId) return
 
+    const numId = parseInt(recipeId)
+    // 1. Instantly load static recipe if available (0ms loading screen)
+    const staticMatch = staticRecipes.find(r => r.id === numId)
+    if (staticMatch) {
+      setRecipe(staticMatch)
+      if (staticMatch.id) addToHistory(staticMatch.id)
+    }
+
+    // 2. Fetch fresh / database recipe in background
     const loadRecipe = async () => {
       try {
         const res = await fetch(`/api/recipes/${recipeId}`)
-
-        if (!res.ok) {
-          throw new Error("Recipe fetch failed")
+        if (res.ok) {
+          const data = await res.json()
+          if (data && data.id) {
+            setRecipe(data)
+            addToHistory(data.id)
+          }
         }
-
-        const data = await res.json()
-        setRecipe(data)
-        if (data && data.id) {
-          addToHistory(data.id)
-        }
-
       } catch (err) {
-        console.error("Cook page fetch error:", err)
-        setRecipe(null)
+        console.warn("Cook page background fetch error:", err)
       }
     }
 
     loadRecipe()
-  }, [recipeId])
+  }, [recipeId, addToHistory])
+
 
   // Reset search videos when global recipe changes
   useEffect(() => {
