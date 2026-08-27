@@ -52,18 +52,31 @@ export default function AdminPage() {
                         const usersData = await usersRes.json()
                         if (Array.isArray(usersData) && usersData.length > 0) {
                             setUsers(usersData)
-                        } else if (users.length === 0) {
-                            setUsers([{
-                                _id: "admin-master",
-                                name: user.name || "Khushi Choudhary (Admin)",
-                                email: user.email || "choudharykhushi499@gmail.com",
-                                role: "admin",
-                            }])
                         }
                     }
                 } catch (error) {
                     console.warn("Users fetch error:", error);
                 }
+
+                // Check localStorage for any devices/accounts synced locally
+                try {
+                    const localKnown = localStorage.getItem("talktotaste-known-users")
+                    if (localKnown) {
+                        const parsed = JSON.parse(localKnown)
+                        if (Array.isArray(parsed)) {
+                            setUsers(prev => {
+                                const map = new Map<string, any>()
+                                prev.forEach(u => u.email && map.set(u.email.toLowerCase(), u))
+                                parsed.forEach(u => {
+                                    if (u.email && !map.has(u.email.toLowerCase())) {
+                                        map.set(u.email.toLowerCase(), u)
+                                    }
+                                })
+                                return Array.from(map.values())
+                            })
+                        }
+                    }
+                } catch (e) {}
 
                 // 2. Fetch fresh / DB recipes independently
                 try {
@@ -86,7 +99,9 @@ export default function AdminPage() {
         if (!confirm("Are you sure? This will delete the user permanently.")) return
         try {
             const res = await fetch(`/api/admin/users/${id}`, { method: "DELETE" })
-            if (res.ok) setUsers(users.filter(u => u._id !== id))
+            if (res.ok) {
+                setUsers(prev => prev.filter(u => u._id !== id && u.email !== id))
+            }
         } catch (error) { console.error(error) }
     }
 
@@ -118,41 +133,41 @@ export default function AdminPage() {
         <div className="min-h-screen bg-[#FFF9F5]">
             <Navigation />
 
-            <div className="container mx-auto px-6 pt-32 pb-12 text-center md:text-left">
+            <div className="container mx-auto px-4 sm:px-6 pt-28 sm:pt-32 pb-12 text-center md:text-left">
                 <motion.div
                     initial={{ opacity: 0, y: -20 }}
                     animate={{ opacity: 1, y: 0 }}
                     className="mb-8"
                 >
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
-                        <h1 className="text-3xl md:text-4xl font-serif text-[#F27438] font-bold">
+                        <h1 className="text-2xl sm:text-3xl md:text-4xl font-serif text-[#F27438] font-bold">
                             Admin Dashboard
                         </h1>
 
                         {/* Search bar */}
                         <div className="relative w-full md:w-72">
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                             <Input
                                 placeholder={activeTab === "users" ? "Search users..." : "Search recipes..."}
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
-                                className="pl-9 bg-white border-orange-100 rounded-full h-10 text-sm focus:border-orange-500 shadow-sm"
+                                className="pl-9 bg-white border-orange-100 rounded-full h-10 text-sm focus:border-orange-500 shadow-sm w-full"
                             />
                         </div>
                     </div>
 
-                    <div className="flex justify-center md:justify-start mb-8">
-                        <Tabs value={activeTab} onValueChange={(val) => { setActiveTab(val); setSearchTerm(""); }} className="inline-block">
-                            <TabsList className="bg-white/80 p-1 rounded-full border border-orange-100 shadow-sm flex items-center h-auto">
+                    <div className="flex justify-center md:justify-start mb-6 sm:mb-8 w-full">
+                        <Tabs value={activeTab} onValueChange={(val) => { setActiveTab(val); setSearchTerm(""); }} className="w-full sm:w-auto">
+                            <TabsList className="bg-white/90 p-1.5 rounded-2xl sm:rounded-full border border-orange-100 shadow-sm flex flex-col sm:flex-row items-stretch sm:items-center gap-1.5 w-full sm:w-auto h-auto">
                                 <TabsTrigger
                                     value="users"
-                                    className="data-[state=active]:bg-[#FEF0E6] data-[state=active]:text-[#F27438] px-6 py-2.5 rounded-full transition-all flex items-center gap-2 font-semibold text-slate-500 text-sm cursor-pointer"
+                                    className="data-[state=active]:bg-[#FEF0E6] data-[state=active]:text-[#F27438] px-4 sm:px-6 py-2.5 rounded-xl sm:rounded-full transition-all flex items-center justify-center gap-2 font-bold text-slate-600 text-xs sm:text-sm cursor-pointer w-full sm:w-auto"
                                 >
                                     <Users className="w-4 h-4" /> User Management ({users.length})
                                 </TabsTrigger>
                                 <TabsTrigger
                                     value="manage"
-                                    className="data-[state=active]:bg-[#FEF0E6] data-[state=active]:text-[#F27438] px-6 py-2.5 rounded-full transition-all flex items-center gap-2 font-semibold text-slate-500 text-sm cursor-pointer"
+                                    className="data-[state=active]:bg-[#FEF0E6] data-[state=active]:text-[#F27438] px-4 sm:px-6 py-2.5 rounded-xl sm:rounded-full transition-all flex items-center justify-center gap-2 font-bold text-slate-600 text-xs sm:text-sm cursor-pointer w-full sm:w-auto"
                                 >
                                     <ChefHat className="w-4 h-4" /> Manage Recipes ({recipes.length})
                                 </TabsTrigger>
@@ -160,6 +175,7 @@ export default function AdminPage() {
                         </Tabs>
                     </div>
                 </motion.div>
+
 
                 <div className="max-w-6xl mx-auto md:mx-0">
                     <AnimatePresence mode="wait">

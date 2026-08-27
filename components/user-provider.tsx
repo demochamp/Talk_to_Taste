@@ -140,8 +140,23 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     }, [])
 
     const updateName = useCallback((name: string) => {
-        setUser((prev: UserState) => ({ ...prev, name }))
+        setUser((prev: UserState) => {
+            const updated = { ...prev, name }
+            if (prev.email) {
+                fetch("/api/user/sync", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        email: prev.email,
+                        name,
+                        role: prev.role
+                    })
+                }).catch(err => console.warn("Name sync failed:", err))
+            }
+            return updated
+        })
     }, [])
+
 
     const login = useCallback((provider?: string) => {
         if (provider) {

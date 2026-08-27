@@ -1,5 +1,7 @@
 import clientPromise from "@/lib/db"
 import { ObjectId } from "mongodb"
+import fs from "fs"
+import path from "path"
 
 export interface StoredUser {
     _id: string
@@ -12,20 +14,55 @@ export interface StoredUser {
     lastLogin?: string
 }
 
-// In-memory fallback cache across serverless warm instances
-let cachedUsers: Map<string, StoredUser> = new Map()
+const TMP_FILE = path.join("/tmp", "talktotaste_users.json")
 
-// Pre-populate Master Admin
-const masterAdmin: StoredUser = {
-    _id: "admin-master",
-    name: "Khushi Choudhary (Admin)",
-    email: "choudharykhushi499@gmail.com",
-    role: "admin",
-    image: null,
-    provider: "google",
-    createdAt: new Date().toISOString()
+// Helper to read disk cache
+function readDiskCache(): Map<string, StoredUser> {
+    const map = new Map<string, StoredUser>()
+    
+    // Always include Master Admin
+    const masterAdmin: StoredUser = {
+        _id: "admin-master",
+        name: "Khushi Choudhary (Admin)",
+        email: "choudharykhushi499@gmail.com",
+        role: "admin",
+        image: null,
+        provider: "google",
+        createdAt: new Date().toISOString()
+    }
+    map.set(masterAdmin.email.toLowerCase(), masterAdmin)
+
+    try {
+        if (fs.existsSync(TMP_FILE)) {
+            const data = fs.readFileSync(TMP_FILE, "utf-8")
+            const list: StoredUser[] = JSON.parse(data)
+            if (Array.isArray(list)) {
+                for (const u of list) {
+                    if (u.email) {
+                        map.set(u.email.toLowerCase().trim(), u)
+                    }
+                }
+            }
+        }
+    } catch (e) {
+        // ignore disk read errors in restricted envs
+    }
+
+    return map
 }
-cachedUsers.set(masterAdmin.email.toLowerCase(), masterAdmin)
+
+// Helper to write disk cache
+function writeDiskCache(map: Map<string, StoredUser>) {
+    try {
+        const list = Array.from(map.values())
+        fs.writeFileSync(TMP_FILE, JSON.stringify(list, null, 2), "utf-8")
+    } catch (e) {
+        // ignore disk write errors
+    }
+}
+
+// In-memory cache across serverless warm instances
+let cachedUsers: Map<string, StoredUser> = readDiskCache()
 
 export async function recordUser(user: {
     id?: string
@@ -35,6 +72,10 @@ export async function recordUser(user: {
     role?: string
     provider?: string
 }): Promise<StoredUser> {
+    if (!user.email) {
+        throw new Error("User email is required")
+    }
+
     const email = user.email.toLowerCase().trim()
     const isAdmin = email === "choudharykhushi499@gmail.com" || user.role === "admin"
     const role: "admin" | "user" = isAdmin ? "admin" : "user"
@@ -42,19 +83,23 @@ export async function recordUser(user: {
     const image = user.image || null
     const provider = user.provider || "oauth"
 
+    cachedUsers = readDiskCache()
+    const existing = cachedUsers.get(email)
+
     const record: StoredUser = {
-        _id: user.id || `user-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+        _id: user.id || existing?._id || `user-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
         name,
         email,
         role,
         image,
         provider,
-        createdAt: new Date().toISOString(),
+        createdAt: existing?.createdAt || new Date().toISOString(),
         lastLogin: new Date().toISOString()
     }
 
-    // Always update local cache
+    // Update local cache & disk
     cachedUsers.set(email, record)
+    writeDiskCache(cachedUsers)
 
     // Sync to MongoDB if available
     try {
@@ -81,19 +126,17 @@ export async function recordUser(user: {
             { upsert: true }
         )
     } catch (err) {
-        console.warn("[UserStore] DB sync skipped/failed:", err)
+        // MongoDB timeout handled safely
     }
 
     return record
 }
 
 export async function getAllUsers(): Promise<StoredUser[]> {
-    const userMap = new Map<string, StoredUser>()
+    cachedUsers = readDiskCache()
+    const userMap = new Map<string, StoredUser>(cachedUsers)
 
-    // 1. Add master admin & local memory users
-    cachedUsers.forEach((u, k) => userMap.set(k, u))
-
-    // 2. Fetch from MongoDB if available
+    // Fetch from MongoDB if available
     try {
         const client = await Promise.race([
             clientPromise,
@@ -117,13 +160,13 @@ export async function getAllUsers(): Promise<StoredUser[]> {
                     lastLogin: doc.lastLogin ? new Date(doc.lastLogin).toISOString() : undefined
                 }
                 userMap.set(email, record)
-                cachedUsers.set(email, record)
             }
         }
     } catch (err) {
-        console.warn("[UserStore] DB fetch skipped/failed:", err)
+        // DB fallback used
     }
 
+    writeDiskCache(userMap)
     return Array.from(userMap.values())
 }
 
@@ -135,14 +178,15 @@ export async function removeUser(idOrEmail: string): Promise<boolean> {
         return false
     }
 
-    // Remove from local cache
+    cachedUsers = readDiskCache()
     for (const [email, user] of cachedUsers.entries()) {
         if (email === key || user._id === idOrEmail) {
             cachedUsers.delete(email)
         }
     }
+    writeDiskCache(cachedUsers)
 
-    // Remove from MongoDB
+    // Remove from MongoDB if available
     try {
         const client = await Promise.race([
             clientPromise,
@@ -155,7 +199,7 @@ export async function removeUser(idOrEmail: string): Promise<boolean> {
         }
         await db.collection("users").deleteOne(query)
     } catch (err) {
-        console.warn("[UserStore] DB deletion skipped/failed:", err)
+        // DB skip handled
     }
 
     return true
