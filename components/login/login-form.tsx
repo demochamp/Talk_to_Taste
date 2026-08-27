@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Mail, Lock, LogIn, UserPlus, Sparkles, AlertCircle } from 'lucide-react';
+import { Mail, Lock, LogIn, UserPlus, Sparkles, AlertCircle, Eye, EyeOff } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { signIn } from 'next-auth/react';
 import { registerUser } from '@/actions/auth-actions';
@@ -18,6 +18,7 @@ export function LoginForm({ isSubmitting: externalIsSubmitting, setIsSubmitting:
     const [socialLoading, setSocialLoading] = useState<'google' | 'github' | null>(null);
     const [mode, setMode] = useState<'login' | 'signup'>('login');
     const [error, setError] = useState<string | null>(null);
+    const [showPassword, setShowPassword] = useState(false);
 
     const isSubmitting = (externalIsSubmitting ?? localIsSubmitting) || socialLoading !== null;
     const setIsSubmitting = externalSetIsSubmitting ?? setLocalIsSubmitting;
@@ -219,20 +220,33 @@ export function LoginForm({ isSubmitting: externalIsSubmitting, setIsSubmitting:
 
                     <div>
                         <label className="block text-xs sm:text-sm font-bold text-gray-900 mb-1">Password</label>
-                        <div className="relative">
+                        <div className="relative flex items-center">
                             <Lock className="absolute left-3 sm:left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-gray-500 pointer-events-none" />
                             <input
                                 name="password"
-                                type="password"
+                                type={showPassword ? "text" : "password"}
                                 required
                                 minLength={6}
                                 autoComplete={mode === 'signup' ? 'new-password' : 'current-password'}
                                 style={{ color: '#111827', backgroundColor: '#ffffff' }}
-                                className="w-full pl-9 sm:pl-11 pr-3 sm:pr-4 py-2 sm:py-2.5 bg-white text-gray-900 placeholder:text-gray-400 font-semibold text-sm sm:text-base border-2 border-gray-300 rounded-xl focus:border-orange-500 focus:ring-4 focus:ring-orange-100 outline-none transition-all shadow-sm"
+                                className="w-full pl-9 sm:pl-11 pr-10 sm:pr-11 py-2 sm:py-2.5 bg-white text-gray-900 placeholder:text-gray-400 font-semibold text-sm sm:text-base border-2 border-gray-300 rounded-xl focus:border-orange-500 focus:ring-4 focus:ring-orange-100 outline-none transition-all shadow-sm"
                                 placeholder="••••••••"
                             />
+                            <button
+                                type="button"
+                                onClick={() => setShowPassword(!showPassword)}
+                                className="absolute right-3 sm:right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-700 focus:outline-none p-1 rounded-md transition-colors cursor-pointer"
+                                aria-label={showPassword ? "Hide password" : "Show password"}
+                            >
+                                {showPassword ? (
+                                    <EyeOff className="w-4 h-4 sm:w-5 sm:h-5" />
+                                ) : (
+                                    <Eye className="w-4 h-4 sm:w-5 sm:h-5" />
+                                )}
+                            </button>
                         </div>
                     </div>
+
 
                     <button
                         type="submit"
