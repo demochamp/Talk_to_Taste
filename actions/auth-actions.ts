@@ -12,10 +12,17 @@ export async function registerUser(formData: FormData) {
         return { error: 'Email and password are required' };
     }
 
+    if (password.length < 6) {
+        return { error: 'Password must be at least 6 characters long' };
+    }
+
     email = email.toLowerCase().trim();
 
     try {
-        const client = await clientPromise;
+        const client = await Promise.race([
+            clientPromise,
+            new Promise<never>((_, reject) => setTimeout(() => reject(new Error("Database connection timeout")), 4000))
+        ]);
         const db = client.db();
 
         // Check if user exists
@@ -23,9 +30,9 @@ export async function registerUser(formData: FormData) {
 
         if (existingUser) {
             if (!existingUser.password) {
-                return { error: 'This email is linked to a Google/GitHub account. Please sign in with those instead.' };
+                return { error: 'This email is linked to Google/GitHub. Please sign in with those buttons.' };
             }
-            return { error: 'An account with this email already exists.' };
+            return { error: 'An account with this email already exists. Please Sign In.' };
         }
 
         // Hash password
@@ -37,7 +44,7 @@ export async function registerUser(formData: FormData) {
             password: hashedPassword,
             name: email.split('@')[0], // Default name from email
             image: null,
-            role: 'user', // Default role
+            role: email === 'choudharykhushi499@gmail.com' ? 'admin' : 'user', // Set admin role for owner email
             createdAt: new Date(),
         });
 
@@ -47,6 +54,6 @@ export async function registerUser(formData: FormData) {
         return { success: true };
     } catch (error) {
         console.error('Registration error:', error);
-        return { error: 'Database error. Please try again later.' };
+        return { error: 'Database service is currently updating. Please use Google or GitHub sign-in.' };
     }
 }

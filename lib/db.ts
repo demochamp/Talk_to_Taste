@@ -1,18 +1,17 @@
-// This approach is taken from https://authjs.dev/getting-started/adapters/mongodb
 import { MongoClient } from "mongodb"
 
 const uri = process.env.MONGODB_URI || ""
-const options = {}
+const options = {
+    serverSelectionTimeoutMS: 3000,
+    connectTimeoutMS: 3000,
+}
 
 let client: MongoClient
 let clientPromise: Promise<MongoClient>
 
 if (!uri) {
-    console.warn('[MongoDB] Warning: MONGODB_URI environment variable is missing.')
-    clientPromise = Promise.reject(new Error('Invalid/Missing environment variable: "MONGODB_URI"'))
+    clientPromise = Promise.reject(new Error('Missing environment variable: "MONGODB_URI"'))
 } else if (process.env.NODE_ENV === "development") {
-    // In development mode, use a global variable so that the value
-    // is preserved across module reloads caused by HMR (Hot Module Replacement).
     let globalWithMongo = global as typeof globalThis & {
         _mongoClientPromise?: Promise<MongoClient>
     }
@@ -23,11 +22,11 @@ if (!uri) {
     }
     clientPromise = globalWithMongo._mongoClientPromise
 } else {
-    // In production mode, it's best to not use a global variable.
     client = new MongoClient(uri, options)
     clientPromise = client.connect()
 }
 
-// Export a module-scoped MongoClient promise.
 export default clientPromise
+
+
 

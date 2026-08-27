@@ -10,11 +10,9 @@ export function LoginModal() {
 
     return (
         <Dialog open={isLoginModalOpen} onOpenChange={(open) => !open && closeLoginModal()}>
-            {/* Increased max-width for side-by-side layout */}
             <DialogContent
-                overlayClassName="bg-white"
-                showCloseButton={false}
-                className="sm:max-w-3xl max-h-[80vh] p-0 bg-white/95 backdrop-blur-xl border-orange-100 shadow-2xl rounded-3xl flex flex-col overflow-hidden"
+                showCloseButton={true}
+                className="sm:max-w-3xl max-h-[85vh] p-0 bg-white border-orange-100 shadow-2xl rounded-3xl flex flex-col overflow-hidden"
             >
                 <DialogHeader className="sr-only">
                     <DialogTitle>Login to TalkToTaste</DialogTitle>
@@ -23,20 +21,15 @@ export function LoginModal() {
 
                 <div className="grid lg:grid-cols-2 h-full">
                     {/* Left: Branding & Animation (Hidden on small mobile, visible on larger screens) */}
-                    <div className="hidden lg:flex flex-col items-center justify-center bg-orange-50/50 p-6 border-r border-orange-100 relative overflow-hidden">
+                    <div className="hidden lg:flex flex-col items-center justify-center bg-orange-50/70 p-8 border-r border-orange-100 relative overflow-hidden">
                         <div className="absolute inset-0 bg-grid-orange-500/[0.05] -z-10" />
-                        <div className="scale-75 transform origin-center">
+                        <div className="scale-90 transform origin-center">
                             <LogoAnimation />
                         </div>
                     </div>
 
                     {/* Right: Login Form */}
-                    <div className="p-2 flex items-center justify-center bg-white relative">
-                        {/* Mobile Logo (Visible only on small screens) */}
-                        <div className="lg:hidden absolute top-4 left-0 right-0 flex justify-center opacity-10 pointer-events-none">
-                            <img src="/logo.png" alt="Logo" className="w-24 h-24 object-contain" />
-                        </div>
-
+                    <div className="p-4 sm:p-6 flex items-center justify-center bg-white relative">
                         <div className="w-full max-w-sm">
                             <LoginForm isModal={true} onSuccess={closeLoginModal} />
                         </div>
@@ -46,3 +39,4 @@ export function LoginModal() {
         </Dialog>
     )
 }
+

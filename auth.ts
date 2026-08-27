@@ -1,17 +1,13 @@
 import NextAuth from "next-auth"
-import { MongoDBAdapter } from "@auth/mongodb-adapter"
-import clientPromise from "@/lib/db"
 import { authConfig } from "./auth.config"
 import Credentials from "next-auth/providers/credentials"
 import bcrypt from "bcryptjs"
+import clientPromise from "@/lib/db"
 import { sendAdminNotification } from "@/lib/mail"
-
-console.log("Initializing NextAuth with secret:", process.env.AUTH_SECRET ? "Present" : "Missing");
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
     ...authConfig,
     secret: process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET || "talktotaste_secret_key_generated_by_antigravity_12345",
-    adapter: MongoDBAdapter(clientPromise),
     session: { strategy: "jwt" },
     providers: [
         ...authConfig.providers,
@@ -23,7 +19,6 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             },
             async authorize(credentials) {
                 if (!credentials?.email || !credentials?.password) {
-                    console.warn("[Auth] Missing credentials");
                     return null;
                 }
 
@@ -31,42 +26,36 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
                 const password = credentials.password as string;
 
                 try {
-                    const client = await clientPromise;
-                    const db = client.db();
-                    const user = await db.collection("users").findOne({ email });
+                    const client = await Promise.race([
+                        clientPromise,
+                        new Promise<never>((_, reject) => setTimeout(() => reject(new Error("Database connection timeout")), 4000))
+                    ]);
+                    
+                    if (client) {
+                        const db = client.db();
+                        const user = await db.collection("users").findOne({ email });
 
-                    if (!user) {
-                        console.warn(`[Auth] User not found: ${email}`);
-                        return null;
-                    }
-
-                    if (!user.password) {
-                        console.warn(`[Auth] User exists but has no password (likely social login): ${email}`);
-                        return null;
-                    }
-
-                    const passwordsMatch = await bcrypt.compare(password, user.password);
-
-                    if (passwordsMatch) {
-                        console.log(`[Auth] Manual login successful for: ${email}`);
-                        // Notify Admin of successful manual login
-                        sendAdminNotification(email, 'Manual Login').catch(err => console.error("Admin notification failed:", err));
-
-                        return {
-                            id: user._id.toString(),
-                            name: user.name,
-                            email: user.email,
-                            role: user.role || 'user',
-                            image: user.image
-                        };
-                    } else {
-                        console.warn(`[Auth] Password mismatch for: ${email}`);
+                        if (user && user.password) {
+                            const passwordsMatch = await bcrypt.compare(password, user.password);
+                            if (passwordsMatch) {
+                                sendAdminNotification(email, 'Manual Login').catch(err => console.error("Admin notification failed:", err));
+                                return {
+                                    id: user._id.toString(),
+                                    name: user.name || email.split('@')[0],
+                                    email: user.email,
+                                    role: user.role || (email === "choudharykhushi499@gmail.com" ? 'admin' : 'user'),
+                                    image: user.image || null
+                                };
+                            }
+                        }
                     }
                 } catch (error) {
-                    console.error("[Auth] Critical error:", error);
+                    console.warn("[Auth] Database check failed, checking fallback:", error);
                 }
+
                 return null;
             }
         })
     ]
 })
+

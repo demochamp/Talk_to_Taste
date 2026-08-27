@@ -2,45 +2,60 @@ import type { NextAuthConfig } from "next-auth"
 import Google from "next-auth/providers/google"
 import GitHub from "next-auth/providers/github"
 
-console.log("Auth Config Loaded");
-console.log("GOOGLE_CLIENT_ID:", process.env.GOOGLE_CLIENT_ID || process.env.AUTH_GOOGLE_ID || process.env.GOOGLE_ID ? "Set" : "Not Set");
-console.log("GITHUB_ID:", process.env.GITHUB_ID || process.env.AUTH_GITHUB_ID || process.env.GITHUB_CLIENT_ID ? "Set" : "Not Set");
+const googleClientId = process.env.GOOGLE_CLIENT_ID || process.env.AUTH_GOOGLE_ID || process.env.GOOGLE_ID;
+const googleClientSecret = process.env.GOOGLE_CLIENT_SECRET || process.env.AUTH_GOOGLE_SECRET || process.env.GOOGLE_SECRET;
 
-const googleClientId = process.env.GOOGLE_CLIENT_ID || process.env.AUTH_GOOGLE_ID || process.env.GOOGLE_ID || "dummy_google_id";
-const googleClientSecret = process.env.GOOGLE_CLIENT_SECRET || process.env.AUTH_GOOGLE_SECRET || process.env.GOOGLE_SECRET || "dummy_google_secret";
+const githubId = process.env.GITHUB_ID || process.env.AUTH_GITHUB_ID || process.env.GITHUB_CLIENT_ID;
+const githubSecret = process.env.GITHUB_SECRET || process.env.AUTH_GITHUB_SECRET || process.env.GITHUB_CLIENT_SECRET;
 
-const githubId = process.env.GITHUB_ID || process.env.AUTH_GITHUB_ID || process.env.GITHUB_CLIENT_ID || "dummy_github_id";
-const githubSecret = process.env.GITHUB_SECRET || process.env.AUTH_GITHUB_SECRET || process.env.GITHUB_CLIENT_SECRET || "dummy_github_secret";
+const providers: any[] = [];
+
+if (googleClientId && googleClientSecret) {
+    providers.push(
+        Google({
+            clientId: googleClientId,
+            clientSecret: googleClientSecret,
+            allowDangerousEmailAccountLinking: true,
+        })
+    );
+} else {
+    providers.push(
+        Google({
+            allowDangerousEmailAccountLinking: true,
+        })
+    );
+}
+
+if (githubId && githubSecret) {
+    providers.push(
+        GitHub({
+            clientId: githubId,
+            clientSecret: githubSecret,
+            allowDangerousEmailAccountLinking: true,
+        })
+    );
+} else {
+    providers.push(
+        GitHub({
+            allowDangerousEmailAccountLinking: true,
+        })
+    );
+}
 
 export const authConfig = {
     trustHost: true,
     secret: process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET || "talktotaste_secret_key_generated_by_antigravity_12345",
-    providers: [
-        Google({
-            clientId: googleClientId,
-            clientSecret: googleClientSecret,
-            authorization: {
-                params: {
-                    prompt: "select_account",
-                    access_type: "offline",
-                    response_type: "code"
-                }
-            }
-        }),
-        GitHub({
-            clientId: githubId,
-            clientSecret: githubSecret,
-        })
-    ],
+    providers,
     pages: {
-        signIn: '/login',
+        signIn: '/',
+        error: '/',
     },
     callbacks: {
         authorized({ auth, request: nextUrl }) {
             const isLoggedIn = !!auth?.user;
             const pathname = nextUrl.nextUrl.pathname;
 
-            // 1. Redirect /login to / (User requirement: No standalone login page)
+            // 1. Redirect /login to / (No standalone login page)
             if (pathname === '/login') {
                 return Response.redirect(new URL('/', nextUrl.url));
             }
@@ -51,7 +66,7 @@ export const authConfig = {
                 return false;
             }
 
-            // 3. Allow everything else (Home, Bot, Recipes)
+            // 3. Allow everything else
             return true;
         },
         async session({ session, token }) {
@@ -78,5 +93,7 @@ export const authConfig = {
     },
     session: { strategy: "jwt" },
 } satisfies NextAuthConfig
+
+
 
 
