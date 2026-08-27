@@ -12,23 +12,23 @@ export function LoginModal() {
         <Dialog open={isLoginModalOpen} onOpenChange={(open) => !open && closeLoginModal()}>
             <DialogContent
                 showCloseButton={true}
-                className="w-[90vw] max-w-[380px] lg:max-w-2xl max-h-[82vh] sm:max-h-[480px] p-0 bg-white border-orange-100 shadow-2xl rounded-3xl flex flex-col overflow-hidden outline-none"
+                className="w-[95vw] max-w-[440px] lg:max-w-3xl max-h-[88vh] p-0 bg-white border-orange-100 shadow-2xl rounded-3xl flex flex-col overflow-hidden outline-none mt-8 sm:mt-12"
             >
                 <DialogHeader className="sr-only">
                     <DialogTitle>Login to TalkToTaste</DialogTitle>
                     <DialogDescription>Access voice-controlled cooking features</DialogDescription>
                 </DialogHeader>
 
-                <div className="grid lg:grid-cols-2 h-full max-h-[82vh] sm:max-h-[480px] overflow-hidden">
+                <div className="grid lg:grid-cols-2 h-full max-h-[88vh] overflow-hidden">
                     {/* Left: Branding & Animation (Hidden on small mobile, visible on larger screens) */}
-                    <div className="hidden lg:flex flex-col items-center justify-center bg-gradient-to-br from-orange-50/90 to-amber-50/50 p-4 border-r border-orange-100 relative overflow-hidden">
-                        <div className="absolute inset-0 bg-grid-orange-500/[0.04] -z-10" />
+                    <div className="hidden lg:flex flex-col items-center justify-center bg-orange-50/70 p-6 sm:p-8 border-r border-orange-100 relative overflow-hidden">
+                        <div className="absolute inset-0 bg-grid-orange-500/[0.05] -z-10" />
                         <LogoAnimation />
                     </div>
 
                     {/* Right: Login Form */}
-                    <div className="p-3 sm:p-4 flex items-center justify-center bg-white relative overflow-y-auto max-h-[82vh] sm:max-h-[480px]">
-                        <div className="w-full max-w-xs py-0.5">
+                    <div className="p-4 sm:p-6 md:p-8 flex items-center justify-center bg-white relative overflow-y-auto max-h-[88vh]">
+                        <div className="w-full max-w-sm py-2">
                             <LoginForm isModal={true} onSuccess={closeLoginModal} />
                         </div>
                     </div>
@@ -37,6 +37,7 @@ export function LoginModal() {
         </Dialog>
     )
 }
+
 
 
 
