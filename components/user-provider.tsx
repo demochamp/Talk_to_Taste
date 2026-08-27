@@ -166,9 +166,21 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
         }
     }, [])
 
-    const logout = useCallback(() => {
-        signOut()
-    }, [])
+    const logout = useCallback(async () => {
+        try {
+            localStorage.removeItem("talktotaste-user")
+        } catch (e) {}
+        setUser({
+            ...DEFAULT_STATE,
+            favorites: user.favorites,
+            history: user.history,
+            settings: user.settings,
+            isLoggedIn: false,
+            role: "user"
+        })
+        await signOut({ callbackUrl: "/" })
+    }, [user.favorites, user.history, user.settings])
+
 
     const openLoginModal = useCallback(() => setIsLoginModalOpen(true), [])
     const closeLoginModal = useCallback(() => setIsLoginModalOpen(false), [])

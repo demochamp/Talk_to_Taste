@@ -10,16 +10,22 @@ import { AnimatedLogo } from "./animated-logo"
 import { useUserState } from "@/hooks/use-user-state"
 import { useTranslation } from "@/lib/i18n"
 import { useVoice } from "@/hooks/use-voice"
+import { useSession } from "next-auth/react"
+
 
 export function Navigation() {
   const [isScrolled, setIsScrolled] = useState(false)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const { theme, setTheme } = useTheme()
   const [mounted, setMounted] = useState(false)
-  const { user, logout } = useUserState()
+  const { data: session, status } = useSession()
+  const { user, logout, openLoginModal } = useUserState()
   const { language, setLanguage, speak } = useVoice()
 
   const { t } = useTranslation()
+
+  const isAuthenticated = status === "authenticated" && !!session?.user && user.isLoggedIn
+  const isAdmin = isAuthenticated && (user?.role === "admin" || (session?.user as any)?.role === "admin" || session?.user?.email === "choudharykhushi499@gmail.com")
 
   const toggleLanguage = () => {
     const newLang = language === "en-IN" ? "hi-IN" : "en-IN"
@@ -98,8 +104,8 @@ export function Navigation() {
               </motion.div>
             ))}
 
-            {/* Admin Link */}
-            {user?.role === 'admin' && (
+            {/* Admin Link (Only when authenticated admin) */}
+            {isAdmin && (
               <motion.div
                 initial={{ opacity: 0, y: -20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -124,7 +130,7 @@ export function Navigation() {
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.9 }}
                 onClick={toggleLanguage}
-                className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-secondary flex items-center justify-center relative group"
+                className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-secondary flex items-center justify-center relative group cursor-pointer"
                 aria-label={language === "en-IN" ? "Switch to Hindi" : "English में बदलें"}
               >
                 <Globe className="w-4 h-4 sm:w-5 sm:h-5 text-foreground" />
@@ -140,7 +146,7 @@ export function Navigation() {
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.9 }}
                 onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-                className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-secondary flex items-center justify-center"
+                className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-secondary flex items-center justify-center cursor-pointer"
               >
                 {theme === "dark" ? (
                   <Sun className="w-4 h-4 sm:w-5 sm:h-5 text-foreground" />
@@ -155,28 +161,33 @@ export function Navigation() {
               <motion.div
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.9 }}
-                className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-secondary flex items-center justify-center"
+                className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-secondary flex items-center justify-center cursor-pointer"
               >
                 <User className="w-4 h-4 sm:w-5 sm:h-5 text-foreground" />
               </motion.div>
             </Link>
 
             {/* Desktop Only: Login/Logout Button */}
-            {user?.isLoggedIn ? (
-              <Button
-                variant="ghost"
-                onClick={() => logout()}
-                className="hidden md:flex items-center gap-2 rounded-full text-[#F27438] hover:text-[#F27438]/80 hover:bg-orange-50/50 font-bold text-sm"
-              >
-                {language === "hi-IN" ? "साइन आउट" : "Sign Out"}
-              </Button>
-            ) : (
-              <Link href="/login" className="hidden md:block">
-                <Button variant="ghost" className="flex items-center gap-2 rounded-full">
+            {mounted && (
+              isAuthenticated ? (
+                <Button
+                  variant="ghost"
+                  onClick={() => logout()}
+                  className="hidden md:flex items-center gap-2 rounded-full text-[#F27438] hover:text-[#F27438]/80 hover:bg-orange-50/50 font-bold text-sm cursor-pointer"
+                >
+                  {language === "hi-IN" ? "साइन आउट" : "Sign Out"}
+                </Button>
+              ) : (
+                <Button
+                  variant="ghost"
+                  onClick={() => openLoginModal()}
+                  className="hidden md:flex items-center gap-2 rounded-full font-bold text-sm text-foreground/80 hover:text-primary hover:bg-orange-50/20 cursor-pointer"
+                >
                   {t("nav.sign_in")}
                 </Button>
-              </Link>
+              )
             )}
+
 
             {/* Mobile menu button */}
             <motion.button
@@ -220,7 +231,7 @@ export function Navigation() {
                 ))}
 
                 {/* Admin Link Mobile */}
-                {user?.role === 'admin' && (
+                {isAdmin && (
                   <motion.div
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
@@ -253,24 +264,26 @@ export function Navigation() {
                   transition={{ delay: 0.4 }}
                   className="mt-2"
                 >
-                  {user?.isLoggedIn ? (
+                  {isAuthenticated ? (
                     <button
                       onClick={() => {
                         logout()
                         setIsMobileMenuOpen(false)
                       }}
-                      className="w-full text-left block text-lg font-bold text-red-500 hover:text-red-600 py-4"
+                      className="w-full text-left block text-lg font-bold text-red-500 hover:text-red-600 py-4 cursor-pointer"
                     >
                       {language === "hi-IN" ? "साइन आउट" : "Sign Out"}
                     </button>
                   ) : (
-                    <Link
-                      href="/login"
-                      onClick={() => setIsMobileMenuOpen(false)}
-                      className="block text-lg font-medium text-primary hover:text-primary/80 py-4"
+                    <button
+                      onClick={() => {
+                        setIsMobileMenuOpen(false)
+                        openLoginModal()
+                      }}
+                      className="w-full text-left block text-lg font-medium text-primary hover:text-primary/80 py-4 cursor-pointer"
                     >
                       {t("nav.sign_in")}
-                    </Link>
+                    </button>
                   )}
                 </motion.div>
 

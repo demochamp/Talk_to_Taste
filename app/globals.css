@@ -540,7 +540,7 @@
   animation: blur-in 0.8s ease-out;
 }
 
-/* Ensure typed inputs and autocomplete are always crystal clear with dark text */
+/* Typed inputs and placeholder contrast for both Light and Dark mode */
 input[type="text"],
 input[type="email"],
 input[type="password"],
@@ -550,8 +550,65 @@ input[type="tel"],
 input[type="url"],
 select,
 textarea {
+  color: #111827;
+  -webkit-text-fill-color: #111827;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: #6b7280 !important;
+  -webkit-text-fill-color: #6b7280 !important;
+  opacity: 1 !important;
+}
+
+/* Dark Mode Text & Placeholder High Contrast */
+.dark input[type="text"],
+.dark input[type="email"],
+.dark input[type="password"],
+.dark input[type="number"],
+.dark input[type="search"],
+.dark input[type="tel"],
+.dark input[type="url"],
+.dark select,
+.dark textarea,
+html.dark input[type="text"],
+html.dark input[type="email"],
+html.dark input[type="password"],
+html.dark input[type="number"],
+html.dark input[type="search"],
+html.dark input[type="tel"],
+html.dark input[type="url"],
+html.dark select,
+html.dark textarea {
+  color: #f8fafc !important;
+  -webkit-text-fill-color: #f8fafc !important;
+}
+
+.dark input::placeholder,
+.dark textarea::placeholder,
+html.dark input::placeholder,
+html.dark textarea::placeholder {
+  color: #cbd5e1 !important;
+  -webkit-text-fill-color: #cbd5e1 !important;
+  opacity: 0.9 !important;
+}
+
+/* Ensure White Auth Modal maintains dark text even when app theme is dark */
+[data-slot="dialog-content"] input[type="text"],
+[data-slot="dialog-content"] input[type="email"],
+[data-slot="dialog-content"] input[type="password"],
+.dark [data-slot="dialog-content"] input[type="text"],
+.dark [data-slot="dialog-content"] input[type="email"],
+.dark [data-slot="dialog-content"] input[type="password"] {
   color: #111827 !important;
   -webkit-text-fill-color: #111827 !important;
+}
+
+[data-slot="dialog-content"] input::placeholder,
+.dark [data-slot="dialog-content"] input::placeholder {
+  color: #9ca3af !important;
+  -webkit-text-fill-color: #9ca3af !important;
+  opacity: 1 !important;
 }
 
 /* Webkit autofill fix for Chrome/Edge/Safari */
@@ -567,4 +624,13 @@ input:-webkit-autofill:active {
   transition: background-color 5000s ease-in-out 0s;
 }
 
-/* End of file */
+.dark input:-webkit-autofill,
+.dark input:-webkit-autofill:hover, 
+.dark input:-webkit-autofill:focus, 
+.dark input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 1000px #1e1b18 inset !important;
+  box-shadow: 0 0 0 1000px #1e1b18 inset !important;
+  -webkit-text-fill-color: #f8fafc !important;
+  caret-color: #f8fafc !important;
+  color: #f8fafc !important;
+}

@@ -70,7 +70,7 @@ export function VoiceSearch() {
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-                className="pl-12 pr-12 h-14 rounded-full text-base sm:text-lg border-2 focus:border-primary bg-background/50 backdrop-blur-sm"
+                className="pl-12 pr-12 h-14 rounded-full text-base sm:text-lg border-2 focus:border-primary bg-card/80 dark:bg-card/90 text-foreground placeholder:text-gray-500 dark:placeholder:text-gray-300 font-medium backdrop-blur-md shadow-sm"
             />
             <Button
                 size="icon"

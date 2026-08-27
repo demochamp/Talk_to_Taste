@@ -238,7 +238,7 @@ export function AssistantUI({
                                                 value={inputText}
                                                 onChange={(e) => setInputText(e.target.value)}
                                                 placeholder={error ? (language === "hi-IN" ? "माइक्रोफ़ोन समस्या" : "Mic Issue") : (language === "hi-IN" ? "पूछिए..." : "Ask anything...")}
-                                                className={`w-full px-4 py-2 rounded-full bg-background border text-sm focus:outline-none focus:ring-2 pr-10 ${error ? "border-red-500 ring-red-100" : "border-input focus:ring-primary/20"}`}
+                                                className={`w-full px-4 py-2 rounded-full bg-background dark:bg-card/90 border text-sm text-foreground placeholder:text-gray-500 dark:placeholder:text-gray-300 font-medium focus:outline-none focus:ring-2 pr-10 ${error ? "border-red-500 ring-red-100" : "border-input focus:ring-primary/20"}`}
                                             />
                                             <button
                                                 type="button"
