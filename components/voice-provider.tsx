@@ -271,41 +271,57 @@ export function VoiceProvider({ children }: { children: React.ReactNode }) {
         // 1. Browser Fallback Function
         const playBrowserFallback = (txt: string) => {
             console.warn("Falling back to Browser TTS for chunk:", txt)
-            const voices = window.speechSynthesis.getVoices()
-            let selectedVoice: SpeechSynthesisVoice | undefined
-
-            if (preferredVoiceURI) {
-                selectedVoice = voices.find(v => v.voiceURI === preferredVoiceURI)
-            }
-            if (!selectedVoice) {
-                selectedVoice = voices.find(v => v.name.includes("Microsoft Swara"))
-            }
-            if (!selectedVoice) {
-                if (targetLang.startsWith("hi")) {
-                    selectedVoice = voices.find(v => v.lang.includes("hi"))
-                } else {
-                    selectedVoice = voices.find(v => v.lang.startsWith("en"))
+            
+            // Function to perform the actual speech
+            const speakWithSystem = () => {
+                const voices = window.speechSynthesis.getVoices()
+                if (voices.length === 0) {
+                    console.error("No browser voices available.")
+                    processNextInQueue()
+                    return
                 }
-            }
-            if (!selectedVoice) selectedVoice = voices[0]
 
-            const utter = new SpeechSynthesisUtterance(txt)
-            if (selectedVoice) utter.voice = selectedVoice
-            utter.lang = targetLang
-            // Adjusted for a slightly more deliberate pace for the Viva
-            utter.rate = 1.05
+                let selectedVoice: SpeechSynthesisVoice | undefined
 
-            utter.onstart = () => setState(prev => ({ ...prev, isSpeaking: true, dialogState: "SPEAKING" }))
-            utter.onend = () => {
-                // If it was a browser fallback, we still need to continue the queue
-                processNextInQueue()
-            }
-            utter.onerror = () => {
-                setState(prev => ({ ...prev, isSpeaking: false }))
-                processNextInQueue()
+                if (preferredVoiceURI) {
+                    selectedVoice = voices.find(v => v.voiceURI === preferredVoiceURI)
+                }
+                if (!selectedVoice) {
+                    selectedVoice = voices.find(v => v.name.includes("Microsoft Swara") || v.name.includes("Google Hindi"))
+                }
+                if (!selectedVoice) {
+                    if (targetLang.startsWith("hi")) {
+                        selectedVoice = voices.find(v => v.lang.includes("hi"))
+                    } else {
+                        selectedVoice = voices.find(v => v.lang.startsWith("en"))
+                    }
+                }
+                if (!selectedVoice) selectedVoice = voices[0]
+
+                const utter = new SpeechSynthesisUtterance(txt)
+                if (selectedVoice) utter.voice = selectedVoice
+                utter.lang = targetLang
+                utter.rate = 1.05
+
+                utter.onstart = () => setState(prev => ({ ...prev, isSpeaking: true, dialogState: "SPEAKING" }))
+                utter.onend = () => processNextInQueue()
+                utter.onerror = () => {
+                    setState(prev => ({ ...prev, isSpeaking: false }))
+                    processNextInQueue()
+                }
+
+                window.speechSynthesis.speak(utter)
             }
 
-            window.speechSynthesis.speak(utter)
+            // Chrome/Edge sometimes need a moment to load voices
+            if (window.speechSynthesis.getVoices().length === 0) {
+                window.speechSynthesis.onvoiceschanged = () => {
+                    speakWithSystem()
+                    window.speechSynthesis.onvoiceschanged = null
+                }
+            } else {
+                speakWithSystem()
+            }
         }
 
         // 2. Queue Management

@@ -10,7 +10,7 @@ console.log("Initializing NextAuth with secret:", process.env.AUTH_SECRET ? "Pre
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
     ...authConfig,
-    secret: process.env.AUTH_SECRET,
+    secret: process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET || "talktotaste_secret_key_generated_by_antigravity_12345",
     adapter: MongoDBAdapter(clientPromise),
     session: { strategy: "jwt" },
     providers: [

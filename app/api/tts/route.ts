@@ -1,11 +1,10 @@
-﻿export const dynamic = "force-dynamic";
+export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server"
 
-// The specific "Waterfall" list of models to try
+// Standard waterfall of models to try
 const TIERS = [
-    { name: "Next-Gen 3.1 (Preview)", models: ["gemini-3.1-flash-lite-preview", "gemini-3.1-flash-live-preview"] },
-    { name: "Fast 2.0 (Premium Audio)", models: ["gemini-2.0-flash"] },
-    { name: "Standard (Fallback)", models: ["gemini-1.5-flash"] }
+    { name: "Flash 1.5 (Standard)", models: ["gemini-1.5-flash", "gemini-1.5-flash-8b", "gemini-1.5-flash-latest"] },
+    { name: "Pro 1.5 (High Quality)", models: ["gemini-1.5-pro", "gemini-1.5-pro-latest"] }
 ]
 
 
@@ -147,8 +146,9 @@ export async function POST(req: NextRequest) {
                         }
                     } catch (err: any) {
                         const isTimeout = err.name === 'AbortError';
-                        console.warn(`[TTS] âš ï¸ Fail: ${modelName} | Acc ${i + 1} | ${isTimeout ? 'TIMEOUT' : err.message}`);
-                        errorLog.push(`${modelName}[${i}]: ${err.message}`);
+                        const errorMessage = isTimeout ? 'TIMEOUT' : (err.message || 'Unknown Error');
+                        console.warn(`[TTS] ⚠️  Fail: ${modelName} | Acc ${i + 1} | ${errorMessage}`);
+                        errorLog.push(`${modelName}[${i}]: ${errorMessage}`);
                         continue; // Try next key/model immediately
                     }
                 }
