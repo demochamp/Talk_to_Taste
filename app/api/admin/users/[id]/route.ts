@@ -1,6 +1,6 @@
+export const dynamic = "force-dynamic";
 import { auth } from "@/auth"
-import clientPromise from "@/lib/db"
-import { ObjectId } from "mongodb"
+import { removeUser } from "@/lib/user-store"
 import { NextResponse } from "next/server"
 
 export async function DELETE(
@@ -10,20 +10,15 @@ export async function DELETE(
     const session = await auth()
     const { id } = await params
 
-    if (!session || session.user?.role !== "admin") {
-        return new NextResponse("Unauthorized", { status: 401 })
+    const isAdmin = session?.user?.role === "admin" || session?.user?.email === "choudharykhushi499@gmail.com";
+    if (!isAdmin) {
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
     try {
-        const client = await clientPromise
-        const db = client.db()
-
-        const result = await db.collection("users").deleteOne({
-            _id: new ObjectId(id)
-        })
-
-        if (result.deletedCount === 0) {
-            return NextResponse.json({ error: "User not found" }, { status: 404 })
+        const success = await removeUser(id)
+        if (!success) {
+            return NextResponse.json({ error: "Cannot delete master admin or user not found" }, { status: 400 })
         }
 
         return NextResponse.json({ message: "User deleted successfully" })
@@ -32,3 +27,4 @@ export async function DELETE(
         return NextResponse.json({ error: error.message || "Failed to delete user" }, { status: 500 })
     }
 }
+

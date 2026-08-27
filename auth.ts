@@ -56,6 +56,24 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
                 return null;
             }
         })
-    ]
+    ],
+    events: {
+        async signIn({ user, account, profile }) {
+            if (user && user.email) {
+                try {
+                    const { recordUser } = await import("@/lib/user-store")
+                    await recordUser({
+                        id: user.id,
+                        email: user.email,
+                        name: user.name || profile?.name || user.email.split("@")[0],
+                        image: user.image || (profile as any)?.picture || (profile as any)?.avatar_url || null,
+                        role: user.email === "choudharykhushi499@gmail.com" ? "admin" : "user",
+                        provider: account?.provider || "oauth"
+                    })
+                } catch (err) {
+                    console.warn("[Auth] Failed to record login in user-store:", err)
+                }
+            }
+        }
+    }
 })
-

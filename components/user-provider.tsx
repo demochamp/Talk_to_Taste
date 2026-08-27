@@ -68,14 +68,31 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     // Sync with NextAuth session
     useEffect(() => {
         if (status === "authenticated" && session?.user) {
+            const userName = session.user.name || "App User"
+            const userEmail = session.user.email || ""
+            const userRole = (session.user as any).role || (userEmail === "choudharykhushi499@gmail.com" ? "admin" : "user")
+
             setUser(prev => ({
                 ...prev,
-                name: session.user.name || prev.name,
-                email: session.user.email || prev.email,
-                // @ts-ignore - Role is added in custom type but TS might complain without restart
-                role: (session.user as any).role || "user",
+                name: userName || prev.name,
+                email: userEmail || prev.email,
+                role: userRole,
                 isLoggedIn: true
             }))
+
+            // Sync user to server user store for Admin visibility
+            if (userEmail) {
+                fetch("/api/user/sync", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        email: userEmail,
+                        name: userName,
+                        image: session.user.image || null,
+                        role: userRole
+                    })
+                }).catch(err => console.warn("User sync trigger failed:", err))
+            }
         } else if (status === "unauthenticated") {
             setUser(prev => ({
                 ...prev,
@@ -86,6 +103,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
             }))
         }
     }, [session, status])
+
 
     // Save to localStorage on change (only settings/favs, not sensitive auth if possible, but keeping consistent)
     useEffect(() => {

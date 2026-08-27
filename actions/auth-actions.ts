@@ -3,6 +3,7 @@
 import bcrypt from 'bcryptjs';
 import clientPromise from '@/lib/db';
 import { sendAdminNotification } from '@/lib/mail';
+import { recordUser } from '@/lib/user-store';
 
 export async function registerUser(formData: FormData) {
     let email = formData.get('email') as string;
@@ -38,14 +39,22 @@ export async function registerUser(formData: FormData) {
         // Hash password
         const hashedPassword = await bcrypt.hash(password, 10);
 
-        // Create user
+        // Create user in MongoDB
         await db.collection('users').insertOne({
             email,
             password: hashedPassword,
-            name: email.split('@')[0], // Default name from email
+            name: email.split('@')[0],
             image: null,
-            role: email === 'choudharykhushi499@gmail.com' ? 'admin' : 'user', // Set admin role for owner email
+            role: email === 'choudharykhushi499@gmail.com' ? 'admin' : 'user',
             createdAt: new Date(),
+        });
+
+        // Record into persistent user-store
+        await recordUser({
+            email,
+            name: email.split('@')[0],
+            role: email === 'choudharykhushi499@gmail.com' ? 'admin' : 'user',
+            provider: 'credentials'
         });
 
         // Notify Admin of new registration (Non-blocking)
