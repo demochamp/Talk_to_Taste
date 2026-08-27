@@ -48,21 +48,21 @@ export function LoginForm({ isSubmitting: externalIsSubmitting, setIsSubmitting:
     };
 
     return (
-        <div className={`w-full mx-auto ${isModal ? 'p-2 sm:p-4 bg-white' : 'max-w-md bg-white rounded-2xl shadow-2xl p-6 sm:p-8 md:p-10 border border-orange-100'}`}>
+        <div className={`w-full mx-auto ${isModal ? 'p-1 sm:p-2 bg-white' : 'max-w-md bg-white rounded-2xl shadow-2xl p-6 sm:p-8 md:p-10 border border-orange-100'}`}>
 
             {/* Header */}
-            <div className="text-center mb-3 sm:mb-5">
+            <div className="text-center mb-2.5 sm:mb-3.5">
                 <h1 className="text-2xl sm:text-3xl font-black text-gray-900 tracking-tight mb-1">
                     {mode === 'login' ? 'Welcome Back' : 'Create Account'}
                 </h1>
                 <p className="text-gray-600 text-xs sm:text-sm font-medium">
                     {mode === 'login' ? 'Continue your smart cooking journey' : 'Start your voice-guided cooking adventure'}
                 </p>
-                <div className="h-1 w-12 sm:w-14 bg-gradient-to-r from-orange-500 to-amber-400 mx-auto mt-2 rounded-full"></div>
+                <div className="h-1 w-12 sm:w-14 bg-gradient-to-r from-orange-500 to-amber-400 mx-auto mt-1.5 rounded-full"></div>
             </div>
 
             {/* Mode Switch Tabs */}
-            <div className="flex bg-gray-100 p-1 rounded-xl mb-3 sm:mb-5 border border-gray-200">
+            <div className="flex bg-gray-100 p-1 rounded-xl mb-2.5 sm:mb-3.5 border border-gray-200">
                 <button
                     type="button"
                     onClick={() => { setMode('login'); setError(null); }}
@@ -87,7 +87,7 @@ export function LoginForm({ isSubmitting: externalIsSubmitting, setIsSubmitting:
                 </button>
             </div>
 
-            <div className="space-y-3 sm:space-y-4">
+            <div className="space-y-2.5 sm:space-y-3.5">
                 {/* Social Login Buttons */}
                 <div className="grid grid-cols-2 gap-2.5 sm:gap-3">
                     <button
@@ -127,7 +127,7 @@ export function LoginForm({ isSubmitting: externalIsSubmitting, setIsSubmitting:
                 </div>
 
                 {/* Divider */}
-                <div className="flex items-center gap-3 my-2.5 sm:my-4">
+                <div className="flex items-center gap-3 my-2 sm:my-3">
                     <div className="flex-1 h-px bg-gray-200"></div>
                     <span className="text-gray-400 text-[10px] sm:text-xs font-bold tracking-wider uppercase">Or with Email</span>
                     <div className="flex-1 h-px bg-gray-200"></div>
@@ -200,7 +200,7 @@ export function LoginForm({ isSubmitting: externalIsSubmitting, setIsSubmitting:
                             if (onSuccess) onSuccess();
                         }
                     }
-                }} className="space-y-3 sm:space-y-4">
+                }} className="space-y-2.5 sm:space-y-3.5">
 
                     <div>
                         <label className="block text-xs sm:text-sm font-bold text-gray-900 mb-1">Email Address</label>
@@ -250,7 +250,7 @@ export function LoginForm({ isSubmitting: externalIsSubmitting, setIsSubmitting:
                     <button
                         type="submit"
                         disabled={isSubmitting}
-                        className="w-full py-2.5 sm:py-3 bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-700 hover:to-amber-700 text-white font-bold text-sm sm:text-base rounded-xl transition-all duration-200 shadow-md hover:shadow-lg flex items-center justify-center gap-2 active:scale-98 cursor-pointer mt-2 sm:mt-3 disabled:opacity-60"
+                        className="w-full py-2.5 sm:py-2.5 bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-700 hover:to-amber-700 text-white font-bold text-sm sm:text-base rounded-xl transition-all duration-200 shadow-md hover:shadow-lg flex items-center justify-center gap-2 active:scale-98 cursor-pointer mt-2 disabled:opacity-60"
                     >
                         {isSubmitting && socialLoading === null ? (
                             <span className="w-4 h-4 sm:w-5 sm:h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
@@ -269,12 +269,12 @@ export function LoginForm({ isSubmitting: externalIsSubmitting, setIsSubmitting:
                                 setMode(mode === 'login' ? 'signup' : 'login');
                                 setError(null);
                             }}
-                            className="text-xs sm:text-sm text-orange-600 hover:text-orange-700 font-bold hover:underline cursor-pointer inline-flex items-center gap-1"
+                            className="text-xs sm:text-sm text-orange-600 hover:text-orange-700 font-bold no-underline hover:no-underline cursor-pointer inline-flex items-center gap-1 transition-colors"
                         >
                             {mode === 'login' ? (
-                                <>New to TalkToTaste? <span className="underline">Create an account</span></>
+                                <>New to TalkToTaste? <span className="text-orange-600 font-extrabold">Create an account</span></>
                             ) : (
-                                <>Already have an account? <span className="underline">Sign in</span></>
+                                <>Already have an account? <span className="text-orange-600 font-extrabold">Sign in</span></>
                             )}
                         </button>
                     </div>
@@ -283,6 +283,7 @@ export function LoginForm({ isSubmitting: externalIsSubmitting, setIsSubmitting:
         </div>
     );
 }
+
 
 
 

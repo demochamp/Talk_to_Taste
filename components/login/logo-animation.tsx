@@ -27,15 +27,15 @@ export function LogoAnimation() {
     }, [isHovered]);
 
     return (
-        <div className="flex flex-col items-center justify-center space-y-4">
+        <div className="flex flex-col items-center justify-center space-y-3">
             {/* Main Logo Container */}
             <div
-                className="relative w-32 h-32 md:w-36 md:h-36"
+                className="relative w-28 h-28 md:w-32 md:h-32"
                 onMouseEnter={() => setIsHovered(true)}
                 onMouseLeave={() => setIsHovered(false)}
             >
                 {/* Animated Background Glow */}
-                <div className={`absolute inset-0 rounded-full blur-3xl transition-all duration-500 ${isHovered ? 'bg-orange-300 opacity-60 scale-125' : 'bg-orange-200 opacity-30'}`}></div>
+                <div className={`absolute inset-0 rounded-full blur-2xl transition-all duration-500 ${isHovered ? 'bg-orange-300 opacity-60 scale-125' : 'bg-orange-200 opacity-30'}`}></div>
 
                 {/* Logo Image */}
                 <div className={`relative w-full h-full flex items-center justify-center transition-all duration-300 ${isHovered ? 'scale-110' : 'scale-100'}`}>
@@ -50,7 +50,7 @@ export function LogoAnimation() {
                 {particles.map((particle) => (
                     <div
                         key={particle.id}
-                        className="absolute w-3 h-3 bg-orange-400 rounded-full pointer-events-none animate-fade-in-up"
+                        className="absolute w-2.5 h-2.5 bg-orange-400 rounded-full pointer-events-none animate-fade-in-up"
                         style={{
                             left: '50%',
                             top: '50%',
@@ -66,40 +66,41 @@ export function LogoAnimation() {
             </div>
 
             {/* Text Content */}
-            <div className="text-center space-y-3 animate-slide-in-right">
+            <div className="text-center space-y-2 animate-slide-in-right">
                 <h2 className="text-2xl md:text-3xl font-bold text-gray-900">
                     Cook with <span className="bg-gradient-to-r from-orange-500 to-orange-600 bg-clip-text text-transparent">Voice</span>
                 </h2>
-                <p className="text-sm text-gray-600 max-w-sm mx-auto">
+                <p className="text-xs sm:text-sm text-gray-600 max-w-xs mx-auto leading-tight">
                     Experience hands-free cooking with our voice-controlled recipe assistant. <span className="font-semibold text-orange-500">Perfect for Indian kitchens.</span>
                 </p>
 
                 {/* Feature Badges */}
-                <div className="flex flex-wrap gap-2 justify-center pt-2 animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
-                    <div className="px-3 py-1 bg-orange-100 text-orange-700 rounded-full text-xs font-medium border border-orange-300 hover:bg-orange-200 transition-colors">
+                <div className="flex flex-wrap gap-1.5 justify-center pt-1.5 animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
+                    <div className="px-3 py-1 bg-orange-100 text-orange-700 rounded-full text-xs font-bold border border-orange-300 hover:bg-orange-200 transition-colors">
                         🎤 90+ Recipes
                     </div>
-                    <div className="px-4 py-2 bg-orange-100 text-orange-700 rounded-full text-sm font-medium border border-orange-300 hover:bg-orange-200 transition-colors">
+                    <div className="px-3 py-1 bg-orange-100 text-orange-700 rounded-full text-xs font-bold border border-orange-300 hover:bg-orange-200 transition-colors">
                         🌍 2 Languages
                     </div>
-                    <div className="px-4 py-2 bg-orange-100 text-orange-700 rounded-full text-sm font-medium border border-orange-300 hover:bg-orange-200 transition-colors">
+                    <div className="px-3 py-1 bg-orange-100 text-orange-700 rounded-full text-xs font-bold border border-orange-300 hover:bg-orange-200 transition-colors">
                         ⏱️ Smart Timers
                     </div>
                 </div>
             </div>
 
             {/* Hover Indicator */}
-            <div className="text-center space-y-2 animate-bounce-soft">
-                <p className="text-xs text-gray-500 uppercase tracking-wide font-semibold">Hover to interact</p>
+            <div className="text-center space-y-1 animate-bounce-soft pt-1">
+                <p className="text-[11px] text-gray-500 uppercase tracking-wide font-semibold">Hover to interact</p>
                 <div className="flex justify-center gap-1">
-                    <div className="w-2 h-2 bg-orange-400 rounded-full animate-pulse"></div>
-                    <div className="w-2 h-2 bg-orange-400 rounded-full animate-pulse" style={{ animationDelay: '0.1s' }}></div>
-                    <div className="w-2 h-2 bg-orange-400 rounded-full animate-pulse" style={{ animationDelay: '0.2s' }}></div>
+                    <div className="w-1.5 h-1.5 bg-orange-400 rounded-full animate-pulse"></div>
+                    <div className="w-1.5 h-1.5 bg-orange-400 rounded-full animate-pulse" style={{ animationDelay: '0.1s' }}></div>
+                    <div className="w-1.5 h-1.5 bg-orange-400 rounded-full animate-pulse" style={{ animationDelay: '0.2s' }}></div>
                 </div>
             </div>
         </div>
     );
 }
+
 
 
 
