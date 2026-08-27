@@ -37,11 +37,12 @@ export default function ProfilePage() {
   const [activeTab, setActiveTab] = useState<"overview" | "favorites" | "history" | "settings">("overview")
   const [isEditing, setIsEditing] = useState(false)
 
-  const { user, updateName, updateSettings } = useUserState()
+  const { user, updateName, updateSettings, logout, openLoginModal } = useUserState()
   const { language, setLanguage } = useVoice()
   const { t } = useTranslation()
   const [userName, setUserName] = useState(user.name)
   const isHindi = language === "hi-IN"
+
 
   // Sync local name state when user data loads
   useEffect(() => {
@@ -178,6 +179,33 @@ export default function ProfilePage() {
               </Button>
             ))}
           </div>
+
+          {/* Guest Sign-In Banner */}
+          {!user.isLoggedIn && (
+            <motion.div
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mt-8 p-4 sm:p-5 rounded-3xl bg-orange-500/10 border border-orange-500/25 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-sm"
+            >
+              <div className="flex items-center gap-3 text-center sm:text-left">
+                <ChefHat className="w-7 h-7 text-primary flex-shrink-0" />
+                <div>
+                  <h4 className="font-bold text-foreground text-sm sm:text-base">
+                    {language === "hi-IN" ? "गेस्ट शेफ़ के रूप में ब्राउज़ कर रहे हैं" : "Browsing as Guest Chef"}
+                  </h4>
+                  <p className="text-xs sm:text-sm text-muted-foreground">
+                    {language === "hi-IN" ? "अपनी पसंदीदा रेसिपी सेव करने और कहीं भी सिंक करने के लिए साइन इन करें।" : "Sign in to save favorite recipes, cooking history, and sync across your devices."}
+                  </p>
+                </div>
+              </div>
+              <Button
+                onClick={() => openLoginModal()}
+                className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold rounded-full text-xs sm:text-sm px-6 py-2 flex-shrink-0 shadow-md cursor-pointer"
+              >
+                {language === "hi-IN" ? "साइन इन / रजिस्टर" : "Sign In / Register"}
+              </Button>
+            </motion.div>
+          )}
         </div>
       </section>
 
@@ -443,19 +471,25 @@ export default function ProfilePage() {
                   </div>
                 </div>
 
-                {/* Logout */}
-                <Button
-                  variant="outline"
-                  className="w-full rounded-full gap-2 text-destructive hover:bg-destructive/10 bg-transparent"
-                  onClick={() => {
-                    // In a real app this would clear session, here we can just clear local storage
-                    localStorage.removeItem("talktotaste-user")
-                    window.location.reload()
-                  }}
-                >
-                  <LogOut className="w-4 h-4" />
-                  {t("profile.reset")}
-                </Button>
+                {/* Logout / Sign In */}
+                {user.isLoggedIn ? (
+                  <Button
+                    variant="outline"
+                    className="w-full rounded-full gap-2 text-destructive hover:bg-destructive/10 bg-transparent cursor-pointer"
+                    onClick={() => logout()}
+                  >
+                    <LogOut className="w-4 h-4" />
+                    {language === "hi-IN" ? "साइन आउट" : "Sign Out"}
+                  </Button>
+                ) : (
+                  <Button
+                    className="w-full rounded-full gap-2 bg-primary hover:bg-primary/90 text-primary-foreground font-bold cursor-pointer"
+                    onClick={() => openLoginModal()}
+                  >
+                    <User className="w-4 h-4" />
+                    {language === "hi-IN" ? "साइन इन / रजिस्टर करें" : "Sign In / Create Account"}
+                  </Button>
+                )}
               </motion.div>
             )}
           </AnimatePresence>
